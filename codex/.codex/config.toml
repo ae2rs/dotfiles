@@ -1,0 +1,4 @@
+model = "gpt-5-codex"
+
+[projects."/Users/lucas/work/monorepo"]
+trust_level = "trusted"
