@@ -1,0 +1,7 @@
+# Zed
+zed/.config/conversations/
+zed/.config/prompts/
+
+# Codex
+codex/.codex/log/
+codex/.codex/sessions/
