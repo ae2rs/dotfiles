@@ -1,6 +1,6 @@
 # Zed
-zed/.config/conversations/
-zed/.config/prompts/
+zed/.config/zed/conversations/
+zed/.config/zed/prompts/
 
 # Codex
 codex/.codex/log/
