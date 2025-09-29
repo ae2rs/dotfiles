@@ -5,7 +5,7 @@ local config = wezterm.config_builder()
 config.font_size = 16
 config.line_height = 1
 config.font = wezterm.font("JetBrains Mono")
-config.color_scheme = "catppuccin-mocha"
+config.color_scheme = "tokyonight_night"
 config.audible_bell = "Disabled"
 
 -- Window
@@ -15,9 +15,9 @@ config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = true
 config.show_new_tab_button_in_tab_bar = false
 config.tab_max_width = 32
-config.window_frame = {
-	border_top_height = "3px",
-}
+-- config.window_frame = {
+-- 	border_top_height = "3px",
+-- }
 
 -- Keys --
 config.keys = {
@@ -44,7 +44,7 @@ local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabl
 tabline.setup({
 	options = {
 		icons_enabled = true,
-		theme = "Catppuccin Mocha",
+		theme = "tokyonight_night",
 		tabs_enabled = true,
 		theme_overrides = {},
 		section_separators = {

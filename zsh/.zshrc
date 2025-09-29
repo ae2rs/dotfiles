@@ -7,6 +7,13 @@ eval "$(starship init zsh)"
 
 
 ########################################
+# HOMEBREW
+########################################
+
+autoload -Uz compinit
+compinit
+
+########################################
 # FZF INTEGRATION
 ########################################
 
@@ -19,14 +26,14 @@ source <(fzf --zsh)
 
 export EDITOR="nvim"
 
-
 ########################################
 # NODE VERSION MANAGER (NVM)
 ########################################
 
 export NVM_DIR="$HOME/.nvm"
 # Load NVM if installed
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --no-use
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 
 ########################################
@@ -66,7 +73,7 @@ alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 ########################################
 
 export ZSH="$HOME/.oh-my-zsh"
-plugins=(git bazel brew docker eza fzf golang macos rust ssh sudo uv zsh-autosuggestions)
+plugins=(git bazel brew docker eza fzf golang kubectl kubectx macos rust ssh sudo uv zsh-autosuggestions)
 source $ZSH/oh-my-zsh.sh
 
 ########################################
@@ -75,13 +82,18 @@ source $ZSH/oh-my-zsh.sh
 
 export PATH="/opt/homebrew/opt/unzip/bin:$PATH"
 
+export PATH="$HOME/.local/bin:$PATH"
+
+########################################
+# GCLOUD
+########################################
+
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/lucas/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/lucas/Downloads/google-cloud-sdk/path.zsh.inc'; fi
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
-export PATH="$HOME/.local/bin:$PATH"
 
 ########################################
 # ALIASES & SHORT FUNCTIONS
@@ -101,9 +113,7 @@ n() {
     nvim "$@" .
 }
 
-# NVM
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
 # Zoxide
 eval "$(zoxide init zsh)"
+
 
