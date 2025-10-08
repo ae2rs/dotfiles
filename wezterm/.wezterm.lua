@@ -7,6 +7,8 @@ config.line_height = 1
 config.font = wezterm.font("JetBrains Mono")
 config.color_scheme = "tokyonight_night"
 config.audible_bell = "Disabled"
+config.window_close_confirmation = "NeverPrompt"
+config.default_cursor_style = "SteadyBar"
 
 -- Window
 config.window_decorations = "RESIZE"

@@ -73,7 +73,7 @@ alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 ########################################
 
 export ZSH="$HOME/.oh-my-zsh"
-plugins=(git bazel brew docker eza fzf golang kubectl kubectx macos rust ssh sudo uv zsh-autosuggestions)
+plugins=(git bazel brew docker eza fzf golang kubectl kubectx macos rust ssh uv zsh-autosuggestions)
 source $ZSH/oh-my-zsh.sh
 
 ########################################
@@ -103,7 +103,9 @@ if [ -f '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '
 alias l='eza -l'
 alias ll='eza -l --all'
 alias ls='eza'
+
 alias lz='lazygit'
+alias lzd='lazydocker'
 
 # Spotify
 alias spo='spotify_player'

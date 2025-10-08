@@ -24,7 +24,7 @@
       "function": false
     }
   },
-  "disable_ai": false,
+  "disable_ai": true,
   "preview_tabs": {
     "enable_preview_from_code_navigation": false
   },
