@@ -280,7 +280,11 @@ require('lazy').setup({
       },
     },
   },
-
+  {
+    'mrcjkb/rustaceanvim',
+    version = '^6',
+    lazy = false,
+  },
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -409,7 +413,18 @@ require('lazy').setup({
         --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
         --   },
         -- },
-        -- pickers = {}
+        pickers = {
+          live_grep = {
+            file_ignore_patterns = { 'node_modules', '.git', '.venv' },
+            additional_args = function(_)
+              return { '--hidden' }
+            end,
+          },
+          find_files = {
+            file_ignore_patterns = { 'node_modules', '.git', '.venv' },
+            hidden = true,
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -444,7 +459,7 @@ require('lazy').setup({
           -- You can pass additional configuration to Telescope to change the theme, layout, etc.
           builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
             winblend = 10,
-            previewer = false,
+            previewer = true,
           })
         end, { desc = '[/] Fuzzily search in current buffer' })
 
