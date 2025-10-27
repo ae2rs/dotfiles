@@ -293,12 +293,13 @@ require('lazy').setup({
   --
   -- Then, because we use the `opts` key (recommended), the configuration runs
   -- after the plugin has been loaded as `require(MODULE).setup(opts)`.
-  {
+
+  { -- Supermaven plugin setup.
     'supermaven-inc/supermaven-nvim',
     config = function()
       require('supermaven-nvim').setup {
         keymaps = {
-          accept_suggestion = '<C-m>',
+          accept_suggestion = '<C-m>', -- avoid tab completion, avoid conflict with C-y for accept suggestion
           clear_suggestion = '<C-]>',
           accept_word = '<C-j>',
         },
