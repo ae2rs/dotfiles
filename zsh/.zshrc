@@ -110,6 +110,18 @@ alias lzd='lazydocker'
 # Spotify
 alias spo='spotify_player'
 
+# Github dash
+alias ghd='gh dash'
+
+# Docker
+alias dc='docker compose'
+
+# Clippy
+alias clip='/Users/lucas/work/monorepo/tools/clippy.py'
+
+# Rustfmt
+alias rfmt='/Users/lucas/work/monorepo/tools/rustfmt $(git ls-files | grep -E "\.rs\$")'
+
 # nvim shortcut (open current directory by default)
 n() {
     nvim "$@" .
