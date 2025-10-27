@@ -1,0 +1,3 @@
+[submodule "nvim/.config/nvim/lazy-plugins/rustaceanvim"]
+	path = nvim/.config/nvim/lazy-plugins/rustaceanvim
+	url = git@github.com:lcsh0s/rustaceanvim.git
