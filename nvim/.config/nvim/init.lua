@@ -977,7 +977,7 @@ require('lazy').setup({
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
-  { 'catppuccin/nvim', name = 'catppuccin', priority = 1000 },
+  -- { 'catppuccin/nvim', name = 'catppuccin', priority = 1000 },
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
     config = function()
@@ -1054,7 +1054,7 @@ require('lazy').setup({
   require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`

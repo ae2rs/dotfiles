@@ -15,6 +15,22 @@ return {
   },
   opts = {
     filesystem = {
+      filtered_items = {
+        visible = false,
+        hide_dotfiles = false,
+        hide_by_name = {
+          'node_modules',
+          '.git',
+          '__pycache__',
+        },
+        always_show = { -- remains visible even if other settings would normally hide it
+          '.gitignored',
+        },
+        always_show_by_pattern = { -- uses glob style patterns
+          '.env*',
+          '.config/*',
+        },
+      },
       window = {
         mappings = {
           ['\\'] = 'close_window',
