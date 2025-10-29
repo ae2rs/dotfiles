@@ -302,6 +302,19 @@ require('lazy').setup({
     },
   },
 
+  -- {
+  --   'NeogitOrg/neogit',
+  --   dependencies = {
+  --     'nvim-lua/plenary.nvim', -- required
+  --     'sindrets/diffview.nvim', -- optional - Diff integration
+  --     -- Only one of these is needed.
+  --     'nvim-telescope/telescope.nvim', -- optional
+  --     'ibhagwan/fzf-lua', -- optional
+  --     'nvim-mini/mini.pick', -- optional
+  --     'folke/snacks.nvim', -- optional
+  --   },
+  -- },
+
   {
     'kdheepak/lazygit.nvim',
     lazy = true,
@@ -1018,7 +1031,7 @@ require('lazy').setup({
   require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
