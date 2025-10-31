@@ -53,7 +53,7 @@ local openUrl = act.QuickSelectArgs({
 })
 
 -- use 'Backslash' to split horizontally
-map("\\", "LEADER", act.SplitHorizontal({ domain = "CurrentPaneDomain" }))
+map("v", "LEADER", act.SplitHorizontal({ domain = "CurrentPaneDomain" }))
 -- and 'Minus' to split vertically
 map("-", "LEADER", act.SplitVertical({ domain = "CurrentPaneDomain" }))
 -- map 1-9 to switch to tab 1-9, 0 for the last tab
@@ -73,7 +73,7 @@ map("k", "LEADER|SHIFT", act.AdjustPaneSize({ "Up", 5 }))
 map("l", "LEADER|SHIFT", act.AdjustPaneSize({ "Right", 5 }))
 -- spawn & close
 map("c", "LEADER", act.SpawnTab("CurrentPaneDomain"))
-map("x", "LEADER", act.CloseCurrentPane({ confirm = true }))
+-- map("x", "LEADER", act.CloseCurrentPane({ confirm = true }))
 map("t", { "SHIFT|CTRL", "SUPER" }, act.SpawnTab("CurrentPaneDomain"))
 map("w", { "SHIFT|CTRL", "SUPER" }, act.CloseCurrentTab({ confirm = true }))
 map("n", { "SHIFT|CTRL", "SUPER" }, act.SpawnWindow)
@@ -81,7 +81,7 @@ map("n", { "SHIFT|CTRL", "SUPER" }, act.SpawnWindow)
 map("z", { "LEADER", "SUPER" }, act.TogglePaneZoomState)
 map("Z", { "LEADER", "SUPER" }, toggleTabBar)
 -- copy & paste
-map("v", "LEADER", act.ActivateCopyMode)
+map("x", "LEADER", act.ActivateCopyMode)
 map("c", { "SHIFT|CTRL", "SUPER" }, act.CopyTo("Clipboard"))
 map("v", { "SHIFT|CTRL", "SUPER" }, act.PasteFrom("Clipboard"))
 map("f", { "SHIFT|CTRL", "SUPER" }, act.Search("CurrentSelectionOrEmptyString"))
