@@ -43,7 +43,7 @@ require('lazy').setup({
   { import = 'plugins.coding' },
   { import = 'plugins.lang' },
   { import = 'plugins.ai' },
-  { import = 'plugins.git' },
+  { import = 'plugins.giet' },
 
   -- Kickstart plugins
   require 'kickstart.plugins.debug',

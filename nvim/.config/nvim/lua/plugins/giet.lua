@@ -20,5 +20,15 @@ return {
       'sindrets/diffview.nvim',
       'nvim-telescope/telescope.nvim',
     },
+    config = function()
+      require('neogit').setup()
+      local neogit = require 'neogit'
+      vim.keymap.set('n', '<leader>gs', function()
+        neogit.open()
+      end, { desc = 'Open Neogit' })
+      vim.keymap.set('n', '<leader>gv', function()
+        neogit.open { kind = 'vsplit' }
+      end, { desc = 'Open Neogit on split' })
+    end,
   },
 }
