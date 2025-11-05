@@ -32,4 +32,27 @@ return {
       end, { desc = 'Open Neogit on split' })
     end,
   },
+  {
+    'johnseth97/gh-dash.nvim',
+    lazy = true,
+    keys = {
+      {
+        '<leader>gd',
+        function()
+          require('gh_dash').toggle()
+          vim.schedule(function()
+            vim.cmd 'startinsert'
+          end)
+        end,
+        desc = 'Toggle gh-dash popup',
+      },
+    },
+    opts = {
+      keymaps = {},
+      border = 'rounded',
+      width = 0.8,
+      height = 0.8,
+      autoinstall = true,
+    },
+  },
 }
