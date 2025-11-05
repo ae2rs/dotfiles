@@ -37,5 +37,47 @@ return {
         },
       },
     },
+    event_handlers = {
+      {
+        event = 'file_opened',
+        handler = function(file_path)
+          require('neo-tree.command').execute { action = 'close' }
+        end,
+      },
+    },
+    default_component_configs = {
+      diagnostics = {
+        symbols = {
+          hint = '',
+          info = '',
+          warning = '',
+          error = '',
+        },
+        highlights = {
+          hint = 'DiagnosticSignHint',
+          info = 'DiagnosticSignInfo',
+          warn = 'DiagnosticSignWarn',
+          error = 'DiagnosticSignError',
+        },
+      },
+      name = {
+        use_git_status_colors = true,
+        highlight = 'NeoTreeFileName',
+      },
+      git_status = {
+        symbols = {
+          added = 'A', -- or "" or ""
+          deleted = 'D', -- or "" or ""
+          modified = 'M', -- or "" or ""
+          renamed = 'R', -- or "" or "➜"
+          untracked = 'U', -- or "" or ""
+          ignored = '', -- or "" or ""
+          unstaged = '', -- or "" or ""
+          staged = '', -- or "" or ""
+          conflict = 'X', -- or "" or ""
+        },
+        align = 'right',
+      },
+    },
   },
 }

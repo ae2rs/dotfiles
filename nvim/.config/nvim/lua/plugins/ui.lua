@@ -9,6 +9,17 @@ return {
         styles = {
           comments = { italic = false },
         },
+        on_highlights = function(highlights)
+          highlights.NeoTreeGitModified = {
+            fg = '#fab387', -- Orange/yellow for modified files
+          }
+          highlights.NeoTreeGitStaged = {
+            fg = '#a6e3a1', -- Green for staged files
+          }
+          highlights.NeoTreeGitUntracked = {
+            fg = '#9399b2', -- Grey for untracked files
+          }
+        end,
       }
       vim.cmd.colorscheme 'tokyonight-night'
     end,
