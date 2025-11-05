@@ -20,8 +20,9 @@ return {
       'sindrets/diffview.nvim',
       'nvim-telescope/telescope.nvim',
     },
+    opts = { mappings = { status = { ['S'] = 'StageAll' } } },
     config = function()
-      require('neogit').setup()
+      require('neogit').setup { mappings = { status = { ['S'] = 'StageAll' } } }
       local neogit = require 'neogit'
       vim.keymap.set('n', '<leader>gs', function()
         neogit.open()
