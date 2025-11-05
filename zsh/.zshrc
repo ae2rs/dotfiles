@@ -130,4 +130,20 @@ n() {
 # Zoxide
 eval "$(zoxide init zsh)"
 
+########################################
+# AI
+########################################
 
+export CLAUDE_TOKEN=${CLAUDE_TOKEN}
+
+########################################
+# SECRETS
+########################################
+
+# Set age key location for sops
+export SOPS_AGE_KEY_FILE="$HOME/.config/age/keys.txt"
+
+# Load secrets from sops
+if [[ -f "$HOME/.config/zsh/zshrc.d/10-secrets.zsh" ]]; then
+  source "$HOME/.config/zsh/zshrc.d/10-secrets.zsh"
+fi

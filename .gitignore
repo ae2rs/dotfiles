@@ -7,3 +7,6 @@ codex/.codex/log/
 codex/.codex/sessions/
 codex/.codex/history.jsonl
 codex/.codex/version.json
+
+# Zsh
+zsh/.config/zsh/secrets/*.dec.*
