@@ -34,6 +34,7 @@ return {
       window = {
         mappings = {
           ['\\'] = 'close_window',
+          ['<esc>'] = 'close_window',
         },
       },
     },
