@@ -31,12 +31,12 @@ return {
     config = function()
       require('noice').setup {
         messages = {
-          enabled = false,
+          enabled = true,
         },
         notify = {
-          enabled = false,
+          enabled = true,
           view = 'messages', -- default view for messages
-          view_error = 'notify', -- view for errors
+          view_error = 'messages', -- view for errors
           view_warn = 'messages',
           view_history = 'messages', -- view for :messages
           view_search = 'virtualtext',
