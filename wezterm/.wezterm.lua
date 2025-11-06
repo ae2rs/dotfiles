@@ -176,7 +176,7 @@ tabline.apply_to_config(config)
 config.window_padding = {
 	left = "1cell",
 	right = "1cell",
-	top = "0.3cell",
+	top = "0",
 	bottom = 0,
 }
 
