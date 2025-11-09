@@ -116,6 +116,7 @@ map(
 )
 
 -- Keep original macOS-style navigation keys
+map("q", "CMD", wezterm.action.QuitApplication)
 map("LeftArrow", "CMD", act.SendString("\x1bOH"))
 map("RightArrow", "CMD", act.SendString("\x1bOF"))
 map("LeftArrow", "OPT", act.SendString("\x1bb"))
