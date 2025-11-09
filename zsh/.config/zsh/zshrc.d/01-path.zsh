@@ -9,4 +9,5 @@ if command -v go >/dev/null 2>&1; then
     export PATH="$PATH:$(go env GOPATH)/bin"
 fi
 
-
+# Java
+echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
