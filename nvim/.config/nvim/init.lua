@@ -43,6 +43,7 @@ require('lazy').setup({
   { import = 'plugins.lsp' },
   { import = 'plugins.coding' },
   { import = 'plugins.lang' },
+  { import = 'plugins.test' },
   { import = 'plugins.ai' },
   { import = 'plugins.giet' },
 
