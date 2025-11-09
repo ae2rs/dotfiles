@@ -10,4 +10,4 @@ if command -v go >/dev/null 2>&1; then
 fi
 
 # Java
-echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
+export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"

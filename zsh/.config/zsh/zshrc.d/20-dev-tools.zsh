@@ -10,3 +10,6 @@ fi
 if [ -f '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then
     . '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc'
 fi
+
+# --- Java ---
+export CPPFLAGS="-I/opt/homebrew/opt/openjdk@17/include"

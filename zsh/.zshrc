@@ -7,3 +7,10 @@ if [[ -d "$HOME/.config/zsh/zshrc.d" ]]; then
     source "$config_file"
   done
 fi
+
+# bun completions
+[ -s "/Users/lucas/.bun/_bun" ] && source "/Users/lucas/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
