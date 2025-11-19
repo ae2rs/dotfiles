@@ -17,8 +17,11 @@ alias ghd='gh dash'
 alias dc='docker compose'
 
 # --- Work-specific ---
-alias clip='/Users/lucas/work/monorepo/tools/clippy.py'
+alias clip='(cd /Users/lucas/work/monorepo/ && /Users/lucas/work/monorepo/tools/clippy.py)'
 alias rfmt='/Users/lucas/work/monorepo/tools/rustfmt $(git ls-files | grep -E "\.rs\$")'
+
+# --- Notes ---
+alias todo='nvim /Users/lucas/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Notes/TODO.md'
 
 # --- nvim shortcut ---
 n() {

@@ -1,10 +1,23 @@
-model = "gpt-5-codex"
-model_reasoning_effort = "low"
+model = "gpt-5.1-codex"
+model_reasoning_effort = "medium"
 
 [projects."/Users/lucas/work/monorepo"]
 trust_level = "trusted"
 approval_policy = "on-request"
 sandbox_mode    = "workspace-write"
+bash_approval_policy = [
+    { pattern = "clip*", approval = "auto-approve" },
+    { pattern = "./tools/clippy.py*", approval = "auto-approve" }
+]
 
 [projects."/Users/lucas"]
 trust_level = "trusted"
+
+[projects."/Users/lucas/perso/iptrace"]
+trust_level = "trusted"
+
+[projects."/private/tmp/facebook-android-sdk"]
+trust_level = "trusted"
+
+[notice]
+hide_gpt5_1_migration_prompt = true
