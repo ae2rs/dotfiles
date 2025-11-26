@@ -10,8 +10,9 @@
     "context": "(vim_mode == normal || vim_mode == helix_normal) && !menu",
     "bindings": {
       "space s f": "file_finder::Toggle",
-      "space s g": "pane::DeploySearch",
-      "space space": "tab_switcher::ToggleAll"
+      "space s g": ["pane::DeploySearch", { "replace_enabled": true }],
+      "space space": "tab_switcher::ToggleAll",
+      "\\": "workspace::ToggleLeftDock"
     }
   },
   {
@@ -24,13 +25,75 @@
   {
     "context": "Editor && edit_prediction",
     "bindings": {
-      "ctrl-y": "editor::AcceptEditPrediction"
+      // "ctrl-y": "editor::ConfirmCompletionInsert",
+      "ctrl-m": "editor::AcceptEditPrediction"
     }
   },
   {
     "context": "Editor && edit_prediction_conflict",
     "bindings": {
-      "ctrl-y": "editor::AcceptEditPrediction"
+      // "ctrl-y": "editor::ConfirmCompletionInsert",
+      "ctrl-m": "editor::AcceptEditPrediction"
+    }
+  },
+  {
+    "context": "Pane",
+    "bindings": {
+      "cmd-1": ["pane::ActivateItem", 0],
+      "cmd-2": ["pane::ActivateItem", 1],
+      "cmd-3": ["pane::ActivateItem", 2],
+      "cmd-4": ["pane::ActivateItem", 3],
+      "cmd-5": ["pane::ActivateItem", 4],
+      "cmd-6": ["pane::ActivateItem", 5],
+      "cmd-7": ["pane::ActivateItem", 6],
+      "cmd-8": ["pane::ActivateItem", 7],
+      "cmd-9": ["pane::ActivateItem", 8]
+    }
+  },
+  {
+    "context": "Workspace",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-1": null,
+      "cmd-2": null,
+      "cmd-3": null,
+      "cmd-4": null,
+      "cmd-5": null,
+      "cmd-6": null,
+      "cmd-7": null,
+      "cmd-8": null,
+      "cmd-9": null,
+      "space s g": ["pane::DeploySearch", { "replace_enabled": true }],
+      "cmd-shift-h": null,
+      "cmd-shift-t": "pane::ReopenClosedItem",
+      "cmd-t": "project_symbols::Toggle",
+      "space s f": "file_finder::Toggle",
+      "ctrl-tab": "tab_switcher::Toggle",
+      "ctrl-shift-tab": ["tab_switcher::Toggle", { "select_last": true }],
+      "ctrl-shift-g": null,
+      "cmd-shift-d": "debug_panel::ToggleFocus",
+      "cmd-?": null,
+      "escape": "workspace::Unfollow",
+      "ctrl-w l": "workspace::ActivatePaneLeft",
+      "ctrl-w h": "workspace::ActivatePaneRight",
+      "ctrl-w k": "workspace::ActivatePaneUp",
+      "ctrl-w j": "workspace::ActivatePaneDown",
+      "cmd-w": "workspace::CloseActiveDock"
+    }
+  },
+  {
+    "context": "Workspace && !editing",
+    "bindings": {}
+  },
+  {
+    "context": "ProjectPanel && !editing",
+    "bindings": {
+      "a": "project_panel::NewFile",
+      "d": "project_panel::NewDirectory",
+      "x": "project_panel::Delete",
+      "r": "project_panel::Rename",
+      "escape": "workspace::ToggleLeftDock",
+      "enter": ["workspace::SendKeystrokes", "enter \\"]
     }
   }
 ]

@@ -14,6 +14,7 @@ return {
     { '\\', ':Neotree reveal<CR>', desc = 'NeoTree reveal', silent = true },
   },
   opts = {
+    hide_root_node = true,
     filesystem = {
       filtered_items = {
         visible = false,
@@ -35,6 +36,15 @@ return {
         mappings = {
           ['\\'] = 'close_window',
           ['<esc>'] = 'close_window',
+          ['P'] = {
+            'toggle_preview',
+            config = {
+              use_float = false,
+              use_snacks_image = true,
+              use_image_nvim = true,
+              title = 'Neo-tree Preview',
+            },
+          },
         },
       },
     },

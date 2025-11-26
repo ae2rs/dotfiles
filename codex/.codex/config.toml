@@ -1,4 +1,4 @@
-model = "gpt-5.1-codex"
+model = "gpt-5.1-codex-max"
 model_reasoning_effort = "medium"
 
 [projects."/Users/lucas/work/monorepo"]
@@ -19,5 +19,12 @@ trust_level = "trusted"
 [projects."/private/tmp/facebook-android-sdk"]
 trust_level = "trusted"
 
+[projects."/Users/lucas/dotfiles"]
+trust_level = "trusted"
+
+[projects."/private/tmp/facebook-ios-sdk"]
+trust_level = "trusted"
+
 [notice]
 hide_gpt5_1_migration_prompt = true
+"hide_gpt-5.1-codex-max_migration_prompt" = true

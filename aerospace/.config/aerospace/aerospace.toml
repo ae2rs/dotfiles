@@ -195,6 +195,7 @@ alt-w = "exec-and-forget open -a /Applications/WezTerm.app"
 alt-s = "exec-and-forget open -a /Applications/Slack.app"
 alt-m = "exec-and-forget open -n /Applications/Mail.app"
 alt-z = "exec-and-forget open -n /Applications/Zen.app"
+alt-b = "exec-and-forget open -n /Applications/Brave\\ Browser.app"
 
 # 'service' binding mode declaration.
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes

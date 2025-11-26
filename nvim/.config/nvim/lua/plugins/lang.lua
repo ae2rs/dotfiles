@@ -15,6 +15,9 @@ return {
         end,
         default_settings = {
           ['rust-analyzer'] = {
+            diagnostics = {
+              disabled = { 'unresolved-import' },
+            },
             cargo = {
               allFeatures = true,
               loadOutDirsFromCheck = true,
