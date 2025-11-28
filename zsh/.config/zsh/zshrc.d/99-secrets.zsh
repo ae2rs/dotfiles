@@ -1,3 +1,9 @@
+# Avoid double-loading when sourced from multiple entry points
+if [[ -n "${ZSH_SECRETS_LOADED:-}" ]]; then
+  return
+fi
+ZSH_SECRETS_LOADED=1
+
 # Set age key location for sops
 export SOPS_AGE_KEY_FILE="$HOME/.config/age/keys.txt"
 

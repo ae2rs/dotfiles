@@ -28,3 +28,10 @@ trust_level = "trusted"
 [notice]
 hide_gpt5_1_migration_prompt = true
 "hide_gpt-5.1-codex-max_migration_prompt" = true
+
+[mcp_servers.context7]
+args = ["-y", "@upstash/context7-mcp" ]
+command = "bunx"
+
+# [mcp_servers.context7.env]
+# CONTEXT7_API_KEY = "CONTEXT7_API_KEY"
