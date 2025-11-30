@@ -6,7 +6,7 @@ export ZSH_CUSTOM="$HOME/.config/zsh/custom"
 
 
 # ZSH_THEME="robbyrussell"
-plugins=(git bazel brew docker eza fzf golang kubectl kubectx macos rust ssh uv zsh-autosuggestions)
+plugins=(git bazel brew docker eza fzf golang kubectl kubectx macos rust ssh uv zsh-autosuggestions docker-compose)
 
 source $ZSH/oh-my-zsh.sh
 

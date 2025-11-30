@@ -1,4 +1,4 @@
-model = "gpt-5.1-codex-max"
+model = "gpt-5.1-codex-mini"
 model_reasoning_effort = "medium"
 
 [projects."/Users/lucas/work/monorepo"]
@@ -23,6 +23,9 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [projects."/private/tmp/facebook-ios-sdk"]
+trust_level = "trusted"
+
+[projects."/Users/lucas/perso/42K"]
 trust_level = "trusted"
 
 [notice]
