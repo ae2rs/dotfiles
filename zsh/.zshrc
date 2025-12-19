@@ -17,3 +17,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Added by Antigravity
 export PATH="/Users/lucas/.antigravity/antigravity/bin:$PATH"
+
+# opencode
+export PATH=/Users/lucas/.opencode/bin:$PATH
