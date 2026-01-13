@@ -30,40 +30,45 @@ return {
     event = 'VeryLazy',
     config = function()
       require('noice').setup {
-        messages = {
+        cmdline = {
           enabled = true,
+        },
+        messages = {
+          enabled = false,
         },
         notify = {
-          enabled = true,
-          view = 'notify', -- default view for messages
-          view_error = 'messages', -- view for errors
-          view_warn = 'messages',
-          view_history = 'messages', -- view for :messages
-          view_search = 'virtualtext',
+          enabled = false,
+        },
+        popupmenu = {
+          enabled = false,
         },
         lsp = {
-          hover = {
+          progress = {
             enabled = true,
-            silent = true,
-            opts = {
-              border = 'rounded',
-            },
+          },
+          hover = {
+            enabled = false,
           },
           signature = {
-            enabled = true,
-            opts = {
-              border = 'rounded',
-            },
+            enabled = false,
           },
-          documentation = {
-            border = 'rounded',
-            opts = {
-              border = 'rounded',
-            },
+          message = {
+            enabled = false,
           },
         },
         presets = {
-          lsp_doc_border = true,
+          bottom_search = false,
+          command_palette = false,
+          long_message_to_split = false,
+          inc_rename = false,
+          lsp_doc_border = false,
+        },
+        views = {
+          mini = {
+            position = {
+              row = -2,
+            },
+          },
         },
       }
     end,
