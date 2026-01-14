@@ -10,3 +10,6 @@ codex/.codex/version.json
 
 # Zsh
 zsh/.config/zsh/secrets/*.dec.*
+
+# Codex
+codex/.codex/auth.json
