@@ -34,10 +34,10 @@ return {
           enabled = true,
         },
         messages = {
-          enabled = false,
+          enabled = true,
         },
         notify = {
-          enabled = false,
+          enabled = true,
         },
         popupmenu = {
           enabled = false,
@@ -59,14 +59,14 @@ return {
         presets = {
           bottom_search = false,
           command_palette = false,
-          long_message_to_split = false,
+          long_message_to_split = true,
           inc_rename = false,
           lsp_doc_border = false,
         },
         views = {
           mini = {
             position = {
-              row = -2,
+              row = -1,
             },
           },
         },
