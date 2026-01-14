@@ -7,9 +7,8 @@ codex/.codex/log/
 codex/.codex/sessions/
 codex/.codex/history.jsonl
 codex/.codex/version.json
+codex/.codex/auth.json
 
 # Zsh
 zsh/.config/zsh/secrets/*.dec.*
 
-# Codex
-codex/.codex/auth.json

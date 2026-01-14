@@ -17,7 +17,7 @@ return {
     hide_root_node = true,
     filesystem = {
       filtered_items = {
-        visible = false,
+        visible = true,
         hide_dotfiles = false,
         hide_by_name = {
           'node_modules',
