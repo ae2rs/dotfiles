@@ -5,6 +5,7 @@ zed/.config/zed/prompts/
 # Codex
 codex/.codex/log/
 codex/.codex/sessions/
+codex/.codex/skills/
 codex/.codex/history.jsonl
 codex/.codex/version.json
 codex/.codex/auth.json
