@@ -20,6 +20,69 @@ return {
       'saghen/blink.cmp',
     },
     config = function()
+      local default_rust_analyzer_settings = {
+        ['rust-analyzer'] = {
+          diagnostics = {
+            enable = false,
+          },
+          cargo = {
+            allFeatures = true,
+            loadOutDirsFromCheck = true,
+            buildScripts = {
+              enable = true,
+            },
+          },
+          procMacro = {
+            enable = true,
+          },
+          lspMux = {
+            version = '1',
+            method = 'connect',
+            server = 'rust-analyzer',
+          },
+        },
+      }
+
+      local function rust_analyzer_root_dir()
+        local path = vim.fn.getcwd()
+        if not path then
+          return nil
+        end
+
+        local ok, util = pcall(require, 'lspconfig.util')
+        if not ok then
+          return path
+        end
+
+        local root = util.root_pattern('rust-analyzer.json', 'Cargo.toml')(path) or util.find_git_ancestor(path)
+        return root or path
+      end
+
+      local function load_project_rust_analyzer_settings()
+        local default = vim.deepcopy(default_rust_analyzer_settings)
+        local project_root = rust_analyzer_root_dir()
+        if not project_root then
+          return default
+        end
+
+        local rust_analyzer_path = vim.fs.joinpath(project_root, 'rust-analyzer.json')
+        if not vim.uv.fs_stat(rust_analyzer_path) then
+          return default
+        end
+
+        local ok_read, lines = pcall(vim.fn.readfile, rust_analyzer_path)
+        if not ok_read then
+          return default
+        end
+
+        local ok_json, overrides = pcall(vim.json.decode, table.concat(lines, '\n'))
+        if not ok_json or type(overrides) ~= 'table' then
+          return default
+        end
+
+        return vim.tbl_deep_extend('force', default, overrides)
+      end
+
       -- LSP attach autocommand
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
@@ -125,27 +188,69 @@ return {
             },
           },
         },
+        rust_analyzer = {
+          cmd = vim.lsp.rpc.connect('127.0.0.1', 27631),
+          root_dir = rust_analyzer_root_dir,
+          settings = load_project_rust_analyzer_settings(),
+        },
       }
 
       -- Ensure tools are installed
-      local ensure_installed = vim.tbl_keys(servers or {})
+      local ensure_installed = {}
+      for name, _ in pairs(servers or {}) do
+        if name ~= 'rust_analyzer' then
+          table.insert(ensure_installed, name)
+        end
+      end
       vim.list_extend(ensure_installed, {
         'stylua',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       -- Setup LSP servers
-      require('mason-lspconfig').setup {
+      local mason_lspconfig = require('mason-lspconfig')
+      local lspconfig = require('lspconfig.configs')
+
+      local function setup_server(server_name, server)
+        if not lspconfig[server_name] then
+          pcall(require, 'lspconfig.configs.' .. server_name)
+        end
+        if not lspconfig[server_name] then
+          vim.notify(
+            string.format('[lspconfig] config "%s" not found. Ensure it is listed in `configs.md`.', server_name),
+            vim.log.levels.WARN
+          )
+          return
+        end
+        lspconfig[server_name].setup(server)
+      end
+
+      mason_lspconfig.setup {
         ensure_installed = {},
         automatic_installation = false,
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
+            setup_server(server_name, server)
           end,
         },
       }
+
+      local installed = {}
+      local ok_installed, installed_servers = pcall(mason_lspconfig.get_installed_servers)
+      if ok_installed then
+        for _, server_name in ipairs(installed_servers) do
+          installed[server_name] = true
+        end
+      end
+
+      for server_name, server in pairs(servers) do
+        if not installed[server_name] then
+          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+          setup_server(server_name, server)
+        end
+      end
     end,
   },
 }
