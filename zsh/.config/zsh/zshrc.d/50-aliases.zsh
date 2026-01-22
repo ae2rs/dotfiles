@@ -75,6 +75,7 @@ alias devlocal='(cd /Users/lucas/work/monorepo/rs/engine/dev-local/ && docker co
 alias devkill="kill -9 $(ps aux | pgrep -fl dev-local/process-compose.yml | awk 'NR==1 {print $1}')"
 alias devclean='docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && docker volume ls -q | xargs -r docker volume rm'
 alias xcode='(cd /Users/lucas/work/monorepo/ && bazel run //iosapp/Apps/Location:xcodeproj && xed iosapp/Apps/Location/Location.xcodeproj)'
+alias lspmux_restart='launchctl kickstart -k gui/$(id -u)/org.codeberg.p2502.lspmux'
 alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools'
 
 # --- Notes ---
