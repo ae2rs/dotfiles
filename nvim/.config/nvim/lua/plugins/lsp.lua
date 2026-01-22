@@ -20,6 +20,44 @@ return {
       'saghen/blink.cmp',
     },
     config = function()
+      local notify = vim.notify
+      vim.notify = function(msg, level, opts)
+        local text = msg
+        if type(msg) == 'table' and type(msg.message) == 'string' then
+          text = msg.message
+        end
+        if type(text) == 'string' then
+          local normalized = text:lower()
+          if normalized:match 'overly%s+long%s+loop%s+turn%s+took' then
+            return
+          end
+        end
+        return notify(msg, level, opts)
+      end
+
+      local function suppress_overly_long(msg)
+        if type(msg) ~= 'string' then
+          return false
+        end
+        return msg:lower():match 'overly%s+long%s+loop%s+turn%s+took' ~= nil
+      end
+
+      local log_handler = vim.lsp.handlers['window/logMessage']
+      vim.lsp.handlers['window/logMessage'] = function(err, result, ctx, config)
+        if result and suppress_overly_long(result.message) then
+          return
+        end
+        return log_handler(err, result, ctx, config)
+      end
+
+      local show_handler = vim.lsp.handlers['window/showMessage']
+      vim.lsp.handlers['window/showMessage'] = function(err, result, ctx, config)
+        if result and suppress_overly_long(result.message) then
+          return
+        end
+        return show_handler(err, result, ctx, config)
+      end
+
       local default_rust_analyzer_settings = {
         ['rust-analyzer'] = {
           diagnostics = {
@@ -208,18 +246,18 @@ return {
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       -- Setup LSP servers
-      local mason_lspconfig = require('mason-lspconfig')
-      local lspconfig = require('lspconfig.configs')
+      local mason_lspconfig = require 'mason-lspconfig'
+      local lspconfig = require 'lspconfig.configs'
 
       local function setup_server(server_name, server)
         if not lspconfig[server_name] then
-          pcall(require, 'lspconfig.configs.' .. server_name)
+          local ok, config = pcall(require, 'lspconfig.configs.' .. server_name)
+          if ok and config then
+            lspconfig[server_name] = config
+          end
         end
         if not lspconfig[server_name] then
-          vim.notify(
-            string.format('[lspconfig] config "%s" not found. Ensure it is listed in `configs.md`.', server_name),
-            vim.log.levels.WARN
-          )
+          vim.notify(string.format('[lspconfig] config "%s" not found. Ensure it is listed in `configs.md`.', server_name), vim.log.levels.WARN)
           return
         end
         lspconfig[server_name].setup(server)
