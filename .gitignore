@@ -4,11 +4,16 @@ zed/.config/zed/prompts/
 
 # Codex
 codex/.codex/log/
+codex/.codex/tmp/
 codex/.codex/sessions/
 codex/.codex/skills/
 codex/.codex/history.jsonl
 codex/.codex/version.json
 codex/.codex/auth.json
+codex/.codex/models_cache.json
+
+# Neovim
+nvim/.config/nvim/.nvimlog
 
 # Zsh
 zsh/.config/zsh/secrets/*.dec.*
