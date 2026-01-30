@@ -73,11 +73,6 @@ return {
           procMacro = {
             enable = true,
           },
-          lspMux = {
-            version = '1',
-            method = 'connect',
-            server = 'rust-analyzer',
-          },
         },
       }
 
@@ -118,7 +113,11 @@ return {
           return default
         end
 
-        return vim.tbl_deep_extend('force', default, overrides)
+        local merged = vim.tbl_deep_extend('force', default, overrides)
+        if merged['rust-analyzer'] then
+          merged['rust-analyzer'].lspMux = nil
+        end
+        return merged
       end
 
       -- LSP attach autocommand
@@ -227,7 +226,6 @@ return {
           },
         },
         rust_analyzer = {
-          cmd = vim.lsp.rpc.connect('127.0.0.1', 27631),
           root_dir = rust_analyzer_root_dir,
           settings = load_project_rust_analyzer_settings(),
         },
@@ -236,9 +234,7 @@ return {
       -- Ensure tools are installed
       local ensure_installed = {}
       for name, _ in pairs(servers or {}) do
-        if name ~= 'rust_analyzer' then
-          table.insert(ensure_installed, name)
-        end
+        table.insert(ensure_installed, name)
       end
       vim.list_extend(ensure_installed, {
         'stylua',
