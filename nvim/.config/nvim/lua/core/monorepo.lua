@@ -1,17 +1,7 @@
 -- Monorepo-specific configuration
--- Suppress protols diagnostics and linting for .proto files in monorepo
+-- Suppress linting for .proto files in monorepo
 
 local MONOREPO_PATH = '/Users/lucas/work/monorepo'
-
--- Disable diagnostics for .proto files in monorepo
-vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
-  desc = 'Disable diagnostics for .proto files in monorepo',
-  group = vim.api.nvim_create_augroup('monorepo-disable-proto-diagnostics', { clear = true }),
-  pattern = MONOREPO_PATH .. '/*.proto',
-  callback = function(args)
-    vim.diagnostic.enable(false, { bufnr = args.buf })
-  end,
-})
 
 -- Skip linting for .proto files in monorepo
 vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {

@@ -120,6 +120,44 @@ return {
         return merged
       end
 
+      local MONOREPO_ROOT = '/Users/lucas/work/monorepo'
+      local PROTOLS_INCLUDE_PATHS = {
+        MONOREPO_ROOT .. '/rs',
+        MONOREPO_ROOT .. '/rs/proto',
+      }
+
+      local function protols_root_dir(fname)
+        local ok, util = pcall(require, 'lspconfig.util')
+        if not ok then
+          return vim.fn.getcwd()
+        end
+        local root = util.root_pattern('protols.toml', 'WORKSPACE', 'WORKSPACE.bazel', 'MODULE.bazel', '.git')(fname)
+        if root then
+          return root
+        end
+        if fname and fname:match('^' .. MONOREPO_ROOT) then
+          return MONOREPO_ROOT
+        end
+        return util.path.dirname(fname)
+      end
+
+      local function protols_cmd()
+        local exe = vim.fn.exepath 'protols'
+        if exe == '' then
+          exe = vim.fs.joinpath(vim.fn.stdpath('data'), 'mason', 'bin', 'protols')
+        end
+        return { exe, '--include-paths=' .. table.concat(PROTOLS_INCLUDE_PATHS, ',') }
+      end
+
+      local function protols_root_dir_cb(bufnr, on_dir)
+        local fname = vim.api.nvim_buf_get_name(bufnr)
+        if fname == '' then
+          on_dir(nil)
+          return
+        end
+        on_dir(protols_root_dir(fname))
+      end
+
       -- LSP attach autocommand
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
@@ -237,6 +275,7 @@ return {
         table.insert(ensure_installed, name)
       end
       vim.list_extend(ensure_installed, {
+        'protols',
         'stylua',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -264,6 +303,9 @@ return {
         automatic_installation = false,
         handlers = {
           function(server_name)
+            if server_name == 'protols' then
+              return
+            end
             local server = servers[server_name] or {}
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             setup_server(server_name, server)
@@ -284,6 +326,32 @@ return {
           server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
           setup_server(server_name, server)
         end
+      end
+
+      -- Use the native 0.11 LSP config for protols to avoid lspconfig/Mason defaults
+      -- (0.11 prefers vim.lsp.config; lspconfig may not affect the running client).
+      if vim.fn.has 'nvim-0.11' == 1 then
+        vim.lsp.config('protols', {
+          cmd = protols_cmd(),
+          filetypes = { 'proto' },
+          root_dir = protols_root_dir_cb,
+          init_options = {
+            include_paths = PROTOLS_INCLUDE_PATHS,
+          },
+        })
+        vim.lsp.enable 'protols'
+      else
+        local protols = {
+          root_dir = protols_root_dir,
+          filetypes = { 'proto' },
+          cmd = protols_cmd(),
+          before_init = function(_, config)
+            config.init_options = config.init_options or {}
+            config.init_options.include_paths = PROTOLS_INCLUDE_PATHS
+          end,
+        }
+        protols.capabilities = vim.tbl_deep_extend('force', {}, capabilities, protols.capabilities or {})
+        setup_server('protols', protols)
       end
     end,
   },
