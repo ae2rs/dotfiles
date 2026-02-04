@@ -10,6 +10,22 @@ A starting point for Neovim that is:
 
 **NOT** a Neovim distribution, but instead a starting point for your configuration.
 
+**Rust Analyzer Monorepo Notes**
+Symptoms:
+- `gd`/`grr` no-op for Rust files in the monorepo.
+- `rust-analyzer` logged “Failed to discover workspace / FetchWorkspaceError”.
+- Neovim printed a deprecation stack trace about `require('lspconfig')`.
+
+Root cause:
+- On Neovim 0.11+, `mason-lspconfig` v2 auto-enables servers via `vim.lsp.enable()` and the runtime `lsp/rust_analyzer.lua`.
+- That path bypassed our project-specific `rust-analyzer.json` loader (which points to Bazel discovery), so `rust-analyzer` started with defaults and could not find any workspace.
+- The config still used `require('lspconfig')`, which is deprecated on 0.11+ and triggered the warning/trace.
+
+Fix:
+- Disable `mason-lspconfig` auto-enable and explicitly configure `rust_analyzer` via `vim.lsp.config` on 0.11+.
+- Load `rust-analyzer.json` per root, and set `initializationOptions` from those settings so Bazel discovery runs.
+- Keep a fallback path that uses `lspconfig` only for older Neovim versions.
+
 ## Installation
 
 ### Install Neovim
@@ -238,4 +254,3 @@ sudo dnf install -y gcc make git ripgrep fd-find unzip neovim
 sudo pacman -S --noconfirm --needed gcc make git ripgrep fd unzip neovim
 ```
 </details>
-
