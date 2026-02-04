@@ -7,13 +7,16 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "vim": {
+    "toggle_relative_line_numbers": true
+  },
   "inlay_hints": {
     "enabled": true,
     "show_value_hints": true,
     "show_type_hints": true,
     "show_parameter_hints": true,
     "show_other_hints": true,
-    "show_background": false,
+    "show_background": true,
     "edit_debounce_ms": 700,
     "scroll_debounce_ms": 50,
     "toggle_on_modifiers_press": {
@@ -21,31 +24,38 @@
       "alt": false,
       "shift": false,
       "platform": false,
-      "function": false
-    }
+      "function": false,
+    },
   },
   // "disable_ai": true,
   "preview_tabs": {
-    "enable_preview_from_code_navigation": false
+    "enable_preview_from_project_panel": false,
+    "enable_preview_from_file_finder": false,
+    "enable_keep_preview_on_code_navigation": false,
   },
   "relative_line_numbers": "enabled",
   "gutter": {
-    "line_numbers": true
+    "line_numbers": true,
+  },
+  "diagnostics": {
+    "inline": {
+      "enabled": true,
+    },
   },
   "minimap": {
-    "show": "always"
+    "show": "always",
   },
   "autosave": null,
   "base_keymap": "VSCode",
   "telemetry": {
     "diagnostics": false,
-    "metrics": false
+    "metrics": false,
   },
   "vim_mode": true,
   "ui_font_size": 18.0,
   "buffer_font_size": 15,
   "theme": "One Dark",
   "features": {
-    "edit_prediction_provider": "copilot"
-  }
+    "edit_prediction_provider": "copilot",
+  },
 }

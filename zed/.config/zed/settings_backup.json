@@ -28,7 +28,7 @@
   "preview_tabs": {
     "enable_preview_from_code_navigation": false
   },
-  "relative_line_numbers": true,
+  "relative_line_numbers": "enabled",
   "gutter": {
     "line_numbers": true
   },
@@ -44,7 +44,7 @@
   "vim_mode": true,
   "ui_font_size": 18.0,
   "buffer_font_size": 15,
-  "theme": "Tokyo Night Storm",
+  "theme": "One Dark",
   "features": {
     "edit_prediction_provider": "copilot"
   }

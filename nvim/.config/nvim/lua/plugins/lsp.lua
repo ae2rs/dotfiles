@@ -76,25 +76,33 @@ return {
         },
       }
 
-      local function rust_analyzer_root_dir()
-        local path = vim.fn.getcwd()
-        if not path then
-          return nil
+      local function rust_analyzer_root_dir(fname)
+        local ok, util = pcall(require, 'lspconfig.util')
+        local path = fname
+        if not path or path == '' then
+          path = vim.fn.getcwd()
         end
 
-        local ok, util = pcall(require, 'lspconfig.util')
         if not ok then
           return path
         end
 
-        local root = util.root_pattern('rust-analyzer.json', 'Cargo.toml')(path) or util.find_git_ancestor(path)
-        return root or path
+        local root = util.root_pattern('rust-analyzer.json')(path)
+        if root then
+          return root
+        end
+
+        root = util.root_pattern('Cargo.toml')(path) or util.find_git_ancestor(path)
+        if root then
+          return root
+        end
+
+        return vim.fs.dirname(path) or path
       end
 
-      local function load_project_rust_analyzer_settings()
+      local function load_project_rust_analyzer_settings(project_root)
         local default = vim.deepcopy(default_rust_analyzer_settings)
-        local project_root = rust_analyzer_root_dir()
-        if not project_root then
+        if not project_root or project_root == '' then
           return default
         end
 
@@ -118,6 +126,15 @@ return {
           merged['rust-analyzer'].lspMux = nil
         end
         return merged
+      end
+
+      local function rust_analyzer_root_dir_cb(bufnr, on_dir)
+        local fname = vim.api.nvim_buf_get_name(bufnr)
+        if fname == '' then
+          on_dir(nil)
+          return
+        end
+        on_dir(rust_analyzer_root_dir(fname))
       end
 
       local MONOREPO_ROOT = '/Users/lucas/work/monorepo'
@@ -265,7 +282,10 @@ return {
         },
         rust_analyzer = {
           root_dir = rust_analyzer_root_dir,
-          settings = load_project_rust_analyzer_settings(),
+          settings = vim.deepcopy(default_rust_analyzer_settings),
+          on_new_config = function(new_config, new_root_dir)
+            new_config.settings = load_project_rust_analyzer_settings(new_root_dir)
+          end,
         },
       }
 
@@ -282,47 +302,63 @@ return {
 
       -- Setup LSP servers
       local mason_lspconfig = require 'mason-lspconfig'
-      local lspconfig = require 'lspconfig.configs'
-
-      local function setup_server(server_name, server)
-        if not lspconfig[server_name] then
-          local ok, config = pcall(require, 'lspconfig.configs.' .. server_name)
-          if ok and config then
-            lspconfig[server_name] = config
-          end
-        end
-        if not lspconfig[server_name] then
-          vim.notify(string.format('[lspconfig] config "%s" not found. Ensure it is listed in `configs.md`.', server_name), vim.log.levels.WARN)
-          return
-        end
-        lspconfig[server_name].setup(server)
-      end
+      local use_native_lsp = vim.fn.has 'nvim-0.11' == 1
 
       mason_lspconfig.setup {
         ensure_installed = {},
         automatic_installation = false,
-        handlers = {
-          function(server_name)
-            if server_name == 'protols' then
-              return
-            end
-            local server = servers[server_name] or {}
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            setup_server(server_name, server)
-          end,
-        },
+        automatic_enable = false,
       }
 
-      local installed = {}
-      local ok_installed, installed_servers = pcall(mason_lspconfig.get_installed_servers)
-      if ok_installed then
-        for _, server_name in ipairs(installed_servers) do
-          installed[server_name] = true
-        end
-      end
+      if use_native_lsp then
+        vim.lsp.config('lua_ls', {
+          capabilities = vim.tbl_deep_extend('force', {}, capabilities),
+          settings = {
+            Lua = {
+              completion = {
+                callSnippet = 'Replace',
+              },
+            },
+          },
+        })
+        vim.lsp.enable 'lua_ls'
 
-      for server_name, server in pairs(servers) do
-        if not installed[server_name] then
+        vim.lsp.config('rust_analyzer', {
+          capabilities = vim.tbl_deep_extend('force', {}, capabilities),
+          root_dir = rust_analyzer_root_dir_cb,
+          settings = vim.deepcopy(default_rust_analyzer_settings),
+          before_init = function(init_params, config)
+            local merged = load_project_rust_analyzer_settings(config.root_dir)
+            config.settings = config.settings or {}
+            for key in pairs(config.settings) do
+              config.settings[key] = nil
+            end
+            for key, value in pairs(merged) do
+              config.settings[key] = value
+            end
+            init_params.initializationOptions = config.settings['rust-analyzer'] or {}
+          end,
+        })
+        vim.lsp.enable 'rust_analyzer'
+      else
+        local lspconfig = require 'lspconfig'
+        local lspconfigs = require 'lspconfig.configs'
+
+        local function setup_server(server_name, server)
+          if not lspconfig[server_name] then
+            local ok, config = pcall(require, 'lspconfig.configs.' .. server_name)
+            if ok and config then
+              lspconfigs[server_name] = config
+            end
+          end
+          if not lspconfig[server_name] then
+            vim.notify(string.format('[lspconfig] config "%s" not found. Ensure it is listed in `configs.md`.', server_name), vim.log.levels.WARN)
+            return
+          end
+          lspconfig[server_name].setup(server)
+        end
+
+        for server_name, server in pairs(servers) do
           server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
           setup_server(server_name, server)
         end
@@ -330,7 +366,7 @@ return {
 
       -- Use the native 0.11 LSP config for protols to avoid lspconfig/Mason defaults
       -- (0.11 prefers vim.lsp.config; lspconfig may not affect the running client).
-      if vim.fn.has 'nvim-0.11' == 1 then
+      if use_native_lsp then
         vim.lsp.config('protols', {
           cmd = protols_cmd(),
           filetypes = { 'proto' },

@@ -7,7 +7,14 @@ codex/.codex/log/
 codex/.codex/tmp/
 codex/.codex/sessions/
 codex/.codex/skills/
+codex/.codex/automations/
+codex/.codex/shell_snapshots/
+codex/.codex/sqlite/
+codex/.codex/vendor_imports/
 codex/.codex/history.jsonl
+codex/.codex/config.toml
+codex/.codex/.codex-global-state.json
+codex/.codex/.personality_migration
 codex/.codex/version.json
 codex/.codex/auth.json
 codex/.codex/models_cache.json
@@ -17,4 +24,3 @@ nvim/.config/nvim/.nvimlog
 
 # Zsh
 zsh/.config/zsh/secrets/*.dec.*
-
