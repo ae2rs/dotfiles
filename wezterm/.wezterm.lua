@@ -135,6 +135,52 @@ config.disable_default_key_bindings = true
 -- Plugins --
 local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")
 
+local disk_usage_cache = " -- "
+local disk_usage_last = 0
+local function disk_usage()
+	local now = os.time()
+	if now - disk_usage_last < 30 then
+		return disk_usage_cache
+	end
+
+	local popen = io and io.popen
+	if not popen then
+		disk_usage_last = now
+		return disk_usage_cache
+	end
+
+	local handle = popen("(df -k /System/Volumes/Data 2>/dev/null || df -k / 2>/dev/null) | tail -1")
+	if not handle then
+		disk_usage_cache = " -- "
+		disk_usage_last = now
+		return disk_usage_cache
+	end
+
+	local output = handle:read("*a") or ""
+	handle:close()
+
+	local fields = {}
+	for field in output:gmatch("%S+") do
+		table.insert(fields, field)
+	end
+
+	local total_kb = tonumber(fields[2])
+	local used_kb = tonumber(fields[3])
+	if not total_kb or not used_kb or total_kb == 0 then
+		disk_usage_cache = " -- "
+		disk_usage_last = now
+		return disk_usage_cache
+	end
+
+	local used_pct = tonumber((fields[5] or ""):match("(%d+)%%"))
+	if not used_pct then
+		used_pct = math.floor((used_kb / total_kb) * 100 + 0.5)
+	end
+	disk_usage_cache = string.format(" %d%% ", used_pct)
+	disk_usage_last = now
+	return disk_usage_cache
+end
+
 tabline.setup({
 	options = {
 		icons_enabled = true,
@@ -165,7 +211,11 @@ tabline.setup({
 			{ "cwd", padding = { left = 0, right = 1 } },
 		},
 		tab_inactive = { "index", { "process", padding = { left = 0, right = 1 }, icons_enabled = false } },
-		tabline_x = { { "ram", icons_enabled = false }, { "cpu", icons_enabled = false } },
+		tabline_x = {
+			{ "ram", icons_enabled = false },
+			{ "cpu", icons_enabled = false },
+			disk_usage,
+		},
 		tabline_y = { { "", cond = false } },
 		tabline_z = { { "", cond = false } },
 	},

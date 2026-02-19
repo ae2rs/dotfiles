@@ -20,20 +20,6 @@ ghp() {
 
     local title="$*"
 
-    # Check format: prefix: description
-    if ! echo "$title" | grep -qE '^[a-z0-9-]+: [-a-z0-9_ ]+$'; then
-        echo "Error: Title must be in format: {short-attached-name}: {lowercase description}"
-        echo "Example: add-feature: implements new user authentication system"
-        return 1
-    fi
-
-    # Extract description part (after ": ")
-    local desc="${title#*: }"
-    if [ ${#desc} -gt 80 ]; then
-        echo "Error: Description must be 80 characters or less (current: ${#desc})"
-        return 1
-    fi
-
     gh pr create --title "$title"
 }
 
@@ -44,20 +30,6 @@ ghpd() {
     fi
 
     local title="$*"
-
-    # Check format: prefix: description
-    if ! echo "$title" | grep -qE '^[a-z0-9-]+: [-a-z0-9_ ]+$'; then
-        echo "Error: Title must be in format: {short-attached-name}: {lowercase description}"
-        echo "Example: add-feature: implements new user authentication system"
-        return 1
-    fi
-
-    # Extract description part (after ": ")
-    local desc="${title#*: }"
-    if [ ${#desc} -gt 80 ]; then
-        echo "Error: Description must be 80 characters or less (current: ${#desc})"
-        return 1
-    fi
 
     gh pr create --draft --title "$title"
 }
@@ -71,12 +43,16 @@ alias ai='aichat'
 # --- Work-specific ---
 alias clip='(cd /Users/lucas/work/monorepo/ && /Users/lucas/work/monorepo/tools/clippy.py)'
 alias rfmt='/Users/lucas/work/monorepo/tools/rustfmt $(git ls-files | grep -E "\.rs\$")'
+alias protofmt='find . -regex ".*\.proto" | xargs clang-format --style Google --assume-filename .proto -i'
+alias bazelfmt='buildifier -r .'
+alias allfmt='rfmt && protofmt && bazelfmt'
+alias allunused='./tools/unused_imports.py && ./tools/proto_unused_imports.py'
 alias devlocal='(cd /Users/lucas/work/monorepo/rs/engine/dev-local/ && docker compose up -d) && bazel run //rs/engine/dev-local'
 alias devkill="kill -9 $(ps aux | pgrep -fl dev-local/process-compose.yml | awk 'NR==1 {print $1}')"
 alias devclean='docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && docker volume ls -q | xargs -r docker volume rm'
 alias xcode='(cd /Users/lucas/work/monorepo/ && bazel run //iosapp/Apps/Location:xcodeproj && xed iosapp/Apps/Location/Location.xcodeproj)'
 alias lspmux_restart='launchctl kickstart -k gui/$(id -u)/org.codeberg.p2502.lspmux'
-alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools'
+alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools && sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) -exec rm -rf {} +'
 
 # --- Notes ---
 alias todo='nvim /Users/lucas/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Notes/TODO.md'

@@ -32,12 +32,29 @@ return {
       require('noice').setup {
         cmdline = {
           enabled = true,
+          view = 'cmdline_popup',
+          format = {
+            cmdline = {
+              view = 'cmdline_popup',
+            },
+            search_down = {
+              view = 'cmdline_popup',
+            },
+            search_up = {
+              view = 'cmdline_popup',
+            },
+            filter = false,
+            lua = false,
+            help = false,
+            calculator = false,
+            input = false,
+          },
         },
         messages = {
-          enabled = true,
+          enabled = false,
         },
         notify = {
-          enabled = true,
+          enabled = false,
         },
         popupmenu = {
           enabled = false,
@@ -47,26 +64,26 @@ return {
             enabled = true,
           },
           hover = {
-            enabled = false,
+            enabled = true,
           },
           signature = {
-            enabled = false,
+            enabled = true,
           },
           message = {
-            enabled = false,
+            enabled = true,
           },
         },
         presets = {
           bottom_search = false,
           command_palette = false,
-          long_message_to_split = true,
+          long_message_to_split = false,
           inc_rename = false,
           lsp_doc_border = false,
         },
         views = {
           mini = {
             position = {
-              row = -1,
+              row = -2,
             },
           },
         },

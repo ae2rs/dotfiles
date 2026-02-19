@@ -6,7 +6,8 @@ zed/.config/zed/prompts/
 codex/.codex/log/
 codex/.codex/tmp/
 codex/.codex/sessions/
-codex/.codex/skills/
+codex/.codex/archived_sessions/
+# codex/.codex/skills/
 codex/.codex/automations/
 codex/.codex/shell_snapshots/
 codex/.codex/sqlite/

@@ -307,7 +307,9 @@ return {
       mason_lspconfig.setup {
         ensure_installed = {},
         automatic_installation = false,
-        automatic_enable = false,
+        automatic_enable = {
+          exclude = { 'rust_analyzer' },
+        },
       }
 
       if use_native_lsp then
@@ -321,7 +323,6 @@ return {
             },
           },
         })
-        vim.lsp.enable 'lua_ls'
 
         vim.lsp.config('rust_analyzer', {
           capabilities = vim.tbl_deep_extend('force', {}, capabilities),
