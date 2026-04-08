@@ -181,6 +181,66 @@ local function disk_usage()
 	return disk_usage_cache
 end
 
+local net_rx_last = 0
+local net_tx_last = 0
+local net_time_last = 0
+local net_cache = " -- "
+local function net_usage()
+	local now = os.time()
+	local dt = now - net_time_last
+	if dt < 2 then
+		return net_cache
+	end
+
+	local handle = io.popen("netstat -ibn 2>/dev/null | awk '/^en/ {rx+=$7; tx+=$10} END {print rx, tx}'")
+	if not handle then
+		return net_cache
+	end
+
+	local output = handle:read("*a") or ""
+	handle:close()
+
+	local rx, tx = output:match("(%d+)%s+(%d+)")
+	rx = tonumber(rx)
+	tx = tonumber(tx)
+
+	if not rx or not tx then
+		return net_cache
+	end
+
+	if net_time_last > 0 and dt > 0 then
+		local rx_rate = (rx - net_rx_last) / dt
+		local tx_rate = (tx - net_tx_last) / dt
+
+		local function fmt(bytes)
+			if bytes >= 1024 * 1024 then
+				return string.format("%.1fM", bytes / (1024 * 1024))
+			elseif bytes >= 1024 then
+				return string.format("%.0fK", bytes / 1024)
+			else
+				return string.format("%dB", math.max(0, bytes))
+			end
+		end
+
+		net_cache = wezterm.format({
+			{ Text = " " },
+			{ Foreground = { Color = "#7aa2f7" } },
+			{ Text = "↓" },
+			{ Foreground = { Color = "#a9b1d6" } },
+			{ Text = fmt(rx_rate) .. " " },
+			{ Foreground = { Color = "#9ece6a" } },
+			{ Text = "↑" },
+			{ Foreground = { Color = "#a9b1d6" } },
+			{ Text = fmt(tx_rate) .. " " },
+		})
+	end
+
+	net_rx_last = rx
+	net_tx_last = tx
+	net_time_last = now
+	return net_cache
+end
+
 tabline.setup({
 	options = {
 		icons_enabled = true,
@@ -214,6 +274,7 @@ tabline.setup({
 		tabline_x = {
 			{ "ram", icons_enabled = false },
 			{ "cpu", icons_enabled = false },
+			net_usage,
 			disk_usage,
 		},
 		tabline_y = { { "", cond = false } },

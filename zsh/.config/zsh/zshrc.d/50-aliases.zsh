@@ -41,10 +41,15 @@ alias dc='docker compose'
 alias ai='aichat'
 
 # --- Work-specific ---
-alias clip='(cd /Users/lucas/work/monorepo/ && /Users/lucas/work/monorepo/tools/clippy.py)'
+clip() {
+    local root
+    root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Error: not in a git repository"; return 1; }
+    (cd "$root" && "$root/tools/clippy.py")
+}
 alias rfmt='/Users/lucas/work/monorepo/tools/rustfmt $(git ls-files | grep -E "\.rs\$")'
 alias protofmt='find . -regex ".*\.proto" | xargs clang-format --style Google --assume-filename .proto -i'
 alias bazelfmt='buildifier -r .'
+alias webfmt="pnpm -r --filter='!sugar' lint --fix"
 alias allfmt='rfmt && protofmt && bazelfmt'
 alias allunused='./tools/unused_imports.py && ./tools/proto_unused_imports.py'
 alias devlocal='(cd /Users/lucas/work/monorepo/rs/engine/dev-local/ && docker compose up -d) && bazel run //rs/engine/dev-local'
