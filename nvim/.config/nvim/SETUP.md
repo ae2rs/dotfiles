@@ -40,7 +40,9 @@ This is the full locked plugin set from `lazy-lock.json`.
 
 - `guess-indent.nvim`: auto-detect indentation. Revisit later.
 - `which-key.nvim`: keymap popup. Revisit later.
-- `fzf-lua`: file/buffer/grep/diagnostic picker. Strong keep candidate.
+- `telescope.nvim`: flexible picker UI for files, grep, buffers, and diagnostics. Keep.
+- `telescope-fzf-native.nvim`: native sorter for Telescope. Keep.
+- `fzf-lua`: file/buffer/grep/diagnostic picker. Dropped in favor of Telescope.
 - `nvim-treesitter`: syntax tree parsing/highlighting. Strong keep candidate.
 - `indent-blankline.nvim`: indentation guides. Drop for now.
 - `nvim-autopairs`: bracket/quote pairing. Revisit later.
@@ -209,7 +211,7 @@ Also in `lua/plugins/lsp.lua`:
 
 ### Suggested Minimal Choices Later
 
-- File finder: prefer `fzf-lua` when search returns because one plugin can cover files, grep, buffers, diagnostics, and many symbol pickers.
+- File finder: use `telescope.nvim` with `telescope-fzf-native.nvim` as the default search UI so file search, grep, buffers, recent files, and diagnostics all share one predictable interface.
 - Treesitter: use `nvim-treesitter`, but only after deciding which languages actually matter.
 - LSP: start with built-in Neovim 0.11 APIs plus `nvim-lspconfig`; add Mason only if manual tool management becomes annoying.
 - Completion: add `blink.cmp` only after LSP is working and understood.
@@ -236,6 +238,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 
 - `lazy.nvim` for plugin management
 - `which-key.nvim` plus `lua/config/keys.lua` for organized leader-based keymaps
+- `telescope.nvim` plus `telescope-fzf-native.nvim` for search and picker workflows
 - `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`
 - `nvim-lspconfig` using the native `vim.lsp.config()` / `vim.lsp.enable()` flow
 - `lazydev.nvim` to make Neovim Lua editing sane without loading huge LuaLS workspaces
@@ -244,6 +247,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 ### Why These Came Back First
 
 - The keymap helper makes it easy to grow the config without ending up with random leader bindings.
+- Telescope gives one consistent UI for file search, grep, buffers, old files, and diagnostics.
 - Lua editing is the immediate environment needed to keep rebuilding the config.
 - `lua_ls` gives diagnostics, navigation, hover, and rename without pulling in broader language tooling yet.
 - `lazydev.nvim` is purpose-built for Neovim config Lua and keeps the setup small.

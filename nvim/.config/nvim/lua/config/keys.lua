@@ -22,6 +22,23 @@ function M.localleader(mode, suffix, rhs, desc, opts)
   M.map(mode, '<localleader>' .. suffix, rhs, desc, opts)
 end
 
+function M.lazy(mode, lhs, rhs, desc, opts)
+  local spec = opts and vim.deepcopy(opts) or {}
+  spec[1] = lhs
+  spec[2] = rhs
+  spec.mode = mode
+  spec.desc = desc
+  return spec
+end
+
+function M.lazy_leader(mode, suffix, rhs, desc, opts)
+  return M.lazy(mode, '<leader>' .. suffix, rhs, desc, opts)
+end
+
+function M.lazy_localleader(mode, suffix, rhs, desc, opts)
+  return M.lazy(mode, '<localleader>' .. suffix, rhs, desc, opts)
+end
+
 function M.group(lhs, group, opts)
   local spec = opts and vim.deepcopy(opts) or {}
   spec[1] = lhs

@@ -2,7 +2,7 @@ local keys = require 'config.keys'
 
 keys.leader_group('c', 'Code')
 keys.leader_group('l', 'LSP')
-keys.leader_group('x', 'Diagnostics')
+keys.leader_group('s', 'Search')
 
 keys.map('n', '<Esc>', '<cmd>nohlsearch<CR>', 'Clear search highlight')
 keys.map('t', '<Esc><Esc>', '<C-\\><C-n>', 'Exit terminal mode')
@@ -14,5 +14,3 @@ keys.map('n', '<C-l>', '<C-w><C-l>', 'Move focus right')
 
 keys.map('n', '[d', vim.diagnostic.goto_prev, 'Previous diagnostic')
 keys.map('n', ']d', vim.diagnostic.goto_next, 'Next diagnostic')
-keys.leader('n', 'xl', vim.diagnostic.open_float, 'Line diagnostics')
-keys.leader('n', 'xx', vim.diagnostic.setloclist, 'Diagnostics list')
