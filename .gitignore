@@ -4,15 +4,22 @@ zed/.config/zed/prompts/
 
 # Codex
 codex/.codex/log/
+codex/.codex/.tmp/
 codex/.codex/tmp/
 codex/.codex/sessions/
 codex/.codex/archived_sessions/
 # codex/.codex/skills/
 codex/.codex/automations/
+codex/.codex/cache/
+codex/.codex/plugins/cache/
 codex/.codex/shell_snapshots/
 codex/.codex/sqlite/
+codex/.codex/worktrees/
 codex/.codex/vendor_imports/
 codex/.codex/history.jsonl
+codex/.codex/session_index.jsonl
+codex/.codex/logs_*.sqlite*
+codex/.codex/state_*.sqlite*
 codex/.codex/config.toml
 codex/.codex/.codex-global-state.json
 codex/.codex/.personality_migration
