@@ -6,7 +6,7 @@ local act = wezterm.action
 config.font_size = 16
 config.line_height = 1
 config.font = wezterm.font("JetBrains Mono")
-config.color_scheme = "tokyonight_night"
+config.color_scheme = "Gruvbox Material (Gogh)"
 config.audible_bell = "Disabled"
 config.window_close_confirmation = "NeverPrompt"
 config.default_cursor_style = "SteadyBar"
@@ -244,7 +244,7 @@ end
 tabline.setup({
 	options = {
 		icons_enabled = true,
-		theme = "tokyonight_night",
+		theme = "Gruvbox Material (Gogh)",
 		tabs_enabled = true,
 		theme_overrides = {},
 		section_separators = {

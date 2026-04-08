@@ -52,7 +52,7 @@ This is the full locked plugin set from `lazy-lock.json`.
 
 ### UI
 
-- `tokyonight.nvim`: colorscheme. Keep candidate if a theme is wanted early.
+- `gruvbox-material`: colorscheme. Keep candidate if a theme is wanted early.
 - `noice.nvim`: command line/message UI replacement. Drop for now.
 - `nvim-notify`: notification UI backend. Drop for now.
 - `todo-comments.nvim`: TODO/FIXME comment highlights. Drop for now.
@@ -218,7 +218,7 @@ Also in `lua/plugins/lsp.lua`:
 - Formatting: start with `vim.lsp.buf.format()` or manual formatting; add `conform.nvim` when multi-tool formatting becomes necessary.
 - Git: use `neogit` as the main Git UI once commit/stash/rebase/reset workflows become important; add `gitsigns.nvim` later only if gutter hunk actions are missed.
 - File tree: skip it initially and rely on finder plus normal file navigation.
-- UI extras: keep built-in UI first; only add `tokyonight.nvim` early if a theme helps readability.
+- UI extras: keep built-in UI first; only add `gruvbox-material` early if a theme helps readability.
 
 ## Target Structure For The New Config
 
@@ -241,7 +241,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 - `telescope.nvim` plus `telescope-fzf-native.nvim` for search and picker workflows
 - `telescope-ui-select.nvim` so `vim.ui.select` uses Telescope for interactive choice menus
 - `lua/config/search.lua` to keep hidden-file search defaults and the explicit ignore list in one place
-- `tokyonight.nvim` using the `night` variant to match the existing WezTerm theme
+- `gruvbox-material` using the softer material palette to match the existing WezTerm theme family
 - `neo-tree.nvim` as a minimal file explorer with dotfiles visible, a small hide list, and auto-close on open
 - `neogit` plus `diffview.nvim` as the main Git UI, with direct keybinds for stash, rebase, and reset flows
 - Telescope git pickers for interactive commit reset and branch selection, while Neogit remains the main Git status/stash UI
@@ -255,7 +255,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 - The keymap helper makes it easy to grow the config without ending up with random leader bindings.
 - Telescope gives one consistent UI for file search, grep, buffers, old files, and diagnostics.
 - Telescope UI Select makes config and plugin choice prompts reusable without falling back to numbered terminal input.
-- Tokyo Night gives the editor an intentional baseline UI without adding broader UI plugins yet.
+- Gruvbox Material gives the editor an intentional baseline UI without adding broader UI plugins yet.
 - Neo-tree covers the cases where a persistent filesystem view is still more useful than a picker.
 - Neogit makes the common Git workflows first-class without bringing back a separate terminal Git UI.
 - Lua editing is the immediate environment needed to keep rebuilding the config.
