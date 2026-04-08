@@ -1,12 +1,26 @@
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 local act = wezterm.action
+local color_scheme = "Gruvbox Material (Gogh)"
+local scheme = wezterm.color.get_builtin_schemes()[color_scheme]
+local palette = {
+	bg = scheme.background,
+	fg = scheme.foreground,
+	surface = scheme.tab_bar and scheme.tab_bar.inactive_tab and scheme.tab_bar.inactive_tab.bg_color
+		or scheme.background,
+	muted = scheme.tab_bar and scheme.tab_bar.inactive_tab and scheme.tab_bar.inactive_tab.fg_color
+		or scheme.brights[1],
+	blue = scheme.ansi[5],
+	green = scheme.ansi[3],
+	yellow = scheme.ansi[4],
+	aqua = scheme.ansi[7],
+}
 
 -- General --
 config.font_size = 16
 config.line_height = 1
 config.font = wezterm.font("JetBrains Mono")
-config.color_scheme = "Gruvbox Material (Gogh)"
+config.color_scheme = color_scheme
 config.audible_bell = "Disabled"
 config.window_close_confirmation = "NeverPrompt"
 config.default_cursor_style = "SteadyBar"
@@ -20,6 +34,10 @@ config.show_new_tab_button_in_tab_bar = false
 config.tab_max_width = 32
 config.window_frame = {
 	border_top_height = "2px",
+	active_titlebar_bg = palette.bg,
+	inactive_titlebar_bg = palette.surface,
+	active_titlebar_fg = palette.fg,
+	inactive_titlebar_fg = palette.muted,
 }
 
 -- Keys --
@@ -121,7 +139,7 @@ map("LeftArrow", "CMD", act.SendString("\x1bOH"))
 map("RightArrow", "CMD", act.SendString("\x1bOF"))
 map("LeftArrow", "OPT", act.SendString("\x1bb"))
 map("RightArrow", "OPT", act.SendString("\x1bf"))
-map("Backspace", "CMD", act.SendKey({ mods = "CTRL", key = "u" }))
+map("Backspace", "CMD", act.SendKey({ mods = "CTRL", key = "w" }))
 
 -- Leader key configuration
 config.leader = {
@@ -224,13 +242,13 @@ local function net_usage()
 
 		net_cache = wezterm.format({
 			{ Text = " " },
-			{ Foreground = { Color = "#7aa2f7" } },
+			{ Foreground = { Color = palette.blue } },
 			{ Text = "↓" },
-			{ Foreground = { Color = "#a9b1d6" } },
+			{ Foreground = { Color = palette.fg } },
 			{ Text = fmt(rx_rate) .. " " },
-			{ Foreground = { Color = "#9ece6a" } },
+			{ Foreground = { Color = palette.green } },
 			{ Text = "↑" },
-			{ Foreground = { Color = "#a9b1d6" } },
+			{ Foreground = { Color = palette.fg } },
 			{ Text = fmt(tx_rate) .. " " },
 		})
 	end
@@ -244,9 +262,18 @@ end
 tabline.setup({
 	options = {
 		icons_enabled = true,
-		theme = "Gruvbox Material (Gogh)",
+		theme = color_scheme,
 		tabs_enabled = true,
-		theme_overrides = {},
+		theme_overrides = {
+			normal_mode = {
+				c = { fg = palette.fg, bg = palette.surface },
+			},
+			tab = {
+				active = { fg = palette.yellow, bg = palette.surface },
+				inactive = { fg = palette.fg, bg = palette.bg },
+				inactive_hover = { fg = palette.aqua, bg = palette.surface },
+			},
+		},
 		section_separators = {
 			left = wezterm.nerdfonts.ple_right_half_circle_thin,
 			right = wezterm.nerdfonts.ple_left_half_circle_thin,
