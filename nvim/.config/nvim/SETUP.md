@@ -240,6 +240,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 - `which-key.nvim` plus `lua/config/keys.lua` for organized leader-based keymaps
 - `telescope.nvim` plus `telescope-fzf-native.nvim` for search and picker workflows
 - `lua/config/search.lua` to keep hidden-file search defaults and the explicit ignore list in one place
+- `tokyonight.nvim` using the `night` variant to match the existing WezTerm theme
 - `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`
 - `nvim-lspconfig` using the native `vim.lsp.config()` / `vim.lsp.enable()` flow
 - `lazydev.nvim` to make Neovim Lua editing sane without loading huge LuaLS workspaces
@@ -249,6 +250,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 
 - The keymap helper makes it easy to grow the config without ending up with random leader bindings.
 - Telescope gives one consistent UI for file search, grep, buffers, old files, and diagnostics.
+- Tokyo Night gives the editor an intentional baseline UI without adding broader UI plugins yet.
 - Lua editing is the immediate environment needed to keep rebuilding the config.
 - `lua_ls` gives diagnostics, navigation, hover, and rename without pulling in broader language tooling yet.
 - `lazydev.nvim` is purpose-built for Neovim config Lua and keeps the setup small.
