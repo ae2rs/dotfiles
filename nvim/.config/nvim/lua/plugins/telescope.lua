@@ -22,15 +22,23 @@ return {
       },
     },
     config = function()
+      local search = require 'config.search'
       local telescope = require 'telescope'
 
       telescope.setup {
         defaults = {
+          vimgrep_arguments = search.vimgrep_arguments(),
           mappings = {
             i = {
               ['<C-u>'] = false,
               ['<C-d>'] = false,
             },
+          },
+        },
+        pickers = {
+          find_files = {
+            hidden = true,
+            find_command = search.find_command(),
           },
         },
         extensions = {

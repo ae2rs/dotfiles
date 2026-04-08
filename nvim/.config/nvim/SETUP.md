@@ -239,6 +239,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 - `lazy.nvim` for plugin management
 - `which-key.nvim` plus `lua/config/keys.lua` for organized leader-based keymaps
 - `telescope.nvim` plus `telescope-fzf-native.nvim` for search and picker workflows
+- `lua/config/search.lua` to keep hidden-file search defaults and the explicit ignore list in one place
 - `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`
 - `nvim-lspconfig` using the native `vim.lsp.config()` / `vim.lsp.enable()` flow
 - `lazydev.nvim` to make Neovim Lua editing sane without loading huge LuaLS workspaces
