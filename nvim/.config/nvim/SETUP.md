@@ -244,6 +244,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 - `tokyonight.nvim` using the `night` variant to match the existing WezTerm theme
 - `neo-tree.nvim` as a minimal file explorer with dotfiles visible, a small hide list, and auto-close on open
 - `neogit` plus `diffview.nvim` as the main Git UI, with direct keybinds for stash, rebase, and reset flows
+- Telescope git pickers for interactive commit reset and branch selection, while Neogit remains the main Git status/stash UI
 - `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`
 - `nvim-lspconfig` using the native `vim.lsp.config()` / `vim.lsp.enable()` flow
 - `lazydev.nvim` to make Neovim Lua editing sane without loading huge LuaLS workspaces

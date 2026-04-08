@@ -8,11 +8,11 @@ return {
 
       return {
         keys.lazy_leader('n', 'gg', git.open_status, 'Git status'),
+        keys.lazy_leader('n', 'gb', git.open_branch_picker, 'Git branches'),
+        keys.lazy_leader('n', 'gr', git.open_reset_picker, 'Reset from commits'),
         keys.lazy_leader('n', 'gz', git.open_stash_popup, 'Stash popup'),
         keys.lazy_leader('n', 'gZ', git.open_stash_list, 'Stash list'),
-        keys.lazy_leader('n', 'gr', git.open_rebase_popup, 'Rebase popup'),
-        keys.lazy_leader('n', 'gu', git.rebase_onto_upstream_or_base, 'Rebase onto upstream'),
-        keys.lazy_leader('n', 'gR', git.open_reset_popup, 'Reset to commit'),
+        keys.lazy_leader('n', 'gR', git.open_rebase_popup, 'Rebase popup'),
       }
     end,
     dependencies = {
@@ -33,10 +33,11 @@ return {
         end,
         mappings = {
           status = {
+            ['gb'] = git.open_branch_picker,
+            ['gr'] = git.open_reset_picker,
             ['gz'] = git.open_stash_popup,
             ['gZ'] = git.open_stash_list,
-            ['gr'] = git.open_rebase_popup,
-            ['gR'] = git.open_reset_popup,
+            ['gR'] = git.open_rebase_popup,
           },
         },
       }
