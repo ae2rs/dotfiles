@@ -24,6 +24,14 @@ return {
       local git = require 'config.git'
 
       return {
+        floating = {
+          width = 0.72,
+          height = 0.32,
+          border = 'rounded',
+        },
+        commit_editor = {
+          kind = 'floating',
+        },
         integrations = {
           diffview = true,
           telescope = true,
