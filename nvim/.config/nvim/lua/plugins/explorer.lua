@@ -2,15 +2,21 @@ return {
   {
     'nvim-neo-tree/neo-tree.nvim',
     branch = 'v3.x',
+    lazy = false,
     cmd = 'Neotree',
     keys = function()
       local keys = require 'config.keys'
+      local explorer = require 'config.explorer'
 
       return {
-        keys.lazy('n', '\\', '<Cmd>Neotree filesystem reveal left<CR>', 'Reveal file in explorer', {
+        keys.lazy('n', '\\', explorer.toggle, 'Toggle explorer', {
           silent = true,
         }),
       }
+    end,
+    init = function()
+      vim.g.loaded_netrw = 1
+      vim.g.loaded_netrwPlugin = 1
     end,
     dependencies = {
       'nvim-lua/plenary.nvim',
@@ -18,6 +24,9 @@ return {
       'nvim-tree/nvim-web-devicons',
     },
     opts = {
+      source_selector = {
+        statusline = false,
+      },
       filesystem = {
         filtered_items = {
           hide_dotfiles = false,

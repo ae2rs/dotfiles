@@ -72,8 +72,8 @@ This is the full locked plugin set from `lazy-lock.json`.
 ### Git And GitHub
 
 - `gitsigns.nvim`: gutter signs and hunk actions. Strong keep candidate.
-- `neogit`: full Git UI. Revisit later.
-- `diffview.nvim`: diff view support for Neogit. Revisit later.
+- `neogit`: full Git UI. Keep candidate once Git workflow returns.
+- `diffview.nvim`: diff view support for Neogit. Revisit with Neogit.
 - `lazygit.nvim`: wrapper around LazyGit. Revisit later.
 - `git-blame.nvim`: inline blame text. Drop for now.
 - `gh-dash.nvim`: popup UI for `gh dash`. Drop for now.
@@ -216,7 +216,7 @@ Also in `lua/plugins/lsp.lua`:
 - LSP: start with built-in Neovim 0.11 APIs plus `nvim-lspconfig`; add Mason only if manual tool management becomes annoying.
 - Completion: add `blink.cmp` only after LSP is working and understood.
 - Formatting: start with `vim.lsp.buf.format()` or manual formatting; add `conform.nvim` when multi-tool formatting becomes necessary.
-- Git: start with `gitsigns.nvim`; keep heavy Git/GitHub UI out until there is a specific need.
+- Git: use `neogit` as the main Git UI once commit/stash/rebase/reset workflows become important; add `gitsigns.nvim` later only if gutter hunk actions are missed.
 - File tree: skip it initially and rely on finder plus normal file navigation.
 - UI extras: keep built-in UI first; only add `tokyonight.nvim` early if a theme helps readability.
 
@@ -239,9 +239,11 @@ Future plugin specs should only appear when needed, ideally as small files under
 - `lazy.nvim` for plugin management
 - `which-key.nvim` plus `lua/config/keys.lua` for organized leader-based keymaps
 - `telescope.nvim` plus `telescope-fzf-native.nvim` for search and picker workflows
+- `telescope-ui-select.nvim` so `vim.ui.select` uses Telescope for interactive choice menus
 - `lua/config/search.lua` to keep hidden-file search defaults and the explicit ignore list in one place
 - `tokyonight.nvim` using the `night` variant to match the existing WezTerm theme
 - `neo-tree.nvim` as a minimal file explorer with dotfiles visible, a small hide list, and auto-close on open
+- `neogit` plus `diffview.nvim` as the main Git UI, with direct keybinds for stash, rebase, and reset flows
 - `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`
 - `nvim-lspconfig` using the native `vim.lsp.config()` / `vim.lsp.enable()` flow
 - `lazydev.nvim` to make Neovim Lua editing sane without loading huge LuaLS workspaces
@@ -251,8 +253,10 @@ Future plugin specs should only appear when needed, ideally as small files under
 
 - The keymap helper makes it easy to grow the config without ending up with random leader bindings.
 - Telescope gives one consistent UI for file search, grep, buffers, old files, and diagnostics.
+- Telescope UI Select makes config and plugin choice prompts reusable without falling back to numbered terminal input.
 - Tokyo Night gives the editor an intentional baseline UI without adding broader UI plugins yet.
 - Neo-tree covers the cases where a persistent filesystem view is still more useful than a picker.
+- Neogit makes the common Git workflows first-class without bringing back a separate terminal Git UI.
 - Lua editing is the immediate environment needed to keep rebuilding the config.
 - `lua_ls` gives diagnostics, navigation, hover, and rename without pulling in broader language tooling yet.
 - `lazydev.nvim` is purpose-built for Neovim config Lua and keeps the setup small.

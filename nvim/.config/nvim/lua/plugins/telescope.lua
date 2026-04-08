@@ -20,10 +20,13 @@ return {
         'nvim-telescope/telescope-fzf-native.nvim',
         build = 'make',
       },
+      'nvim-telescope/telescope-ui-select.nvim',
     },
     config = function()
+      local actions = require 'telescope.actions'
       local search = require 'config.search'
       local telescope = require 'telescope'
+      local themes = require 'telescope.themes'
 
       telescope.setup {
         defaults = {
@@ -48,10 +51,24 @@ return {
             override_file_sorter = true,
             case_mode = 'smart_case',
           },
+          ['ui-select'] = themes.get_dropdown {
+            initial_mode = 'normal',
+            previewer = false,
+            mappings = {
+              i = {
+                ['<Esc>'] = actions.close,
+              },
+              n = {
+                ['<Esc>'] = actions.close,
+                ['q'] = actions.close,
+              },
+            },
+          },
         },
       }
 
       pcall(telescope.load_extension, 'fzf')
+      pcall(telescope.load_extension, 'ui-select')
     end,
   },
 }

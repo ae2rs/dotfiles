@@ -1,6 +1,7 @@
 local keys = require 'config.keys'
 
 keys.leader_group('c', 'Code')
+keys.leader_group('g', 'Git')
 keys.leader_group('l', 'LSP')
 keys.leader_group('s', 'Search')
 
