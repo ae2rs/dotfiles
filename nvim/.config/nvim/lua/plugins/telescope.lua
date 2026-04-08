@@ -24,24 +24,57 @@ return {
     },
     config = function()
       local actions = require 'telescope.actions'
+      local action_layout = require 'telescope.actions.layout'
       local search = require 'config.search'
       local telescope = require 'telescope'
       local themes = require 'telescope.themes'
 
+      local function apply_highlights()
+        vim.api.nvim_set_hl(0, 'TelescopePromptPrefix', { fg = '#d79921' })
+      end
+
       telescope.setup {
         defaults = {
+          prompt_prefix = '  󰍉  ',
+          sorting_strategy = 'ascending',
+          dynamic_preview_title = true,
           vimgrep_arguments = search.vimgrep_arguments(),
+          layout_strategy = 'horizontal',
+          layout_config = {
+            prompt_position = 'top',
+            horizontal = {
+              preview_width = 0.55,
+            },
+            width = 0.92,
+            height = 0.88,
+          },
           mappings = {
             i = {
-              ['<C-u>'] = false,
-              ['<C-d>'] = false,
+              ['<C-h>'] = action_layout.toggle_preview,
+            },
+            n = {
+              ['<C-h>'] = action_layout.toggle_preview,
             },
           },
         },
         pickers = {
-          find_files = {
+          find_files = themes.get_dropdown {
             hidden = true,
             find_command = search.find_command(),
+            previewer = false,
+          },
+          buffers = themes.get_dropdown {
+            previewer = false,
+            sort_mru = true,
+            ignore_current_buffer = true,
+            mappings = {
+              i = {
+                ['<C-d>'] = actions.delete_buffer,
+              },
+              n = {
+                ['<C-d>'] = actions.delete_buffer,
+              },
+            },
           },
         },
         extensions = {
@@ -69,6 +102,11 @@ return {
 
       pcall(telescope.load_extension, 'fzf')
       pcall(telescope.load_extension, 'ui-select')
+      apply_highlights()
+
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        callback = apply_highlights,
+      })
     end,
   },
 }
