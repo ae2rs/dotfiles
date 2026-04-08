@@ -26,6 +26,8 @@ return {
   {
     'neovim/nvim-lspconfig',
     config = function()
+      local keys = require 'config.keys'
+
       vim.diagnostic.config {
         severity_sort = true,
         float = {
@@ -50,8 +52,8 @@ return {
           map('gD', vim.lsp.buf.declaration, 'Goto declaration')
           map('gI', vim.lsp.buf.implementation, 'Goto implementation')
           map('grr', vim.lsp.buf.references, 'References')
-          map('<leader>rn', vim.lsp.buf.rename, 'Rename')
-          map('<leader>ca', vim.lsp.buf.code_action, 'Code action', { 'n', 'x' })
+          keys.leader('n', 'lr', vim.lsp.buf.rename, 'Rename symbol', { buffer = event.buf })
+          keys.leader({ 'n', 'x' }, 'la', vim.lsp.buf.code_action, 'Code action', { buffer = event.buf })
         end,
       })
 

@@ -235,6 +235,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 ### Current Active Subsystems
 
 - `lazy.nvim` for plugin management
+- `which-key.nvim` plus `lua/config/keys.lua` for organized leader-based keymaps
 - `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`
 - `nvim-lspconfig` using the native `vim.lsp.config()` / `vim.lsp.enable()` flow
 - `lazydev.nvim` to make Neovim Lua editing sane without loading huge LuaLS workspaces
@@ -242,6 +243,7 @@ Future plugin specs should only appear when needed, ideally as small files under
 
 ### Why These Came Back First
 
+- The keymap helper makes it easy to grow the config without ending up with random leader bindings.
 - Lua editing is the immediate environment needed to keep rebuilding the config.
 - `lua_ls` gives diagnostics, navigation, hover, and rename without pulling in broader language tooling yet.
 - `lazydev.nvim` is purpose-built for Neovim config Lua and keeps the setup small.

@@ -1,11 +1,18 @@
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
-vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+local keys = require 'config.keys'
 
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus left' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus down' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus up' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus right' })
+keys.leader_group('c', 'Code')
+keys.leader_group('l', 'LSP')
+keys.leader_group('x', 'Diagnostics')
 
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Previous diagnostic' })
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Next diagnostic' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Diagnostics to loclist' })
+keys.map('n', '<Esc>', '<cmd>nohlsearch<CR>', 'Clear search highlight')
+keys.map('t', '<Esc><Esc>', '<C-\\><C-n>', 'Exit terminal mode')
+
+keys.map('n', '<C-h>', '<C-w><C-h>', 'Move focus left')
+keys.map('n', '<C-j>', '<C-w><C-j>', 'Move focus down')
+keys.map('n', '<C-k>', '<C-w><C-k>', 'Move focus up')
+keys.map('n', '<C-l>', '<C-w><C-l>', 'Move focus right')
+
+keys.map('n', '[d', vim.diagnostic.goto_prev, 'Previous diagnostic')
+keys.map('n', ']d', vim.diagnostic.goto_next, 'Next diagnostic')
+keys.leader('n', 'xl', vim.diagnostic.open_float, 'Line diagnostics')
+keys.leader('n', 'xx', vim.diagnostic.setloclist, 'Diagnostics list')
