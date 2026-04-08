@@ -47,7 +47,9 @@ return {
             lua = false,
             help = false,
             calculator = false,
-            input = false,
+            input = {
+              view = 'cmdline_popup',
+            },
           },
         },
         messages = {
@@ -103,6 +105,24 @@ return {
     opts = { signs = false },
   },
 
+  { -- Render markdown in-buffer with nice formatting
+    'MeanderingProgrammer/render-markdown.nvim',
+    ft = { 'markdown', 'codecompanion' },
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
+    opts = {},
+    keys = {
+      {
+        '<leader>mp',
+        function()
+          vim.cmd 'tab split'
+          vim.cmd 'RenderMarkdown enable'
+        end,
+        ft = 'markdown',
+        desc = 'Markdown preview in new tab',
+      },
+    },
+  },
+
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
     config = function()
@@ -114,12 +134,28 @@ return {
 
       -- Simple and easy statusline
       local statusline = require 'mini.statusline'
-      statusline.setup { use_icons = vim.g.have_nerd_font }
-
-      -- Configure cursor location section
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
+      statusline.setup {
+        use_icons = vim.g.have_nerd_font,
+        content = {
+          active = function()
+            local mode, mode_hl = statusline.section_mode { trunc_width = 120 }
+            local git = statusline.section_git { trunc_width = 40 }
+            local diagnostics = statusline.section_diagnostics { trunc_width = 75 }
+            local lsp = statusline.section_lsp and statusline.section_lsp { trunc_width = 75 } or ''
+            local filename = vim.fn.expand '%:.' ~= '' and vim.fn.expand '%:.' or '[No Name]'
+            local filetype = vim.bo.filetype
+            return statusline.combine_groups {
+              { hl = mode_hl,                  strings = { mode } },
+              { hl = 'MiniStatuslineDevinfo',  strings = { git, diagnostics, lsp } },
+              '%<',
+              { hl = 'MiniStatuslineFilename', strings = { filename } },
+              '%=',
+              { hl = 'MiniStatuslineFileinfo', strings = { filetype } },
+              { hl = mode_hl,                  strings = { '%2l:%-2v' } },
+            }
+          end,
+        },
+      }
     end,
   },
 }

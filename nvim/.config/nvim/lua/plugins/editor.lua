@@ -172,6 +172,33 @@ return {
       vim.keymap.set('n', '<leader>sh', fzf.helptags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', fzf.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', fzf.files, { desc = '[S]earch [F]iles' })
+      vim.keymap.set('n', '<leader>sF', function()
+        local clip = vim.trim(vim.fn.getreg '+')
+        local file, line, col = clip:match '^(.+):(%d+):(%d+)$'
+        if not file then
+          file, line = clip:match '^(.+):(%d+)$'
+        end
+        if not file then
+          file = clip
+        end
+        line = line and tonumber(line)
+        col = col and tonumber(col)
+        local function jump_after_open(selected)
+          if selected and selected[1] then
+            vim.cmd('edit ' .. vim.fn.fnameescape(selected[1]))
+            if line then
+              vim.schedule(function()
+                pcall(vim.api.nvim_win_set_cursor, 0, { line, (col or 1) - 1 })
+              end)
+            end
+          end
+        end
+        if vim.fn.filereadable(file) == 1 then
+          jump_after_open { file }
+        else
+          fzf.files { query = file, actions = { ['default'] = jump_after_open } }
+        end
+      end, { desc = '[S]earch [F]ile at location (file:line:col from clipboard)' })
       vim.keymap.set('n', '<leader>ss', fzf.builtin, { desc = '[S]earch [S]elect FzfLua' })
       vim.keymap.set('n', '<leader>sw', fzf.grep_cword, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', fzf.live_grep, { desc = '[S]earch by [G]rep' })

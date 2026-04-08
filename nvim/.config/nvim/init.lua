@@ -24,6 +24,46 @@ local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
 -- ============================================================================
+-- Runtime workarounds
+-- ============================================================================
+
+-- Suppress noisy libuv fs_event EMFILE callback errors coming from vim._watch.
+do
+  local uv = vim.uv or vim.loop
+  if uv and uv.new_fs_event and not vim.g._suppress_emfile_watch_errors then
+    local probe = uv.new_fs_event()
+    local mt = probe and getmetatable(probe)
+    if probe and probe.close then
+      probe:close()
+    end
+
+    if mt and type(mt.__index) == 'table' and type(mt.__index.start) == 'function' then
+      local original_start = mt.__index.start
+      mt.__index.start = function(self, path, flags, callback)
+        if type(flags) == 'function' and callback == nil then
+          callback = flags
+          flags = {}
+        end
+
+        if type(callback) == 'function' then
+          local wrapped_callback = function(err, filename, events)
+            if err and tostring(err):find('EMFILE', 1, true) then
+              return
+            end
+            return callback(err, filename, events)
+          end
+          return original_start(self, path, flags, wrapped_callback)
+        end
+
+        return original_start(self, path, flags, callback)
+      end
+    end
+
+    vim.g._suppress_emfile_watch_errors = true
+  end
+end
+
+-- ============================================================================
 -- Load core configuration
 -- ============================================================================
 

@@ -31,6 +31,9 @@ return {
           if normalized:match 'overly%s+long%s+loop%s+turn%s+took' then
             return
           end
+          if normalized:match 'emfile' or normalized:match 'too many open files' then
+            return
+          end
         end
         return notify(msg, level, opts)
       end

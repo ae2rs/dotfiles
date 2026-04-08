@@ -61,3 +61,11 @@ vim.o.confirm = true
 
 -- Stop cursor blinking
 vim.opt.guicursor:remove { 't:block-blinkon500-blinkoff500-TermCursor' }
+
+-- Suppress "written" message on file save
+vim.opt.shortmess:append 'W'
+
+-- LSP-based folding
+vim.o.foldmethod = 'expr'
+vim.o.foldexpr = 'v:lua.vim.lsp.foldexpr()'
+vim.o.foldlevel = 99
