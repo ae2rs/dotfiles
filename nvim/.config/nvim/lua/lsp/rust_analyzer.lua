@@ -7,7 +7,7 @@ local FALLBACK_DISCOVER_TITLE = 'Discover workspace'
 local default_settings = {
   ['rust-analyzer'] = {
     diagnostics = {
-      enable = false,
+      enable = true,
     },
     cargo = {
       allFeatures = true,

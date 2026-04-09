@@ -15,7 +15,7 @@ require('lazy').setup {
     { import = 'plugins' },
   },
   install = {
-    colorscheme = { 'gruvbox-material', 'habamax' },
+    colorscheme = { 'tokyonight', 'habamax' },
   },
   checker = {
     enabled = false,

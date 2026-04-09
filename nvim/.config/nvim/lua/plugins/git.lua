@@ -1,5 +1,34 @@
 return {
   {
+    'lewis6991/gitsigns.nvim',
+    event = { 'BufReadPre', 'BufNewFile' },
+    keys = function()
+      local git = require 'config.git'
+      local keys = require 'config.keys'
+
+      return {
+        keys.lazy_leader('n', 'gl', git.toggle_line_blame, 'Toggle line blame'),
+      }
+    end,
+    opts = {
+      signs = {
+        add = { text = '+' },
+        change = { text = '~' },
+        delete = { text = '_' },
+        topdelete = { text = '^' },
+        changedelete = { text = '~' },
+        untracked = { text = '?' },
+      },
+      signcolumn = true,
+      current_line_blame = false,
+      current_line_blame_opts = {
+        delay = 0,
+        virt_text_pos = 'eol',
+      },
+      current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',
+    },
+  },
+  {
     'NeogitOrg/neogit',
     cmd = 'Neogit',
     keys = function()
@@ -51,7 +80,37 @@ return {
       }
     end,
     config = function(_, opts)
+      local group = vim.api.nvim_create_augroup('neogit-highlights', { clear = true })
+
+      local function set_neogit_highlights()
+        local colors = require('tokyonight.colors').setup { style = 'storm' }
+        local highlights = {
+          NeogitHunkHeaderCursor = { bg = 'NONE', fg = colors.blue, bold = true },
+          NeogitDiffContextCursor = { bg = 'NONE', fg = colors.fg_dark },
+          NeogitDiffAddCursor = { bg = 'NONE', fg = colors.git.add, bold = true },
+          NeogitDiffDeleteCursor = { bg = 'NONE', fg = colors.git.delete, bold = true },
+          NeogitDiffAddInline = { bg = 'NONE', fg = colors.git.add, italic = true },
+          NeogitDiffDeleteInline = { bg = 'NONE', fg = colors.git.delete, italic = true },
+        }
+
+        for name, spec in pairs(highlights) do
+          vim.api.nvim_set_hl(0, name, spec)
+        end
+      end
+
       require('neogit').setup(opts)
+      set_neogit_highlights()
+
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        group = group,
+        callback = set_neogit_highlights,
+      })
+
+      vim.api.nvim_create_autocmd('User', {
+        group = group,
+        pattern = { 'NeogitStatusRefreshed', 'NeogitDiffLoaded' },
+        callback = set_neogit_highlights,
+      })
     end,
   },
   {

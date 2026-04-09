@@ -1,7 +1,7 @@
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 local act = wezterm.action
-local color_scheme = "Gruvbox Material (Gogh)"
+local color_scheme = "Tokyo Night Storm"
 local scheme = wezterm.color.get_builtin_schemes()[color_scheme]
 local palette = {
 	bg = scheme.background,
@@ -266,12 +266,12 @@ tabline.setup({
 		tabs_enabled = true,
 		theme_overrides = {
 			normal_mode = {
-				c = { fg = palette.fg, bg = palette.surface },
+				c = { fg = palette.fg, bg = palette.bg },
 			},
 			tab = {
-				active = { fg = palette.yellow, bg = palette.surface },
+				active = { fg = palette.yellow, bg = palette.bg },
 				inactive = { fg = palette.fg, bg = palette.bg },
-				inactive_hover = { fg = palette.aqua, bg = palette.surface },
+				inactive_hover = { fg = palette.aqua, bg = palette.bg },
 			},
 		},
 		section_separators = {
@@ -283,8 +283,8 @@ tabline.setup({
 			right = "|",
 		},
 		tab_separators = {
-			left = wezterm.nerdfonts.ple_right_half_circle_thick,
-			right = wezterm.nerdfonts.ple_left_half_circle_thick,
+			left = " ",
+			right = " ",
 		},
 	},
 	sections = {
@@ -293,11 +293,12 @@ tabline.setup({
 		tabline_c = { { "", cond = false } },
 		tab_active = {
 			"index",
-			{ "parent", padding = 0 },
-			"/",
 			{ "cwd", padding = { left = 0, right = 1 } },
 		},
-		tab_inactive = { "index", { "process", padding = { left = 0, right = 1 }, icons_enabled = false } },
+		tab_inactive = {
+			"index",
+			{ "cwd", padding = { left = 0, right = 1 } },
+		},
 		tabline_x = {
 			{ "ram", icons_enabled = false },
 			{ "cpu", icons_enabled = false },

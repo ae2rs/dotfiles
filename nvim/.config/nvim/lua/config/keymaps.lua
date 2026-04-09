@@ -15,3 +15,10 @@ keys.map('n', '<C-l>', '<C-w><C-l>', 'Move focus right')
 
 keys.map('n', '[d', vim.diagnostic.goto_prev, 'Previous diagnostic')
 keys.map('n', ']d', vim.diagnostic.goto_next, 'Next diagnostic')
+keys.leader('n', 'ld', function()
+  vim.diagnostic.open_float(nil, {
+    border = 'rounded',
+    scope = 'line',
+    source = 'if_many',
+  })
+end, 'Line diagnostics')

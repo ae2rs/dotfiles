@@ -55,4 +55,33 @@ return {
       },
     },
   },
+  {
+    'rachartier/tiny-inline-diagnostic.nvim',
+    event = 'VeryLazy',
+    priority = 1000,
+    config = function()
+      require('tiny-inline-diagnostic').setup {
+        preset = 'modern',
+        options = {
+          show_source = {
+            enabled = true,
+            if_many = false,
+          },
+          softwrap = 40,
+          multilines = {
+            enabled = true,
+            trim_whitespaces = true,
+          },
+          show_all_diags_on_cursorline = true,
+          enable_on_insert = false,
+          overflow = {
+            mode = 'wrap',
+            padding = 4,
+          },
+          show_code = true,
+          override_open_float = true,
+        },
+      }
+    end,
+  },
 }

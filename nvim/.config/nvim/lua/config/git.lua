@@ -52,4 +52,8 @@ function M.open_branch_picker()
   })
 end
 
+function M.toggle_line_blame()
+  require('gitsigns').toggle_current_line_blame()
+end
+
 return M
