@@ -9,7 +9,9 @@ return {
       return {
         keys.lazy_leader('n', 'sf', builtin.find_files, 'Search files'),
         keys.lazy_leader('n', 'sg', builtin.live_grep, 'Search by grep'),
-        keys.lazy_leader('n', 's.', builtin.oldfiles, 'Search recent files'),
+        keys.lazy_leader('n', 's.', function()
+          builtin.oldfiles { cwd_only = true }
+        end, 'Search recent files'),
         keys.lazy_leader('n', '<leader>', builtin.buffers, 'Search buffers'),
         keys.lazy_leader('n', 'sd', builtin.diagnostics, 'Search diagnostics'),
       }
