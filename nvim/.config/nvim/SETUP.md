@@ -211,7 +211,7 @@ Also in `lua/plugins/lsp.lua`:
 
 ### Suggested Minimal Choices Later
 
-- File finder: use `telescope.nvim` with `telescope-fzf-native.nvim` as the default search UI so file search, grep, buffers, recent files, and diagnostics all share one predictable interface.
+- File finder: use `fzf-lua` for file search and live grep if Telescope feels too delayed on larger trees; keep Telescope only where its picker coverage still pays off.
 - Treesitter: use `nvim-treesitter`, but only after deciding which languages actually matter.
 - LSP: start with built-in Neovim 0.11 APIs plus `nvim-lspconfig`; add Mason only if manual tool management becomes annoying.
 - Completion: add `blink.cmp` only after LSP is working and understood.
