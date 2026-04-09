@@ -25,7 +25,11 @@ return {
   },
   {
     'neovim/nvim-lspconfig',
+    dependencies = {
+      'saghen/blink.cmp',
+    },
     config = function()
+      local blink = require 'blink.cmp'
       local keys = require 'config.keys'
       local monorepo = require 'lsp.monorepo'
       local lsp = vim.lsp
@@ -111,6 +115,12 @@ return {
 
       monorepo.setup_message_filters()
 
+      local function with_capabilities(config)
+        config = vim.deepcopy(config)
+        config.capabilities = blink.get_lsp_capabilities(config.capabilities)
+        return config
+      end
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('scratch-lsp-attach', { clear = true }),
         callback = function(event)
@@ -144,9 +154,9 @@ return {
         end,
       })
 
-      lsp.config('lua_ls', require 'lsp.lua_ls')
-      lsp.config('monorepo_rust_analyzer', rust_analyzer)
-      lsp.config('protols', protols)
+      lsp.config('lua_ls', with_capabilities(require 'lsp.lua_ls'))
+      lsp.config('monorepo_rust_analyzer', with_capabilities(rust_analyzer))
+      lsp.config('protols', with_capabilities(protols))
 
       lsp.enable 'lua_ls'
       lsp.enable 'monorepo_rust_analyzer'
