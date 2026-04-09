@@ -242,11 +242,13 @@ Future plugin specs should only appear when needed, ideally as small files under
 - `telescope-ui-select.nvim` so `vim.ui.select` uses Telescope for interactive choice menus
 - `lua/config/search.lua` to keep hidden-file search defaults and the explicit ignore list in one place
 - `gruvbox-material` using the softer material palette to match the existing WezTerm theme family
+- `fidget.nvim` for bottom-right LSP progress with spinner-based status and completion feedback
 - `neo-tree.nvim` as a minimal file explorer with dotfiles visible, a small hide list, and auto-close on open
 - `neogit` plus `diffview.nvim` as the main Git UI, with direct keybinds for stash, rebase, and reset flows
 - Telescope git pickers for interactive commit reset and branch selection, while Neogit remains the main Git status/stash UI
-- `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`
+- `mason.nvim` plus `mason-lspconfig.nvim` to install and manage `lua_ls`, `rust_analyzer`, and `protols`
 - `nvim-lspconfig` using the native `vim.lsp.config()` / `vim.lsp.enable()` flow
+- native monorepo LSP modules for `rust_analyzer` and `protols`, including project-local Rust override loading, a Mason-pinned Rust Analyzer command, a discover-command compatibility wrapper for the monorepo, and monorepo Proto rooting
 - `lazydev.nvim` to make Neovim Lua editing sane without loading huge LuaLS workspaces
 - `conform.nvim` with `stylua` for Lua formatting
 
@@ -256,9 +258,12 @@ Future plugin specs should only appear when needed, ideally as small files under
 - Telescope gives one consistent UI for file search, grep, buffers, old files, and diagnostics.
 - Telescope UI Select makes config and plugin choice prompts reusable without falling back to numbered terminal input.
 - Gruvbox Material gives the editor an intentional baseline UI without adding broader UI plugins yet.
+- Fidget provides a dedicated, unobtrusive place for long-running LSP startup and indexing work instead of using transient command-line messages.
 - Neo-tree covers the cases where a persistent filesystem view is still more useful than a picker.
 - Neogit makes the common Git workflows first-class without bringing back a separate terminal Git UI.
 - Lua editing is the immediate environment needed to keep rebuilding the config.
 - `lua_ls` gives diagnostics, navigation, hover, and rename without pulling in broader language tooling yet.
+- The monorepo Rust/proto logic is back in isolated modules, so the machine-specific behavior stays readable instead of being mixed into generic editor config.
+- The Rust monorepo integration now pins the Mason binary and normalizes the discover-command event stream so Rust Analyzer no longer crashes during Bazel workspace discovery.
 - `lazydev.nvim` is purpose-built for Neovim config Lua and keeps the setup small.
 - `conform.nvim` plus `stylua` gives deterministic formatting without mixing formatting concerns into the LSP setup.

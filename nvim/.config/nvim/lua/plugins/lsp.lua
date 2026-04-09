@@ -15,7 +15,7 @@ return {
   {
     'mason-org/mason-lspconfig.nvim',
     opts = {
-      ensure_installed = { 'lua_ls' },
+      ensure_installed = { 'lua_ls', 'rust_analyzer', 'protols' },
       automatic_enable = false,
     },
     dependencies = {
@@ -27,8 +27,11 @@ return {
     'neovim/nvim-lspconfig',
     config = function()
       local keys = require 'config.keys'
+      local monorepo = require 'lsp.monorepo'
       local lsp = vim.lsp
       local protocol = lsp.protocol
+      local protols = require 'lsp.protols'
+      local rust_analyzer = require 'lsp.rust_analyzer'
       local util = require 'vim.lsp.util'
 
       local function save_modified_file_buffers()
@@ -104,6 +107,8 @@ return {
         },
       }
 
+      monorepo.setup_message_filters()
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('scratch-lsp-attach', { clear = true }),
         callback = function(event)
@@ -137,7 +142,13 @@ return {
         end,
       })
 
+      lsp.config('lua_ls', require 'lsp.lua_ls')
+      lsp.config('monorepo_rust_analyzer', rust_analyzer)
+      lsp.config('protols', protols)
+
       lsp.enable 'lua_ls'
+      lsp.enable 'monorepo_rust_analyzer'
+      lsp.enable 'protols'
     end,
   },
 }
