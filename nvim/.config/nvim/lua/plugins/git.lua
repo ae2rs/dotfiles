@@ -80,37 +80,7 @@ return {
       }
     end,
     config = function(_, opts)
-      local group = vim.api.nvim_create_augroup('neogit-highlights', { clear = true })
-
-      local function set_neogit_highlights()
-        local colors = require('tokyonight.colors').setup { style = 'storm' }
-        local highlights = {
-          NeogitHunkHeaderCursor = { bg = 'NONE', fg = colors.blue, bold = true },
-          NeogitDiffContextCursor = { bg = 'NONE', fg = colors.fg_dark },
-          NeogitDiffAddCursor = { bg = 'NONE', fg = colors.git.add, bold = true },
-          NeogitDiffDeleteCursor = { bg = 'NONE', fg = colors.git.delete, bold = true },
-          NeogitDiffAddInline = { bg = 'NONE', fg = colors.git.add, italic = true },
-          NeogitDiffDeleteInline = { bg = 'NONE', fg = colors.git.delete, italic = true },
-        }
-
-        for name, spec in pairs(highlights) do
-          vim.api.nvim_set_hl(0, name, spec)
-        end
-      end
-
       require('neogit').setup(opts)
-      set_neogit_highlights()
-
-      vim.api.nvim_create_autocmd('ColorScheme', {
-        group = group,
-        callback = set_neogit_highlights,
-      })
-
-      vim.api.nvim_create_autocmd('User', {
-        group = group,
-        pattern = { 'NeogitStatusRefreshed', 'NeogitDiffLoaded' },
-        callback = set_neogit_highlights,
-      })
     end,
   },
   {

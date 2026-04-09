@@ -1,7 +1,7 @@
 local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 local act = wezterm.action
-local color_scheme = "Tokyo Night Storm"
+local color_scheme = "Tokyo Night"
 local scheme = wezterm.color.get_builtin_schemes()[color_scheme]
 local palette = {
 	bg = scheme.background,
