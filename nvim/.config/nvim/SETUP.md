@@ -218,6 +218,12 @@ Also in `lua/plugins/lsp.lua`:
 - Formatting: start with `vim.lsp.buf.format()` or manual formatting; add `conform.nvim` when multi-tool formatting becomes necessary.
 - Git: use `neogit` as the main Git UI once commit/stash/rebase/reset workflows become important; add `gitsigns.nvim` later only if gutter hunk actions are missed.
 - File tree: skip it initially and rely on finder plus normal file navigation.
+
+## Current Exceptions
+
+- `noice.nvim` is enabled only for LSP hover and signature help. Cmdline, messages, popupmenu, notifications, and LSP progress remain outside Noice.
+- `nvim-treesitter` is enabled only to provide the markdown parser/query support that Noice uses for LSP doc rendering. Parser installs should stay explicit via `:TSInstall` / `:TSUpdate`.
+- Hover docs should follow the existing float styling conventions in this config: rounded borders, opaque windows, and the current `NormalFloat`/`FloatBorder`/`FloatTitle` highlight groups.
 - UI extras: keep built-in UI first; only add `gruvbox-material` early if a theme helps readability.
 
 ## Target Structure For The New Config
