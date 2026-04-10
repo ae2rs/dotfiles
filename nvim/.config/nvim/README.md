@@ -1,34 +1,51 @@
-# Neovim Scratch Rebuild
+# Neovim Config
 
-This branch resets the Neovim config to a minimal `lazy.nvim` bootstrap so the setup can be rebuilt feature by feature.
+This repository contains the active Neovim configuration used from `~/.config/nvim`.
+It is built around `lazy.nvim`, small Lua modules, and a few project-specific LSP helpers for a Rust/proto monorepo.
 
-The source of truth for the rebuild is [`SETUP.md`](./SETUP.md). It documents:
+## Layout
 
-- the goals for the new config
-- the full plugin inventory from the old setup
-- the current Rust/proto monorepo LSP behavior
-- the recommended order for adding features back
+- [`init.lua`](./init.lua): entrypoint that loads the core config modules.
+- [`lua/config/`](./lua/config): native Neovim options, keymaps, autocmds, and shared helpers.
+- [`lua/plugins/`](./lua/plugins): lazy.nvim plugin specs grouped by subsystem.
+- [`lua/lsp/`](./lua/lsp): server-specific helpers and monorepo-specific LSP behavior.
+- [`scripts/`](./scripts): helper scripts used by the Neovim config.
+- [`after/syntax/`](./after/syntax): filetype-specific highlight overrides kept from earlier theme work.
 
-The active config is intentionally tiny:
+More local context lives in:
 
-- [`init.lua`](./init.lua)
-- [`lua/config/options.lua`](./lua/config/options.lua)
-- [`lua/config/keymaps.lua`](./lua/config/keymaps.lua)
-- [`lua/config/autocmds.lua`](./lua/config/autocmds.lua)
-- [`lua/config/lazy.lua`](./lua/config/lazy.lua)
-sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/
-```
-</details>
-<details><summary>Fedora Install Steps</summary>
+- [`lua/README.md`](./lua/README.md)
+- [`lua/config/README.md`](./lua/config/README.md)
+- [`lua/plugins/README.md`](./lua/plugins/README.md)
+- [`lua/lsp/README.md`](./lua/lsp/README.md)
+- [`scripts/README.md`](./scripts/README.md)
 
-```
-sudo dnf install -y gcc make git ripgrep fd-find unzip neovim
-```
-</details>
+## Current Setup
 
-<details><summary>Arch Install Steps</summary>
+The current config is not a minimal bootstrap. It already includes:
 
-```
-sudo pacman -S --noconfirm --needed gcc make git ripgrep fd unzip neovim
-```
-</details>
+- `lazy.nvim` for plugin management
+- `which-key.nvim` for keymap discovery
+- `fzf-lua` and `telescope.nvim` for search and picker workflows
+- `neo-tree.nvim` for file exploration
+- `gitsigns.nvim`, `neogit`, and `diffview.nvim` for Git workflows
+- `nvim-lspconfig`, `mason.nvim`, `mason-lspconfig.nvim`, and `lazydev.nvim` for LSP
+- custom Rust and proto LSP modules under [`lua/lsp/`](./lua/lsp)
+- `blink.cmp` for completion
+- `conform.nvim` for formatting Lua buffers with `stylua`
+- `fidget.nvim`, `noice.nvim`, `tiny-inline-diagnostic.nvim`, and `tokyonight.nvim` for UI polish
+- `nvim-treesitter` for parser support
+
+## Commands
+
+- Sync plugins: `nvim --headless "+Lazy! sync" +qa`
+- Run health checks: `nvim --headless "+checkhealth" +qa`
+- Sync plugins and run health checks: `nvim --headless "+Lazy! sync" "+checkhealth" +qa`
+- Format the repo: `stylua .`
+- Launch Neovim: `nvim`
+
+## Notes
+
+- The LSP setup includes monorepo-specific Rust and proto behavior. Read [`lua/lsp/README.md`](./lua/lsp/README.md) before changing those modules.
+- Plugin specs are intentionally split by behavior rather than by plugin dependency tree.
+- `after/syntax/` still contains many `gruvbox_material` overrides even though the active colorscheme is currently `tokyonight`. Treat that directory as legacy theme customization unless you intentionally clean it up.

@@ -2,8 +2,11 @@
 
 ## Project Structure & Module Organization
 - Entry point: `init.lua` sets leader keys, loads `lua/config/*`, and bootstraps `lazy.nvim` through `lua/config/lazy.lua`.
-- The active config is intentionally minimal. Add future plugin specs under `lua/plugins/` only when a feature is deliberately reintroduced.
-- Planning and inventory live in `SETUP.md`. Read it before adding features back.
+- Core editor behavior lives in `lua/config/`; keep these modules close to native Neovim concepts such as options, keymaps, autocmds, and shared helpers.
+- Plugin specs live in `lua/plugins/`; keep them grouped by subsystem and prefer declarative `lazy.nvim` specs over extra wrapper layers.
+- Server-specific LSP logic lives in `lua/lsp/`, including the monorepo-specific Rust/proto helpers. Read `lua/lsp/README.md` before changing that area.
+- Helper scripts used by the config live in `scripts/`.
+- Theme/filetype highlight overrides live under `after/syntax/`.
 - Formatting config: `.stylua.toml`. Repo docs: `README.md`; license: `LICENSE.md`.
 
 ## Build, Test, and Development Commands
@@ -16,8 +19,11 @@
 ## Coding Style & Naming Conventions
 - Lua: 2-space indentation, Unix line endings, prefer single quotes (`.stylua.toml` enforced). Keep lines under 160 characters.
 - Module naming: lower_snake_case filenames in `lua/`, majors grouped by feature area.
-- Keep `lua/config/*` close to native Neovim concepts: options, keymaps, autocmds, lazy bootstrap.
-- Plugin specs should stay declarative and minimal; avoid adding wrappers or abstraction layers unless they remove real duplication.
+- Keep `lua/config/*` focused on editor-wide behavior and helper modules that multiple plugin specs reuse.
+- Keep `lua/plugins/*` focused on plugin declaration and plugin-local configuration.
+- Keep `lua/lsp/*` focused on server setup, root detection, project overrides, and monorepo integration.
+- Plugin specs should stay declarative and minimal; avoid wrappers or abstraction layers unless they remove real duplication.
+- Add short README-style docs in core directories when structure or local behavior becomes non-obvious.
 
 ## Testing Guidelines
 - No automated test suite; rely on Neovim health checks and smoke tests.
@@ -32,5 +38,5 @@
 
 ## Security & Configuration Tips
 - Avoid committing secrets or credentialed endpoints in sample configs or test fixtures.
-- Prefer native Neovim features first; add plugins only for clear gaps and record the rationale in `SETUP.md` or the change summary.
+- Prefer native Neovim features first; add plugins only for clear gaps and record the rationale in the change summary or local docs when needed.
 - When adding new plugins, prefer lazy-loading triggers where they materially reduce startup work.
