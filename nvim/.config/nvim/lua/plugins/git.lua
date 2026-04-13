@@ -7,7 +7,7 @@ return {
       local keys = require 'config.keys'
 
       return {
-        keys.lazy_leader('n', 'gl', git.toggle_line_blame, 'Toggle line blame'),
+        keys.lazy_leader('n', 'gL', git.toggle_line_blame, 'Toggle line blame'),
       }
     end,
     opts = {
@@ -81,6 +81,26 @@ return {
     end,
     config = function(_, opts)
       require('neogit').setup(opts)
+    end,
+  },
+  {
+    'kdheepak/lazygit.nvim',
+    cmd = {
+      'LazyGit',
+      'LazyGitConfig',
+      'LazyGitCurrentFile',
+      'LazyGitFilter',
+      'LazyGitFilterCurrentFile',
+    },
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+    keys = function()
+      local keys = require 'config.keys'
+
+      return {
+        keys.lazy_leader('n', 'gl', '<cmd>LazyGit<CR>', 'LazyGit'),
+      }
     end,
   },
   {

@@ -10,11 +10,10 @@ return {
     opts = {
       keymap = {
         preset = 'none',
-        ['<C-space>'] = { 'show', 'show_documentation', 'hide_documentation' },
-        ['<C-e>'] = { 'hide', 'fallback' },
         ['<C-y>'] = { 'select_and_accept', 'fallback' },
-        ['<C-p>'] = { 'select_prev', 'fallback_to_mappings' },
         ['<C-n>'] = { 'select_next', 'fallback_to_mappings' },
+        ['<C-p>'] = { 'select_prev', 'fallback_to_mappings' },
+        ['<C-e>'] = { 'cancel', 'fallback' },
       },
       appearance = {
         nerd_font_variant = 'mono',
@@ -34,6 +33,7 @@ return {
   },
   {
     'Exafunction/windsurf.nvim',
+    enabled = true,
     main = 'codeium',
     cmd = 'Codeium',
     event = 'InsertEnter',
@@ -53,6 +53,14 @@ return {
       enable_cmp_source = false,
       virtual_text = {
         enabled = true,
+        key_bindings = {
+          accept = '<C-l>',
+          accept_word = false,
+          accept_line = false,
+          clear = false,
+          next = false,
+          prev = false,
+        },
         filetypes = {
           TelescopePrompt = false,
         },
