@@ -11,6 +11,43 @@ alias ls='eza'
 alias lz='lazygit'
 alias lzd='lazydocker'
 
+gcoo() {
+    if [[ $# -lt 1 || $# -gt 2 ]]; then
+        echo "Usage: gcoo <branch|remote/branch> [local-branch]"
+        return 1
+    fi
+
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Error: not in a git repository"; return 1; }
+
+    local input_ref="$1"
+    local remote="origin"
+    local branch="$input_ref"
+    local remote_candidate="${input_ref%%/*}"
+
+    if [[ "$input_ref" == */* ]] && git remote get-url "$remote_candidate" >/dev/null 2>&1; then
+        remote="$remote_candidate"
+        branch="${input_ref#*/}"
+    fi
+
+    if [[ -z "$branch" ]]; then
+        echo "Error: expected <branch> or <remote>/<branch>, got: $input_ref"
+        return 1
+    fi
+
+    local remote_ref="$remote/$branch"
+
+    local local_branch="${2:-$branch}"
+
+    if git show-ref --verify --quiet "refs/heads/$local_branch"; then
+        echo "Error: local branch already exists: $local_branch"
+        return 1
+    fi
+
+    git fetch "$remote" "$branch" || return 1
+    git switch --track --create "$local_branch" "$remote_ref" || return 1
+    git pull --ff-only || return 1
+}
+
 # Create GitHub PRs with title
 ghp() {
     if [ $# -eq 0 ]; then
