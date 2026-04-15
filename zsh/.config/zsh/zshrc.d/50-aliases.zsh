@@ -39,6 +39,8 @@ alias spo='spotify_player'
 alias ghd='gh dash'
 alias dc='docker compose'
 alias ai='aichat'
+alias c='codex'
+alias cr='codex resume'
 
 # --- Work-specific ---
 clip() {
