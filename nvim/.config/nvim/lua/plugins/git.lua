@@ -38,6 +38,7 @@ return {
       return {
         keys.lazy_leader('n', 'gg', git.open_status, 'Git status'),
         keys.lazy_leader('n', 'gb', git.open_branch_picker, 'Git branches'),
+        keys.lazy_leader('n', 'gd', git.open_dash, 'GitHub dash'),
         keys.lazy_leader('n', 'gr', git.open_reset_picker, 'Reset from commits'),
         keys.lazy_leader('n', 'gz', git.open_stash_popup, 'Stash popup'),
         keys.lazy_leader('n', 'gZ', git.open_stash_list, 'Stash list'),
