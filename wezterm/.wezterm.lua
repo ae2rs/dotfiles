@@ -139,7 +139,7 @@ map("LeftArrow", "CMD", act.SendString("\x1bOH"))
 map("RightArrow", "CMD", act.SendString("\x1bOF"))
 map("LeftArrow", "OPT", act.SendString("\x1bb"))
 map("RightArrow", "OPT", act.SendString("\x1bf"))
-map("Backspace", "CMD", act.SendKey({ mods = "CTRL", key = "w" }))
+map("Backspace", "CMD", act.SendKey({ mods = "CTRL", key = "u" }))
 
 -- Leader key configuration
 config.leader = {
