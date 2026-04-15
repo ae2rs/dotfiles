@@ -1,5 +1,198 @@
 return {
   {
+    'nvim-lualine/lualine.nvim',
+    event = 'UIEnter',
+    dependencies = {
+      'nvim-tree/nvim-web-devicons',
+    },
+    opts = function()
+      local lazy_status = require 'lazy.status'
+
+      local function wide_enough()
+        return vim.fn.winwidth(0) > 100
+      end
+
+      local function macro_recording()
+        local register = vim.fn.reg_recording()
+        if register == '' then
+          return ''
+        end
+
+        return ' @' .. register
+      end
+
+      local function search_count()
+        if vim.v.hlsearch == 0 then
+          return ''
+        end
+
+        local ok, result = pcall(vim.fn.searchcount, {
+          maxcount = 999,
+          recompute = 1,
+        })
+        if not ok or not result or result.total == 0 then
+          return ''
+        end
+
+        return string.format(' %d/%d', result.current, result.total)
+      end
+
+      local mode_names = {
+        ['NORMAL'] = 'NORMAL',
+        ['O-PENDING'] = 'OP',
+        ['INSERT'] = 'INSERT',
+        ['VISUAL'] = 'VISUAL',
+        ['V-BLOCK'] = 'V-BLOCK',
+        ['V-LINE'] = 'V-LINE',
+        ['V-REPLACE'] = 'V-REPLACE',
+        ['REPLACE'] = 'REPLACE',
+        ['COMMAND'] = 'COMMAND',
+        ['EX'] = 'EX',
+        ['MORE'] = 'MORE',
+        ['CONFIRM'] = 'CONFIRM',
+        ['SHELL'] = 'SHELL',
+        ['TERMINAL'] = 'TERMINAL',
+        ['SELECT'] = 'SELECT',
+        ['S-LINE'] = 'S-LINE',
+        ['S-BLOCK'] = 'S-BLOCK',
+      }
+
+      return {
+        options = {
+          theme = 'tokyonight',
+          globalstatus = true,
+          component_separators = {
+            left = '│',
+            right = '│',
+          },
+          section_separators = {
+            left = '',
+            right = '',
+          },
+          disabled_filetypes = {
+            statusline = {
+              'alpha',
+              'dashboard',
+              'starter',
+            },
+          },
+        },
+        sections = {
+          lualine_a = {
+            {
+              'mode',
+              fmt = function(str)
+                return ' ' .. (mode_names[str] or str)
+              end,
+            },
+          },
+          lualine_b = {
+            {
+              'branch',
+              icon = '',
+            },
+            {
+              'diff',
+              symbols = {
+                added = ' ',
+                modified = ' ',
+                removed = ' ',
+              },
+            },
+          },
+          lualine_c = {
+            {
+              'diagnostics',
+              sources = { 'nvim_diagnostic' },
+              symbols = {
+                error = ' ',
+                warn = ' ',
+                info = ' ',
+                hint = ' ',
+              },
+            },
+            {
+              'filename',
+              path = 1,
+              symbols = {
+                modified = ' ●',
+                readonly = ' ',
+                unnamed = '[No Name]',
+                newfile = '[New]',
+              },
+            },
+          },
+          lualine_x = {
+            {
+              macro_recording,
+              color = {
+                fg = '#ff9e64',
+              },
+            },
+            {
+              search_count,
+              cond = wide_enough,
+            },
+            {
+              function()
+                return lazy_status.updates()
+              end,
+              cond = lazy_status.has_updates,
+              color = {
+                fg = '#e0af68',
+              },
+            },
+            {
+              'filetype',
+              colored = true,
+              icon_only = false,
+            },
+            {
+              'fileformat',
+              cond = wide_enough,
+              symbols = {
+                unix = 'LF',
+                dos = 'CRLF',
+                mac = 'CR',
+              },
+            },
+          },
+          lualine_y = {
+            {
+              'progress',
+            },
+          },
+          lualine_z = {
+            {
+              'location',
+            },
+          },
+        },
+        inactive_sections = {
+          lualine_a = {},
+          lualine_b = {},
+          lualine_c = {
+            {
+              'filename',
+              path = 1,
+            },
+          },
+          lualine_x = {
+            {
+              'location',
+            },
+          },
+          lualine_y = {},
+          lualine_z = {},
+        },
+        extensions = {
+          'neo-tree',
+          'quickfix',
+        },
+      }
+    end,
+  },
+  {
     'j-hui/fidget.nvim',
     opts = {
       progress = {
