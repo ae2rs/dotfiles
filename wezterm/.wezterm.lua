@@ -152,6 +152,65 @@ config.disable_default_key_bindings = true
 
 -- Plugins --
 local tabline = wezterm.plugin.require("https://github.com/michaelbrusegard/tabline.wez")
+local plugin_cpu_component = require("tabline.components.window.cpu")
+
+local cpu_usage_cache = " -- "
+local cpu_usage_last = 0
+local function cpu_usage()
+	local is_darwin = string.match(wezterm.target_triple, "darwin") ~= nil
+	if not is_darwin then
+		local value = plugin_cpu_component.update(nil, plugin_cpu_component.default_opts)
+		if value == "" then
+			return cpu_usage_cache
+		end
+		return string.format(" %s ", value)
+	end
+
+	local now = os.time()
+	if now - cpu_usage_last < 2 then
+		return cpu_usage_cache
+	end
+
+	-- iostat reports system-wide CPU counters; the second sample avoids the
+	-- boot-average first report and tracks real load better than ps %cpu.
+	local success, output = wezterm.run_child_process({
+		"iostat",
+		"-C",
+		"-n",
+		"0",
+		"-w",
+		"1",
+		"-c",
+		"2",
+	})
+	if not success or not output then
+		cpu_usage_last = now
+		return cpu_usage_cache
+	end
+
+	local sample
+	for line in output:gmatch("[^\r\n]+") do
+		if line:match("^%s*%d") then
+			sample = line
+		end
+	end
+
+	if not sample then
+		cpu_usage_last = now
+		return cpu_usage_cache
+	end
+
+	local idle = tonumber(sample:match("^%s*%d+%s+%d+%s+(%d+)"))
+	if not idle then
+		cpu_usage_last = now
+		return cpu_usage_cache
+	end
+
+	local used_pct = math.max(0, math.min(100, 100 - idle))
+	cpu_usage_cache = string.format(" %d%% ", used_pct)
+	cpu_usage_last = now
+	return cpu_usage_cache
+end
 
 local disk_usage_cache = " -- "
 local disk_usage_last = 0
@@ -301,7 +360,7 @@ tabline.setup({
 		},
 		tabline_x = {
 			{ "ram", icons_enabled = false },
-			{ "cpu", icons_enabled = false },
+			cpu_usage,
 			net_usage,
 			disk_usage,
 		},
