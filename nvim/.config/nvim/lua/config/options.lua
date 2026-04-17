@@ -9,6 +9,8 @@ vim.o.splitbelow = true
 vim.o.termguicolors = true
 vim.o.updatetime = 250
 vim.o.timeoutlen = 300
+vim.o.cursorline = true
+vim.o.cursorlineopt = 'number,line'
 vim.o.guicursor = 'n-v-c:block,i-ci-ve:ver25,r-cr-o:hor20,a:blinkwait0-blinkoff0-blinkon0'
 
 vim.schedule(function()
