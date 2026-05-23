@@ -1,15 +1,17 @@
-# --- Node Version Manager (NVM) ---
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# --- Node (via Bun) ---
+# Using Bun as the JS runtime/package manager; PATH set in ~/.zshrc
 
 # --- Google Cloud SDK ---
+# Path needs to be available immediately; completion is lazy-loaded on first `gcloud` use.
 if [ -f '/Users/lucas/Downloads/google-cloud-sdk/path.zsh.inc' ]; then
     . '/Users/lucas/Downloads/google-cloud-sdk/path.zsh.inc'
 fi
-if [ -f '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then
-    . '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc'
-fi
+gcloud() {
+    unfunction gcloud
+    [ -f '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc' ] && \
+        . '/Users/lucas/Downloads/google-cloud-sdk/completion.zsh.inc'
+    command gcloud "$@"
+}
 
 # --- Java ---
 export CPPFLAGS="-I/opt/homebrew/opt/openjdk@17/include"

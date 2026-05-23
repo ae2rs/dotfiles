@@ -76,8 +76,8 @@ alias spo='spotify_player'
 alias ghd='gh dash'
 alias dc='docker compose'
 alias ai='aichat'
-alias c='codex'
-alias cr='codex resume'
+alias c='claude'
+alias cr='claude --resume'
 
 # --- Work-specific ---
 clip() {
@@ -91,12 +91,13 @@ alias bazelfmt='buildifier -r .'
 alias webfmt="pnpm -r --filter='!sugar' lint --fix"
 alias allfmt='rfmt && protofmt && bazelfmt'
 alias allunused='./tools/unused_imports.py && ./tools/proto_unused_imports.py'
+alias allowners='bazel run //tools/owners -- generate && bazel run //tools/owners -- format'
 alias devlocal='(cd /Users/lucas/work/monorepo/rs/engine/dev-local/ && docker compose up -d) && bazel run //rs/engine/dev-local'
 alias devkill="kill -9 $(ps aux | pgrep -fl dev-local/process-compose.yml | awk 'NR==1 {print $1}')"
 alias devclean='docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && docker volume ls -q | xargs -r docker volume rm'
 alias xcode='(cd /Users/lucas/work/monorepo/ && bazel run //iosapp/Apps/Location:xcodeproj && xed iosapp/Apps/Location/Location.xcodeproj)'
 alias lspmux_restart='launchctl kickstart -k gui/$(id -u)/org.codeberg.p2502.lspmux'
-alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools && sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) -exec rm -rf {} +'
+alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools /var/tmp/_bazel_lucas && sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) -exec rm -rf {} +'
 
 # --- Notes ---
 alias todo='nvim /Users/lucas/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Notes/TODO.md'

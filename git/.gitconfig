@@ -22,3 +22,9 @@
 	defaultBranch = main
 [feature]
 	manyFiles = true
+[scalar]
+	repo = /Users/lucas/dotfiles
+	repo = /Users/lucas/work/monorepo
+[maintenance]
+	repo = /Users/lucas/dotfiles
+	repo = /Users/lucas/work/monorepo

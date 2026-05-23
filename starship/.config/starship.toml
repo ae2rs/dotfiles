@@ -2,13 +2,16 @@ format = """
 $username\
 $directory\
 $git_branch\
+$git_state\
+$kubernetes\
 $line_break\
-$character"""
+$status$sudo$character"""
 
-right_format = """$cmd_duration"""
+right_format = """$cmd_duration$time"""
 
 add_newline = false
 scan_timeout = 10
+command_timeout = 500
 
 [character]
 success_symbol = "[➜](bold green) "
@@ -19,17 +22,54 @@ truncation_length = 1
 read_only = ' 🔒'
 
 [cmd_duration]
-format = "[$duration]($style) "
-style = "light_grey"
-min_time = 1_000
+format = "[$duration · ]($style)"
+style = "bright-black"
+min_time = 0
+show_milliseconds = false
 
 [git_branch]
 symbol = 'git'
 format = '[$symbol:\([$branch](bold red)\)](bold blue) '
 
-[git_status]
+[time]
+disabled = false
+format = '[$time]($style)'
+style = "bright-black"
+time_format = "%H:%M:%S"
+
+[git_state]
+# Reads .git/ directly — no git shell-out, near-zero cost.
+# Renders only during rebase/merge/cherry-pick/revert/bisect.
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
 style = "bold yellow"
-# format = '([\[$ahead$behind\]]($style))'
-# ahead = '⇡$count'
-# behind = '⇣$count'
+
+[kubernetes]
+disabled = false
+format = '[⎈ $context( \($namespace\))]($style) '
+style = "cyan bold"
+# Show only in directories that look like k8s manifests/charts/kustomizations.
+# (Default would render everywhere — too noisy.)
+detect_files = ['k8s', 'kubeconfig', 'kustomization.yaml', 'Chart.yaml', 'skaffold.yaml']
+detect_folders = ['.kube', 'manifests', 'charts']
+detect_extensions = []
+# Highlight prod-ish contexts in red so accidental kubectl is visible.
+[[kubernetes.contexts]]
+context_pattern = ".*prod.*"
+style = "red bold"
+
+[status]
+disabled = false
+format = '[$status]($style) '
+style = "bold red"
+symbol = ""
+success_symbol = ""
+not_found_symbol = ""
+sigint_symbol = ""
+signal_symbol = ""
+
+[sudo]
+disabled = false
+format = '[$symbol]($style)'
+symbol = "● "
+style = "bold yellow"
 
