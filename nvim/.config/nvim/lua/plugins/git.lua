@@ -39,7 +39,6 @@ return {
         keys.lazy_leader('n', 'gg', git.open_status, 'Git status'),
         keys.lazy_leader('n', 'gb', git.open_branch_picker, 'Git branches'),
         keys.lazy_leader('n', 'gd', git.open_dash, 'GitHub dash'),
-        keys.lazy_leader('n', 'gr', git.open_reset_picker, 'Reset from commits'),
         keys.lazy_leader('n', 'gz', git.open_stash_popup, 'Stash popup'),
         keys.lazy_leader('n', 'gZ', git.open_stash_list, 'Stash list'),
         keys.lazy_leader('n', 'gR', git.open_rebase_popup, 'Rebase popup'),
@@ -71,8 +70,8 @@ return {
         end,
         mappings = {
           status = {
+            ['x'] = false,
             ['gb'] = git.open_branch_picker,
-            ['gr'] = git.open_reset_picker,
             ['gz'] = git.open_stash_popup,
             ['gZ'] = git.open_stash_list,
             ['gR'] = git.open_rebase_popup,
@@ -82,6 +81,24 @@ return {
     end,
     config = function(_, opts)
       require('neogit').setup(opts)
+      require('config.neogit_branches').setup()
+
+      -- When opening a file from the status view without a hunk-targeted
+      -- cursor, Neogit hard-codes line 1. Fall back to the `"` mark instead,
+      -- so unloaded files reopen at the last position recorded in shada.
+      local jump = require 'neogit.lib.jump'
+      local original_open = jump.open
+      jump.open = function(command, path, cursor, cmd_debug_prefix)
+        if cursor then
+          return original_open(command, path, cursor, cmd_debug_prefix)
+        end
+        local logger = require 'neogit.logger'
+        local cmd = ('silent! %s %s | silent! normal! g`"zz'):format(command, vim.fn.fnameescape(path))
+        if cmd_debug_prefix then
+          logger.debug(cmd_debug_prefix .. " '" .. cmd .. "'")
+        end
+        vim.cmd(cmd)
+      end
     end,
   },
   {

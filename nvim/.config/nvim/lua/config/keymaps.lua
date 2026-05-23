@@ -4,6 +4,7 @@ keys.leader_group('c', 'Code')
 keys.leader_group('g', 'Git')
 keys.leader_group('l', 'LSP')
 keys.leader_group('s', 'Search')
+keys.leader_group('t', 'Terminal')
 
 keys.map('n', '<Esc>', '<cmd>nohlsearch<CR>', 'Clear search highlight')
 keys.map('t', '<Esc><Esc>', '<C-\\><C-n>', 'Exit terminal mode')

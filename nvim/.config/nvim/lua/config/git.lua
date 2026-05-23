@@ -66,7 +66,49 @@ function M.open_rebase_popup()
   require('neogit').open { 'rebase' }
 end
 
-function M.open_reset_picker()
+local function reset_to_commit(status_buf, oid, abbrev)
+  vim.ui.select({ 'mixed', 'soft', 'hard' }, {
+    prompt = ('Reset to %s — mode?'):format(abbrev),
+  }, function(choice)
+    if not choice then
+      return
+    end
+    local a = require 'neogit.lib.async'
+    local notification = require 'neogit.lib.notification'
+    local reset = require('neogit.lib.git').reset
+    a.void(function()
+      notification.info(('Resetting --%s to %s…'):format(choice, abbrev))
+      if reset[choice](oid) then
+        notification.info(('Reset --%s to %s'):format(choice, abbrev))
+      else
+        notification.error(('Reset --%s to %s failed'):format(choice, abbrev))
+      end
+      if status_buf then
+        status_buf:dispatch_refresh(nil, 'reset')
+      end
+    end)()
+  end)
+end
+
+function M.open_reset_picker(status_buf)
+  if vim.bo.filetype == 'NeogitStatus' then
+    if not (status_buf and status_buf.buffer and status_buf.buffer.ui) then
+      local ok, status = pcall(require, 'neogit.buffers.status')
+      if ok then
+        status_buf = status.instance(vim.fn.getcwd(0)) or status.instance()
+      end
+    end
+    if status_buf and status_buf.buffer and status_buf.buffer.ui then
+      local item = status_buf.buffer.ui:get_item_under_cursor()
+      local commit = item and type(item.commit) == 'table' and item.commit
+      if commit and commit.oid then
+        local abbrev = commit.abbreviated_commit or commit.oid:sub(1, 7)
+        reset_to_commit(status_buf, commit.oid, abbrev)
+        return
+      end
+    end
+  end
+
   telescope_git_picker('git_commits', {
     prompt_title = 'Git Commits (<C-r>m mixed, <C-r>s soft, <C-r>h hard)',
     git_command = {
@@ -80,8 +122,23 @@ function M.open_reset_picker()
 end
 
 function M.open_branch_picker()
+  local actions = require 'telescope.actions'
   telescope_git_picker('git_branches', {
-    prompt_title = 'Git Branches (<CR> checkout, <C-r> rebase)',
+    prompt_title = 'Branches  <CR>/o:checkout  r:rebase  m:merge  d:delete  n:new  R:rename  t:track',
+    initial_mode = 'normal',
+    show_remote_tracking_branches = false,
+    attach_mappings = function(_, map)
+      map('n', 'o', actions.git_checkout)
+      map('n', 'r', actions.git_rebase_branch)
+      map('n', 'm', actions.git_merge_branch)
+      map('n', 'M', actions.git_merge_branch)
+      map('n', 'd', actions.git_delete_branch)
+      map('n', 'n', actions.git_create_branch)
+      map('n', 'R', actions.git_rename_branch)
+      map('n', 't', actions.git_track_branch)
+      map('n', 's', actions.git_switch_branch)
+      return true
+    end,
   })
 end
 

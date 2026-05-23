@@ -249,6 +249,30 @@ return {
     },
   },
   {
+    'RRethy/vim-illuminate',
+    event = { 'BufReadPost', 'BufNewFile' },
+    config = function()
+      require('illuminate').configure {
+        under_cursor = false,
+      }
+      for _, group in ipairs { 'IlluminatedWordText', 'IlluminatedWordRead', 'IlluminatedWordWrite' } do
+        vim.api.nvim_set_hl(0, group, { underline = true, sp = 'NONE' })
+      end
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        callback = function()
+          for _, group in ipairs { 'IlluminatedWordText', 'IlluminatedWordRead', 'IlluminatedWordWrite' } do
+            vim.api.nvim_set_hl(0, group, { underline = true, sp = 'NONE' })
+          end
+        end,
+      })
+    end,
+  },
+  {
+    'sphamba/smear-cursor.nvim',
+    event = 'VeryLazy',
+    opts = {},
+  },
+  {
     'rachartier/tiny-inline-diagnostic.nvim',
     event = 'VeryLazy',
     priority = 1000,
