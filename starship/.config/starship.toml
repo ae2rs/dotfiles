@@ -3,7 +3,6 @@ $username\
 $directory\
 $git_branch\
 $git_state\
-$kubernetes\
 $line_break\
 $status$sudo$character"""
 
@@ -43,19 +42,19 @@ time_format = "%H:%M:%S"
 format = '\([$state( $progress_current/$progress_total)]($style)\) '
 style = "bold yellow"
 
-[kubernetes]
-disabled = false
-format = '[⎈ $context( \($namespace\))]($style) '
-style = "cyan bold"
+# [kubernetes]
+# disabled = false
+# format = '[⎈ $context( \($namespace\))]($style) '
+# style = "cyan bold"
 # Show only in directories that look like k8s manifests/charts/kustomizations.
 # (Default would render everywhere — too noisy.)
-detect_files = ['k8s', 'kubeconfig', 'kustomization.yaml', 'Chart.yaml', 'skaffold.yaml']
-detect_folders = ['.kube', 'manifests', 'charts']
-detect_extensions = []
+# detect_files = ['k8s', 'kubeconfig', 'kustomization.yaml', 'Chart.yaml', 'skaffold.yaml']
+# detect_folders = ['.kube', 'manifests', 'charts']
+# detect_extensions = []
 # Highlight prod-ish contexts in red so accidental kubectl is visible.
-[[kubernetes.contexts]]
-context_pattern = ".*prod.*"
-style = "red bold"
+# [[kubernetes.contexts]]
+# context_pattern = ".*prod.*"
+# style = "red bold"
 
 [status]
 disabled = false
