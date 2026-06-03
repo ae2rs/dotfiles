@@ -20,9 +20,9 @@ return {
         untracked = { text = '?' },
       },
       signcolumn = true,
-      current_line_blame = false,
+      current_line_blame = true,
       current_line_blame_opts = {
-        delay = 0,
+        delay = 150,
         virt_text_pos = 'eol',
       },
       current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',

@@ -9,6 +9,11 @@ keys.leader_group('t', 'Terminal')
 keys.map('n', '<Esc>', '<cmd>nohlsearch<CR>', 'Clear search highlight')
 keys.map('t', '<Esc><Esc>', '<C-\\><C-n>', 'Exit terminal mode')
 
+-- Translate Alt+<key> into single-byte readline equivalents that zsh's
+-- vi-insert keymap understands. This avoids leaking a bare ESC into zsh,
+-- which would otherwise drop the prompt into vi-cmd mode ("inverted prompt").
+keys.map('t', '<M-BS>', '\23', 'Delete word backward (sends C-w)') -- ^W
+
 keys.map('n', '<C-h>', '<C-w><C-h>', 'Move focus left')
 keys.map('n', '<C-j>', '<C-w><C-j>', 'Move focus down')
 keys.map('n', '<C-k>', '<C-w><C-k>', 'Move focus up')

@@ -210,7 +210,12 @@ local function confirm(msg)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, { ' ' .. text .. ' ' })
   vim.bo[buf].modifiable = false
 
-  local win = vim.api.nvim_open_win(buf, false, {
+  -- Focusable + entered so the real cursor lives inside this popup while we
+  -- wait on getcharstr. Otherwise any cursor-trail animation (noice, smear,
+  -- etc.) chases the cursor in the previous window while the popup floats
+  -- elsewhere, which looks broken.
+  local prev_win = vim.api.nvim_get_current_win()
+  local win = vim.api.nvim_open_win(buf, true, {
     relative = 'editor',
     width = width,
     height = 1,
@@ -218,16 +223,22 @@ local function confirm(msg)
     col = math.floor((vim.o.columns - width) / 2),
     style = 'minimal',
     border = 'rounded',
-    focusable = false,
+    focusable = true,
     zindex = 250,
     noautocmd = true,
   })
   vim.wo[win].winhighlight = 'Normal:NormalFloat,FloatBorder:FloatBorder,FloatTitle:FloatTitle'
+  vim.wo[win].cursorline = false
+  -- Park the cursor on the visible text so the smear sits inside the popup.
+  pcall(vim.api.nvim_win_set_cursor, win, { 1, 2 })
 
   vim.cmd 'redraw'
   local ok, ch = pcall(vim.fn.getcharstr)
   pcall(vim.api.nvim_win_close, win, true)
   pcall(vim.api.nvim_buf_delete, buf, { force = true })
+  if vim.api.nvim_win_is_valid(prev_win) then
+    pcall(vim.api.nvim_set_current_win, prev_win)
+  end
   vim.cmd 'redraw'
 
   if not ok or not ch or ch == '' then
@@ -1121,7 +1132,9 @@ function M.setup()
           M.new_branch_under_cursor()
         end, opts)
         vim.keymap.set('n', 'r', function()
-          M.reset_under_cursor()
+          if not M.reset_under_cursor() then
+            require('neogit').open { 'rebase' }
+          end
         end, opts)
       end)
     end,
