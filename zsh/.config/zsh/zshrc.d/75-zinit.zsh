@@ -17,8 +17,8 @@ zinit wait lucid for \
     OMZP::docker \
     OMZP::docker-compose \
     OMZP::eza \
-    OMZP::fzf \
     OMZP::kubectl \
+    OMZP::fzf \
     OMZP::rust \
     OMZP::ssh \
     OMZP::uv

@@ -4,7 +4,7 @@
 
 # --- eza (better ls) ---
 alias l='eza -l'
-alias ll='eza -l --all'
+alias ll='eza -alh'
 alias ls='eza'
 
 # --- Git & Docker tools ---
@@ -76,8 +76,17 @@ alias spo='spotify_player'
 alias ghd='gh dash'
 alias dc='docker compose'
 alias ai='aichat'
-alias c='claude'
-alias cr='claude --resume'
+
+# --- Claude ---
+# Main one is pro
+alias c="CLAUDE_CONFIG_DIR=~/.claude-pro command claude"
+alias cr='c --resume'
+
+# Perso account
+alias cperso="CLAUDE_CONFIG_DIR=~/.claude-perso command claude"
+alias cpersor='cp --resume'
+
+alias claude="echo 'Use claude code specific commandes : claude-perso or claude-pro'"
 
 # --- Work-specific ---
 clip() {
@@ -98,6 +107,45 @@ alias devclean='docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r 
 alias xcode='(cd /Users/lucas/work/monorepo/ && bazel run //iosapp/Apps/Location:xcodeproj && xed iosapp/Apps/Location/Location.xcodeproj)'
 alias lspmux_restart='launchctl kickstart -k gui/$(id -u)/org.codeberg.p2502.lspmux'
 alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools /var/tmp/_bazel_lucas && sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) -exec rm -rf {} +'
+
+nuke_disk() {
+    echo "🧨 Nuking disk caches...\n"
+
+    # ── Bazel ──────────────────────────────────────────────────────────────────
+    echo "🏗️   Bazel..."
+    sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs \
+      /private/var/tmp/_bazel_rust_tools /var/tmp/_bazel_lucas \
+      ~/Library/Caches/bazel ~/Library/Caches/go-build
+    sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) \
+      -exec rm -rf {} + 2>/dev/null
+
+    # ── Rust target/ dirs (only next to a Cargo.toml, never blind) ─────────────
+    echo "🦀  Rust target/ dirs..."
+    find ~/perso ~/work -maxdepth 6 -name "Cargo.toml" -not -path "*/target/*" 2>/dev/null \
+      | while read f; do
+          dir=$(dirname "$f")
+          if [ -d "$dir/target" ]; then
+            rm -rf "$dir/target"
+            echo "    cleaned: $dir/target"
+          fi
+        done
+
+    # ── Cargo registry cache (keeps src/ for IDE lookups) ──────────────────────
+    echo "📦  Cargo registry cache..."
+    rm -rf ~/.cargo/registry/cache
+
+    # ── Node / Bun / uv ────────────────────────────────────────────────────────
+    echo "🟢  npm / Bun / uv caches..."
+    npm cache clean --force 2>/dev/null
+    rm -rf ~/.npm ~/.bun/install/cache ~/.cache/uv
+
+    # ── Xcode ──────────────────────────────────────────────────────────────────
+    echo "🍎  Xcode DerivedData + unavailable simulators..."
+    rm -rf ~/Library/Developer/Xcode/DerivedData
+    xcrun simctl delete unavailable 2>/dev/null
+
+    echo "\n✅  Done! Run 'df -h /' to verify."
+  }
 
 # --- Notes ---
 alias todo='nvim /Users/lucas/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Notes/TODO.md'
@@ -120,3 +168,6 @@ y() {
     fi
     rm -f -- "$tmp"
 }
+
+# --- Others ---
+alias pwdc='pwd | tr -d "\r" | pbcopy'

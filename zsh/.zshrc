@@ -16,3 +16,6 @@ export PATH="/Users/lucas/.antigravity/antigravity/bin:$PATH"
 
 # opencode
 export PATH=/Users/lucas/.opencode/bin:$PATH
+
+# Abacus AI CLI
+export PATH="/Users/lucas/.abacusai/bin:$PATH"
