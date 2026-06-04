@@ -1,29 +1,5 @@
 local M = {}
 
-M.root = '/Users/lucas/work/monorepo'
-M.proto_include_paths = {
-  M.root .. '/rs',
-  M.root .. '/rs/proto',
-}
-
-local function normalize_path(path)
-  if not path or path == '' then
-    return vim.fn.getcwd()
-  end
-
-  local stat = vim.uv.fs_stat(path)
-  if stat and stat.type == 'directory' then
-    return path
-  end
-
-  return vim.fs.dirname(path) or path
-end
-
-function M.is_under_root(path)
-  local normalized = normalize_path(path)
-  return normalized == M.root or vim.startswith(normalized, M.root .. '/')
-end
-
 local function should_suppress_notify(msg)
   local text = msg
   if type(msg) == 'table' and type(msg.message) == 'string' then

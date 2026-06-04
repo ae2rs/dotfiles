@@ -34,10 +34,6 @@ return {
       local monorepo = require 'lsp.monorepo'
       local lsp = vim.lsp
       local protocol = lsp.protocol
-      -- Monorepo rust-analyzer/protols are now provided by the repo's own
-      -- `.nvim.lua` (exrc). See PR wesprint-io/monorepo#30364.
-      -- local protols = require 'lsp.protols'
-      -- local rust_analyzer = require 'lsp.rust_analyzer'
       local util = require 'vim.lsp.util'
 
       local function save_modified_file_buffers()
@@ -165,15 +161,9 @@ return {
 
       lsp.config('lua_ls', with_capabilities(require 'lsp.lua_ls'))
       lsp.config('gopls', with_capabilities(require 'lsp.gopls'))
-      -- Provided by the monorepo's `.nvim.lua` (exrc) instead. See PR
-      -- wesprint-io/monorepo#30364.
-      -- lsp.config('monorepo_rust_analyzer', with_capabilities(rust_analyzer))
-      -- lsp.config('protols', with_capabilities(protols))
 
       lsp.enable 'lua_ls'
       lsp.enable 'gopls'
-      -- lsp.enable 'monorepo_rust_analyzer'
-      -- lsp.enable 'protols'
     end,
   },
 }
