@@ -20,6 +20,7 @@ return {
     opts = {
       formatters_by_ft = {
         lua = { 'stylua' },
+        go = { 'goimports', 'gofumpt' },
       },
       format_on_save = function(bufnr)
         local bo = vim.bo[bufnr]

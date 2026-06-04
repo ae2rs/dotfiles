@@ -15,7 +15,7 @@ return {
   {
     'mason-org/mason-lspconfig.nvim',
     opts = {
-      ensure_installed = { 'lua_ls', 'rust_analyzer', 'protols' },
+      ensure_installed = { 'lua_ls', 'rust_analyzer', 'protols', 'gopls' },
       automatic_enable = false,
     },
     dependencies = {
@@ -153,16 +153,25 @@ return {
           map('gy', telescope_picker 'lsp_type_definitions', 'Goto type definition')
           map('K', lsp.buf.hover, 'Hover')
           keys.leader({ 'n', 'x' }, 'la', lsp.buf.code_action, 'Code action', { buffer = event.buf })
+
+          if vim.lsp.inlay_hint then
+            vim.lsp.inlay_hint.enable(true, { bufnr = event.buf })
+            keys.leader('n', 'lh', function()
+              vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }, { bufnr = event.buf })
+            end, 'Toggle inlay hints', { buffer = event.buf })
+          end
         end,
       })
 
       lsp.config('lua_ls', with_capabilities(require 'lsp.lua_ls'))
+      lsp.config('gopls', with_capabilities(require 'lsp.gopls'))
       -- Provided by the monorepo's `.nvim.lua` (exrc) instead. See PR
       -- wesprint-io/monorepo#30364.
       -- lsp.config('monorepo_rust_analyzer', with_capabilities(rust_analyzer))
       -- lsp.config('protols', with_capabilities(protols))
 
       lsp.enable 'lua_ls'
+      lsp.enable 'gopls'
       -- lsp.enable 'monorepo_rust_analyzer'
       -- lsp.enable 'protols'
     end,
