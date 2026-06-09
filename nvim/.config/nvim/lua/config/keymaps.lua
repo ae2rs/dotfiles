@@ -19,6 +19,12 @@ keys.map('n', '<C-j>', '<C-w><C-j>', 'Move focus down')
 keys.map('n', '<C-k>', '<C-w><C-k>', 'Move focus up')
 keys.map('n', '<C-l>', '<C-w><C-l>', 'Move focus right')
 
+keys.leader('n', 'cp', function()
+  local path = vim.fn.fnamemodify(vim.fn.expand '%', ':.')
+  vim.fn.setreg('+', path)
+  vim.notify('Copied: ' .. path)
+end, 'Copy relative path')
+
 keys.map('n', '[d', vim.diagnostic.goto_prev, 'Previous diagnostic')
 keys.map('n', ']d', vim.diagnostic.goto_next, 'Next diagnostic')
 keys.leader('n', 'ld', function()
