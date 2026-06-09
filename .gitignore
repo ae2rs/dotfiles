@@ -20,12 +20,16 @@ codex/.codex/history.jsonl
 codex/.codex/session_index.jsonl
 codex/.codex/logs_*.sqlite*
 codex/.codex/state_*.sqlite*
+codex/.codex/goals_*.sqlite*
+codex/.codex/memories_*.sqlite*
 codex/.codex/config.toml
 codex/.codex/.codex-global-state.json
 codex/.codex/.personality_migration
 codex/.codex/version.json
 codex/.codex/auth.json
 codex/.codex/models_cache.json
+codex/.codex/*cache*.json
+codex/.codex/installation_id
 
 # Neovim
 nvim/.config/nvim/.nvimlog
