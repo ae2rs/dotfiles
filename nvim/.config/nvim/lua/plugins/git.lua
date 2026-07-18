@@ -70,7 +70,7 @@ return {
         end,
         mappings = {
           status = {
-            ['x'] = false,
+            -- ['x'] = false,
             ['gb'] = git.open_branch_picker,
             ['gz'] = git.open_stash_popup,
             ['gZ'] = git.open_stash_list,
@@ -81,7 +81,11 @@ return {
     end,
     config = function(_, opts)
       require('neogit').setup(opts)
-      require('config.neogit_branches').setup()
+      -- Custom Neogit branch/preview logic (status branch section, busy-lock
+      -- spinner, cursor-checkout, custom d/t/n/r keymaps, right-side preview)
+      -- disabled: too unreliable. See config/neogit_branches.lua and
+      -- config/neogit_preview.lua.
+      -- require('config.neogit_branches').setup()
 
       -- When opening a file from the status view without a hunk-targeted
       -- cursor, Neogit hard-codes line 1. Fall back to the `"` mark instead,

@@ -27,8 +27,12 @@ zinit wait lucid for \
 # zsh-syntax-highlighting must load last; `atinit'zicompinit; zicdreplay'`
 # triggers a single compinit right before it loads, replaying any compdef
 # calls registered by snippets above.
+# `_comp_options+=(globdots)` MUST run after zicompinit: compinit assigns
+# _comp_options wholesale (see compinit line ~139), so appending earlier
+# (e.g. in a zshrc.d file) gets clobbered. This makes tab-completion offer
+# dotfiles without typing the leading dot, without affecting globbing.
 zinit wait lucid light-mode for \
-    atinit'zicompinit; zicdreplay' \
+    atinit'zicompinit; zicdreplay; _comp_options+=(globdots)' \
         zdharma-continuum/fast-syntax-highlighting \
     atload'_zsh_autosuggest_start' \
         zsh-users/zsh-autosuggestions \

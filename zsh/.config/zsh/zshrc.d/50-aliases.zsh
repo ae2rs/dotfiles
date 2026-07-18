@@ -3,9 +3,10 @@
 ########################################
 
 # --- eza (better ls) ---
-alias l='eza -l'
+# -a shows dotfiles (like `ls -A`); use -aa to also show . and ..
+alias l='eza -la'
 alias ll='eza -alh'
-alias ls='eza'
+alias ls='eza -a'
 
 # --- Git & Docker tools ---
 alias lz='lazygit'
@@ -148,8 +149,8 @@ nuke_disk() {
   }
 
 # --- Notes ---
-alias todo='nvim /Users/lucas/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Notes/TODO.md'
-alias notes='nvim /Users/lucas/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/Notes/'
+alias todo='(cd /Users/lucas/Documents/notes/ && nvim TODO.md) '
+alias notes='(cd /Users/lucas/Documents/notes/ && nvim)'
 
 # --- nvim shortcut ---
 n() {
@@ -171,3 +172,4 @@ y() {
 
 # --- Others ---
 alias pwdc='pwd | tr -d "\r" | pbcopy'
+alias ipcp='ipconfig getifaddr en0 | tr -d "\n" | pbcopy'

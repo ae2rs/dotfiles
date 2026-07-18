@@ -49,6 +49,19 @@ local function mason_bin(name)
   return name
 end
 
+-- Prefer the monorepo's pinned rust-analyzer wrapper. It resolves the
+-- rust-analyzer from the Bazel-pinned toolchain (nightly/2026-03-05) and exports
+-- CARGO to the matching pinned cargo, so the server and cargo agree on supported
+-- flags (e.g. `cargo metadata --lockfile-path`). Falls back to the Mason binary.
+local function resolve_cmd()
+  local wrapper = vim.fs.joinpath(monorepo.root, 'tools', 'rust-editor-support', 'rust-analyzer')
+  if vim.fn.executable(wrapper) == 1 then
+    return { wrapper }
+  end
+
+  return { mason_bin 'rust-analyzer' }
+end
+
 local function python3_cmd()
   local exepath = vim.fn.exepath 'python3'
   if exepath ~= '' then
@@ -215,7 +228,7 @@ function M.on_new_config(config, project_root)
   debug_log(('new_config root=%s cmd=%s discover=%s'):format(tostring(project_root), table.concat(config.cmd or {}, ' '), table.concat(discover_command, ' ')))
 end
 
-M.cmd = { mason_bin 'rust-analyzer' }
+M.cmd = resolve_cmd()
 M.name = 'rust_analyzer'
 M.filetypes = { 'rust' }
 M.settings = vim.deepcopy(default_settings)
