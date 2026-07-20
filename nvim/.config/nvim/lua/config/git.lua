@@ -22,7 +22,16 @@ local function dash_tab_is_dedicated(tabpage, bufnr)
     return false
   end
 
-  local wins = vim.api.nvim_tabpage_list_wins(tabpage)
+  -- Only consider "real" (non-floating) windows: noice/snacks notification
+  -- floats can be present on the tab when gh dash exits, and counting them
+  -- would make the tab look non-dedicated and skip the close.
+  local wins = {}
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage)) do
+    if vim.api.nvim_win_get_config(win).relative == '' then
+      wins[#wins + 1] = win
+    end
+  end
+
   if #wins ~= 1 then
     return false
   end

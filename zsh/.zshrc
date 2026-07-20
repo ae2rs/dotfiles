@@ -19,3 +19,6 @@ export PATH=/Users/lucas/.opencode/bin:$PATH
 
 # Abacus AI CLI
 export PATH="/Users/lucas/.abacusai/bin:$PATH"
+
+# kimi-code
+export PATH="/Users/lucas/.kimi-code/bin:$PATH"
