@@ -84,11 +84,6 @@ alias ai='aichat'
 alias c="clodo auto && command claude"
 alias cr='c --resume'
 
-# Pin a specific account
-alias camo="clodo use amo && command claude"
-alias cperso="clodo use perso && command claude"
-alias cpersor='cperso --resume'
-
 # --- Work-specific ---
 clip() {
     local root
