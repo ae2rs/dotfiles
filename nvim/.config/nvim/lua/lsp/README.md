@@ -18,5 +18,6 @@ Important behavior:
 - Workspace discover commands are wrapped through [`../../scripts/rust_analyzer_discover.py`](../../scripts/rust_analyzer_discover.py) so missing titles and relative paths do not break the Neovim client flow.
 - Proto files under `/Users/lucas/work/monorepo` are forced to use the monorepo root and include paths from `monorepo.lua`.
 - `monorepo.lua` also suppresses a small set of noisy notify/LSP messages for the monorepo workflow.
+- Rust clients set `exit_timeout = 5000` so a busy rust-analyzer cannot block quitting (graceful shutdown, then force-kill after 5s).
 
 If you change root detection, override loading, or the message filters, re-check the monorepo editing workflow manually.

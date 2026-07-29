@@ -228,6 +228,9 @@ function M.on_new_config(config, project_root)
   debug_log(('new_config root=%s cmd=%s discover=%s'):format(tostring(project_root), table.concat(config.cmd or {}, ' '), table.concat(discover_command, ' ')))
 end
 
+-- rust-analyzer in the monorepo can be slow to answer `shutdown` (bazel workspace
+-- discovery). Give it 5s to exit gracefully, then force-stop so quitting isn't blocked.
+M.exit_timeout = 5000
 M.cmd = resolve_cmd()
 M.name = 'rust_analyzer'
 M.filetypes = { 'rust' }
