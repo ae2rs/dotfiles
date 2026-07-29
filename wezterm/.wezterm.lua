@@ -61,6 +61,58 @@ local toggleTabBar = wezterm.action_callback(function(window)
 	})
 end)
 
+-- pop the active pane out into a new window
+local popPane = wezterm.action_callback(function(_, pane)
+	pane:move_to_new_window()
+end)
+
+-- pop the whole tab out into a new window, keeping the panes as splits
+local popTab = wezterm.action_callback(function(window, pane)
+	local tab = window:active_tab()
+	local infos = tab:panes_with_info()
+	if #infos <= 1 then
+		pane:move_to_new_window()
+		return
+	end
+
+	-- Move the first pane into a new window, then split that pane and move
+	-- each remaining pane into the new split. Direction (and size, for the
+	-- second pane) comes from the original geometry; with 3+ panes nested
+	-- layouts are approximated since every split targets the first pane.
+	local first = infos[1]
+	first.pane:move_to_new_window()
+	for i = 2, #infos do
+		local info = infos[i]
+		local args = {
+			wezterm.executable_dir .. "/wezterm",
+			"cli",
+			"split-pane",
+			"--pane-id",
+			tostring(first.pane:pane_id()),
+		}
+		if info.left >= first.left + first.width then
+			table.insert(args, "--right")
+			if i == 2 then
+				table.insert(args, "--percent")
+				table.insert(args, tostring(math.floor(info.width / (first.width + info.width) * 100 + 0.5)))
+			end
+		elseif info.top >= first.top + first.height then
+			table.insert(args, "--bottom")
+			if i == 2 then
+				table.insert(args, "--percent")
+				table.insert(args, tostring(math.floor(info.height / (first.height + info.height) * 100 + 0.5)))
+			end
+		elseif info.left + info.width <= first.left then
+			table.insert(args, "--left")
+		else
+			table.insert(args, "--top")
+		end
+		table.insert(args, "--move-pane-id")
+		table.insert(args, tostring(info.pane:pane_id()))
+		wezterm.run_child_process(args)
+	end
+end)
+
 local openUrl = act.QuickSelectArgs({
 	label = "open url",
 	patterns = { "https?://\\S+" },
@@ -95,6 +147,9 @@ map("x", "LEADER", act.CloseCurrentPane({ confirm = true }))
 map("t", { "SHIFT|CTRL", "SUPER" }, act.SpawnTab("CurrentPaneDomain"))
 map("w", { "SHIFT|CTRL", "SUPER" }, act.CloseCurrentTab({ confirm = true }))
 map("n", { "SHIFT|CTRL", "SUPER" }, act.SpawnWindow)
+-- pop out to a new window
+map("m", "LEADER", popPane) -- active pane only
+map("M", "LEADER", popTab) -- whole tab
 -- zoom states
 map("z", { "LEADER", "SUPER" }, act.TogglePaneZoomState)
 map("Z", { "LEADER", "SUPER" }, toggleTabBar)
