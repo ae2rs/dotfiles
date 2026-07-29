@@ -25,6 +25,8 @@ codex/.codex/memories_*.sqlite*
 codex/.codex/config.toml
 codex/.codex/.codex-global-state.json
 codex/.codex/.personality_migration
+codex/.codex/.sandbox_migration
+codex/.codex/skills/.system/
 codex/.codex/version.json
 codex/.codex/auth.json
 codex/.codex/models_cache.json
