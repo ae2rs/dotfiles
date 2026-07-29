@@ -79,15 +79,15 @@ alias dc='docker compose'
 alias ai='aichat'
 
 # --- Claude ---
-# Main one is pro
-alias c="CLAUDE_CONFIG_DIR=~/.claude-pro command claude"
+# One config dir (~/.claude); clodo owns which account is active.
+# Keeps the current account unless it is maxed out, then swaps.
+alias c="clodo auto && command claude"
 alias cr='c --resume'
 
-# Perso account
-alias cperso="CLAUDE_CONFIG_DIR=~/.claude-perso command claude"
-alias cpersor='cp --resume'
-
-alias claude="echo 'Use claude code specific commandes : claude-perso or claude-pro'"
+# Pin a specific account
+alias camo="clodo use amo && command claude"
+alias cperso="clodo use perso && command claude"
+alias cpersor='cperso --resume'
 
 # --- Work-specific ---
 clip() {
