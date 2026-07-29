@@ -4,6 +4,10 @@ keys.leader_group('c', 'Code')
 keys.leader_group('g', 'Git')
 keys.leader_group('l', 'LSP')
 keys.leader_group('s', 'Search')
+
+keys.leader('n', 'sr', function()
+  require('config.search').resume()
+end, 'Resume last search')
 keys.leader_group('t', 'Terminal')
 
 keys.map('n', '<Esc>', '<cmd>nohlsearch<CR>', 'Clear search highlight')

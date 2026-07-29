@@ -70,4 +70,24 @@ function M.fzf_live_grep_command()
   return shell_join(args)
 end
 
+local last_engine = nil
+
+-- Wrap a picker callback so the engine is recorded on every invocation.
+function M.track(engine, fn)
+  return function(...)
+    last_engine = engine
+    fn(...)
+  end
+end
+
+function M.resume()
+  if last_engine == 'fzf' then
+    require('fzf-lua').resume()
+  elseif last_engine == 'telescope' then
+    require('telescope.builtin').resume()
+  else
+    vim.notify('No search to resume', vim.log.levels.INFO)
+  end
+end
+
 return M

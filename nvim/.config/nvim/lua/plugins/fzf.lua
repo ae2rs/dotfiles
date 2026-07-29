@@ -4,14 +4,25 @@ return {
     cmd = 'FzfLua',
     keys = function()
       local keys = require 'config.keys'
+      local search = require 'config.search'
 
       return {
-        keys.lazy_leader('n', 'sf', function()
-          require('fzf-lua').files()
-        end, 'Search files'),
-        keys.lazy_leader('n', 'sg', function()
-          require('fzf-lua').live_grep()
-        end, 'Search by grep'),
+        keys.lazy_leader(
+          'n',
+          'sf',
+          search.track('fzf', function()
+            require('fzf-lua').files()
+          end),
+          'Search files'
+        ),
+        keys.lazy_leader(
+          'n',
+          'sg',
+          search.track('fzf', function()
+            require('fzf-lua').live_grep()
+          end),
+          'Search by grep'
+        ),
       }
     end,
     dependencies = {

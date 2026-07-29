@@ -4,14 +4,20 @@ return {
     cmd = 'Telescope',
     keys = function()
       local keys = require 'config.keys'
+      local search = require 'config.search'
       local builtin = require 'telescope.builtin'
 
       return {
-        keys.lazy_leader('n', 's.', function()
-          builtin.oldfiles { cwd_only = true }
-        end, 'Search recent files'),
-        keys.lazy_leader('n', '<leader>', builtin.buffers, 'Search buffers'),
-        keys.lazy_leader('n', 'sd', builtin.diagnostics, 'Search diagnostics'),
+        keys.lazy_leader(
+          'n',
+          's.',
+          search.track('telescope', function()
+            builtin.oldfiles { cwd_only = true }
+          end),
+          'Search recent files'
+        ),
+        keys.lazy_leader('n', '<leader>', search.track('telescope', builtin.buffers), 'Search buffers'),
+        keys.lazy_leader('n', 'sd', search.track('telescope', builtin.diagnostics), 'Search diagnostics'),
       }
     end,
     dependencies = {
