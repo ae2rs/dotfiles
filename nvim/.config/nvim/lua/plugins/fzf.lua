@@ -101,6 +101,11 @@ return {
           hidden = true,
           lgrep = true,
           cwd_prompt = false,
+          winopts = {
+            preview = {
+              hidden = false,
+            },
+          },
           fzf_opts = {
             ['--layout'] = 'reverse',
           },
