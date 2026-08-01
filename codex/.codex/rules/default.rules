@@ -28,3 +28,4 @@ prefix_rule(pattern=["curl", "-N", "-sS", "-X", "POST", "https://pa002.abacus.ai
 prefix_rule(pattern=["cargo", "fmt"], decision="allow")
 prefix_rule(pattern=["gh", "pr", "view"], decision="allow")
 prefix_rule(pattern=["bazel", "run"], decision="allow")
+prefix_rule(pattern=["cargo", "install", "--path"], decision="allow")
