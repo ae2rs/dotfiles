@@ -79,9 +79,7 @@ alias dc='docker compose'
 alias ai='aichat'
 
 # --- Claude ---
-# One config dir (~/.claude); clodo owns which account is active.
-# Keeps the current account unless it is maxed out, then swaps.
-alias c="clodo auto && command claude"
+alias c="claude"
 alias cr='c --resume'
 
 # --- Work-specific ---
