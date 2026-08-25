@@ -17,7 +17,7 @@ local palette = {
 }
 
 -- General --
-config.font_size = 15
+config.font_size = 16
 config.line_height = 1
 config.font = wezterm.font("JetBrains Mono")
 config.color_scheme = color_scheme
