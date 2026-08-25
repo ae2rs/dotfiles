@@ -83,10 +83,110 @@ alias c="claude"
 alias cr='c --resume'
 
 # --- Work-specific ---
+# Clippy, scoped. Fires the same bazel invocation as tools/clippy.py (so it shares
+# the action cache with the editor's clippy), but lets us aim it at less than the
+# whole Rust tree:
+#   clip                    every Rust package (//rs/...)
+#   clip rs/engine          that directory, recursively (//rs/engine/...)
+#   clip rs/engine/foo.rs   the bazel package owning that file (//rs/engine:all)
+#   clip //rs/foo:bar       target patterns are passed through untouched
+#   clip -d                 the packages owning every .rs file changed vs. origin/HEAD
+# Paths and targets can be mixed; any other -flag is forwarded to bazel.
 clip() {
+    emulate -L zsh
+
     local root
-    root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Error: not in a git repository"; return 1; }
-    (cd "$root" && "$root/tools/clippy.py")
+    root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+        print -u2 "clip: not in a git repository"
+        return 1
+    }
+    local bazel=$root/tools/rust-editor-support/bazel-real
+    [[ -x $bazel ]] || {
+        print -u2 "clip: $root does not look like the monorepo"
+        return 1
+    }
+
+    local -a targets flags paths
+    local diff_mode=0
+
+    while (( $# )); do
+        case $1 in
+            -h|--help)
+                print "usage: clip [-d] [bazel flags] [dir|file|//target]..."
+                print "  (no args)  lint every Rust package (//rs/...)"
+                print "  dir        lint that directory recursively"
+                print "  file       lint the bazel package owning it"
+                print "  //target   passed through to bazel untouched"
+                print "  -d         lint the packages of .rs files changed vs origin/HEAD"
+                return 0
+                ;;
+            -d|--diff) diff_mode=1 ;;
+            //*|@*|:*) targets+=($1) ;;
+            -*)        flags+=($1) ;;
+            *)         paths+=(${1:A}) ;;
+        esac
+        shift
+    done
+
+    if (( diff_mode )); then
+        local base f
+        base=$(git -C $root symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null) || base=origin/main
+        base=$(git -C $root merge-base HEAD $base 2>/dev/null) || base=HEAD
+        for f in ${(f)"$(git -C $root diff --name-only --diff-filter=d $base -- '*.rs'; git -C $root ls-files --others --exclude-standard -- '*.rs')"}; do
+            paths+=($root/$f)
+        done
+        (( $#paths )) || { print -u2 "clip: no changed .rs files"; return 0 }
+    fi
+
+    local abs rel pkg
+    for abs in $paths; do
+        [[ -e $abs ]] || { print -u2 "clip: no such file or directory: $abs"; return 1 }
+        [[ $abs == $root || $abs == $root/* ]] || { print -u2 "clip: outside the monorepo: $abs"; return 1 }
+        rel=${${abs#$root}#/}
+        if [[ -d $abs ]]; then
+            # A directory means everything under it, subpackages included.
+            targets+=("//${rel:-rs}/...")
+        else
+            # A file means the one package that owns it: walk up to its BUILD.bazel.
+            pkg=${rel:h}
+            while [[ $pkg != . && ! -f $root/$pkg/BUILD.bazel ]]; do
+                pkg=${pkg:h}
+            done
+            [[ $pkg == . ]] && pkg=""
+            [[ -f $root/$pkg/BUILD.bazel ]] || {
+                print -u2 "clip: no BUILD.bazel above $rel"
+                return 1
+            }
+            targets+=("//${pkg}:all")
+        fi
+    done
+
+    targets=(${(u)targets})
+    (( $#targets )) || targets=("//rs/...")
+
+    # bazel is asked for JSON diagnostics (that is what makes the cache shared with
+    # the editor); this unwraps them back into the rendered, ANSI-coloured form.
+    local render='import json,sys
+for line in sys.stdin:
+    if line[:1] == "{":
+        try:
+            sys.stdout.write(json.loads(line)["rendered"] + "\n")
+            continue
+        except Exception:
+            pass
+    sys.stderr.write(line)'
+
+    print -u2 "clip: ${(j: :)targets}"
+    (
+        cd $root || exit 1
+        $bazel --bazelrc=tools/clippy.bazelrc build \
+            --@rules_rust//rust/settings:error_format=json \
+            --@rules_rust//rust/settings:clippy_error_format=json \
+            --@rules_rust//:clippy_flags=--json=diagnostic-rendered-ansi \
+            --color=yes \
+            $flags $targets 2>&1 >/dev/null | python3 -u -c $render
+        exit ${pipestatus[1]}
+    )
 }
 alias rfmt='/Users/lucas/work/monorepo/tools/rustfmt $(git ls-files | grep -E "\.rs\$")'
 alias protofmt='find . -regex ".*\.proto" | xargs clang-format --style Google --assume-filename .proto -i'
