@@ -15,9 +15,12 @@ filter_mode = "global"
 ## zshrc.d/35-atuin.zsh to hand the key back to zsh entirely.
 filter_mode_shell_up_key_binding = "session"
 
-## Substring matching, to match the FZF_CTRL_R_OPTS="--exact" habit this
-## replaces. Alternatives: "prefix", "fuzzy".
-search_mode = "fulltext"
+## fzf-style fuzzy: a bare term matches as a subsequence, so "cgo" finds
+## "cargo". The fzf extended syntax works too -- 'exact, ^prefix, suffix$,
+## !negate, | or -- plus r/regex/, which fzf has no equivalent for.
+## Prefix a term with ' for exact matching; set "fulltext" to make that the
+## default (the old FZF_CTRL_R_OPTS="--exact" behaviour).
+search_mode = "fuzzy"
 
 ## Sync-only machinery; nothing to run in the background.
 [daemon]
