@@ -313,108 +313,6 @@ local function disk_usage()
 	return disk_usage_cache
 end
 
-local claude_pct = nil
-local claude_reset_ts = nil
-local claude_last = 0
-local function claude_usage()
-	local now = os.time()
-
-	-- clodo's daemon keeps cache.json fresh; re-read at most once a minute.
-	if now - claude_last >= 60 then
-		claude_last = now
-
-		local clodo_dir = wezterm.home_dir .. "/.config/clodo"
-		local config_file = io.open(clodo_dir .. "/config.toml", "r")
-		local name = config_file and config_file:read("*a"):match('current%s*=%s*"([^"]+)"')
-		if config_file then
-			config_file:close()
-		end
-
-		if name then
-			local cache_file = io.open(clodo_dir .. "/cache.json", "r")
-			local body = cache_file and cache_file:read("*a")
-			if cache_file then
-				cache_file:close()
-			end
-			local ok, data = pcall(wezterm.json_parse, body or "")
-			local entry = ok and data and data.entries and data.entries[name]
-			local five_hour = entry and entry.usage and entry.usage.five_hour
-			local pct = five_hour and tonumber(five_hour.utilization)
-			local resets_at = five_hour and five_hour.resets_at
-			local y, mo, d, h, mi, s
-			if type(resets_at) == "string" then
-				y, mo, d, h, mi, s = resets_at:match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):([%d.]+)")
-			end
-			if pct then
-				claude_pct = math.floor(pct + 0.5)
-				-- resets_at is null when no 5h window is active (e.g. right
-				-- after a reset); show the percentage without a countdown.
-				if y then
-					-- os.time() reads the table as local time; add the local/UTC
-					-- offset to turn the UTC fields into a real epoch. isdst is
-					-- cleared so mktime auto-detects DST (os.date("!*t") hardcodes
-					-- isdst=false, which would skew the offset by an hour).
-					local utc_now = os.date("!*t")
-					utc_now.isdst = nil
-					local utc_offset = os.difftime(os.time(), os.time(utc_now))
-					claude_reset_ts = os.time({
-						year = tonumber(y),
-						month = tonumber(mo),
-						day = tonumber(d),
-						hour = tonumber(h),
-						min = tonumber(mi),
-						sec = math.floor(tonumber(s)),
-					}) + utc_offset
-				else
-					claude_reset_ts = nil
-				end
-			end
-		end
-	end
-
-	if not claude_pct then
-		return " ○ -- "
-	end
-
-	local color = palette.green
-	if claude_pct >= 80 then
-		color = scheme.ansi[2]
-	elseif claude_pct >= 50 then
-		color = palette.yellow
-	end
-
-	-- Fill the gauge proportionally, using only glyphs native to JetBrains
-	-- Mono so they share the cell metrics of the surrounding text (the
-	-- half-circle codepoints fall back to Menlo and sit off-center).
-	local gauge = { "○", "◔", "◕", "●" }
-	local glyph = gauge[math.floor(claude_pct * 3 / 100 + 0.5) + 1]
-
-	local items = {
-		{ Text = " " },
-		{ Foreground = { Color = color } },
-		{ Text = glyph },
-		{ Foreground = { Color = palette.fg } },
-		{ Text = " " .. string.format("%d%%", claude_pct) },
-	}
-
-	if claude_reset_ts then
-		local remaining = math.max(0, claude_reset_ts - now)
-		local countdown
-		if remaining < 60 then
-			countdown = "<1m"
-		elseif remaining < 3600 then
-			countdown = string.format("%dm", math.floor(remaining / 60))
-		else
-			countdown = string.format("%dh%02dm", math.floor(remaining / 3600), math.floor((remaining % 3600) / 60))
-		end
-		table.insert(items, { Foreground = { Color = palette.muted } })
-		table.insert(items, { Text = " · " .. countdown })
-	end
-
-	table.insert(items, { Text = " " })
-	return wezterm.format(items)
-end
-
 local net_rx_last = 0
 local net_tx_last = 0
 local net_time_last = 0
@@ -516,7 +414,6 @@ tabline.setup({
 			{ "cwd", padding = { left = 0, right = 1 } },
 		},
 		tabline_x = {
-			claude_usage,
 			{ "ram", icons_enabled = false },
 			cpu_usage,
 			net_usage,
