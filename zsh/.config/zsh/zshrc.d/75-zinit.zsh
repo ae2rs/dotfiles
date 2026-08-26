@@ -11,6 +11,10 @@ zinit snippet OMZP::brew
 # --- Turbo: OMZ plugin directories loaded ~0s after prompt.
 # `OMZP::name` fetches the full plugin dir so multi-file plugins (macos)
 # can find their helper scripts. `wait` = defer, `lucid` = quiet.
+# NOTE: OMZP::fzf is intentionally NOT loaded. It runs `eval "$(fzf --zsh)"`,
+# which 30-cli-tools.zsh already does eagerly, and doing it again here in turbo
+# (after the prompt) would clobber the Ctrl-R binding Atuin sets in 35-atuin.zsh.
+# Its one unique contribution, FZF_DEFAULT_COMMAND, now lives in 30-cli-tools.zsh.
 zinit wait lucid for \
     OMZP::git \
     OMZP::bazel \
@@ -18,7 +22,6 @@ zinit wait lucid for \
     OMZP::docker-compose \
     OMZP::eza \
     OMZP::kubectl \
-    OMZP::fzf \
     OMZP::rust \
     OMZP::ssh \
     OMZP::uv

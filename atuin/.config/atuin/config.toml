@@ -1,0 +1,24 @@
+# Atuin — SQLite-backed shell history.
+# Fully local: no account, no sync, no telemetry.
+
+## Sync is inert without an account, but be explicit about it.
+auto_sync = false
+
+## The only network call Atuin makes by default (a release check).
+update_check = false
+
+## Ctrl-R searches everything, from every terminal and session.
+filter_mode = "global"
+
+## Up-arrow stays scoped to the current terminal, so it still behaves like
+## plain shell history. Pass --disable-up-arrow to `atuin init` in
+## zshrc.d/35-atuin.zsh to hand the key back to zsh entirely.
+filter_mode_shell_up_key_binding = "session"
+
+## Substring matching, to match the FZF_CTRL_R_OPTS="--exact" habit this
+## replaces. Alternatives: "prefix", "fuzzy".
+search_mode = "fulltext"
+
+## Sync-only machinery; nothing to run in the background.
+[daemon]
+enabled = false
