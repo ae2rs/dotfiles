@@ -13,10 +13,14 @@ keys.leader_group('t', 'Terminal')
 keys.map('n', '<Esc>', '<cmd>nohlsearch<CR>', 'Clear search highlight')
 keys.map('t', '<Esc><Esc>', '<C-\\><C-n>', 'Exit terminal mode')
 
--- Translate Alt+<key> into single-byte readline equivalents that zsh's
--- vi-insert keymap understands. This avoids leaking a bare ESC into zsh,
--- which would otherwise drop the prompt into vi-cmd mode ("inverted prompt").
-keys.map('t', '<M-BS>', '\23', 'Delete word backward (sends C-w)') -- ^W
+-- Neovim's :terminal emits nothing at all for Alt+Backspace, and depending on
+-- how the outer emulator encodes it nvim may also see it as two separate keys
+-- (<Esc> then <BS>). Forward the canonical ESC+DEL sequence in both cases; zsh
+-- binds ^[^? to backward-kill-word in zshrc.d/80-keybindings.zsh.
+-- Alt+Left/Right need no mapping here: nvim already emits ^[[1;3D / ^[[1;3C,
+-- which the same zsh file binds to backward-word / forward-word.
+keys.map('t', '<M-BS>', '\27\127', 'Delete word backward')
+keys.map('t', '<Esc><BS>', '\27\127', 'Delete word backward')
 
 keys.map('n', '<C-h>', '<C-w><C-h>', 'Move focus left')
 keys.map('n', '<C-j>', '<C-w><C-j>', 'Move focus down')
