@@ -25,3 +25,6 @@ search_mode = "fuzzy"
 ## Sync-only machinery; nothing to run in the background.
 [daemon]
 enabled = false
+
+[ai]
+enabled = false
