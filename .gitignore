@@ -15,13 +15,11 @@ codex/.codex/plugins/cache/
 codex/.codex/shell_snapshots/
 codex/.codex/sqlite/
 codex/.codex/worktrees/
+codex/.codex/thread-writer-locks/
 codex/.codex/vendor_imports/
 codex/.codex/history.jsonl
 codex/.codex/session_index.jsonl
-codex/.codex/logs_*.sqlite*
-codex/.codex/state_*.sqlite*
-codex/.codex/goals_*.sqlite*
-codex/.codex/memories_*.sqlite*
+codex/.codex/*.sqlite*
 codex/.codex/config.toml
 codex/.codex/.codex-global-state.json
 codex/.codex/.personality_migration
