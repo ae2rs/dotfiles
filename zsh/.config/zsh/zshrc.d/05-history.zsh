@@ -11,5 +11,7 @@ setopt HIST_IGNORE_ALL_DUPS # keep only the most recent copy of a command
 setopt HIST_IGNORE_SPACE    # a leading space keeps a command out of history
 setopt HIST_REDUCE_BLANKS
 
-# No SHARE_HISTORY on purpose: Atuin already provides cross-terminal search,
-# and sharing would fight the session-scoped up-arrow configured for Atuin.
+# No SHARE_HISTORY on purpose: nothing interactive reads this file any more.
+# Ctrl-R, Up (35-atuin.zsh) and zsh-autosuggestions all go through Atuin, which
+# is cross-terminal already, so sharing would only add cross-session writes to
+# a file that is now just an archive. Ctrl-P/Ctrl-N still walk it, per session.

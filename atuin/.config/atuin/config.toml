@@ -10,10 +10,12 @@ update_check = false
 ## Ctrl-R searches everything, from every terminal and session.
 filter_mode = "global"
 
-## Up-arrow stays scoped to the current terminal, so it still behaves like
-## plain shell history. Pass --disable-up-arrow to `atuin init` in
-## zshrc.d/35-atuin.zsh to hand the key back to zsh entirely.
-filter_mode_shell_up_key_binding = "session"
+## Ctrl-R is the only key that opens Atuin's search UI. 35-atuin.zsh
+## passes --disable-up-arrow and rebinds Up to a widget reading this same
+## database non-interactively, so Up recalls the previous command inline
+## instead of opening a picker. That widget passes its own --filter-mode
+## global, which is why filter_mode_shell_up_key_binding is absent here:
+## it only ever applied to Atuin's own Up binding.
 
 ## fzf-style fuzzy: a bare term matches as a subsequence, so "cgo" finds
 ## "cargo". The fzf extended syntax works too -- 'exact, ^prefix, suffix$,
