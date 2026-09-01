@@ -82,6 +82,10 @@ alias ai='aichat'
 alias c="claude"
 alias cr='c --resume'
 
+# --- Pi ---
+alias p="pi"
+alias pr='p --resume'
+
 # --- Work-specific ---
 # Clippy, scoped. Fires the same bazel invocation as tools/clippy.py (so it shares
 # the action cache with the editor's clippy), but lets us aim it at less than the
