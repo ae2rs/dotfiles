@@ -1,0 +1,6 @@
+{
+  "childExtensionPaths": [
+    "~/.pi/agent/npm/node_modules/@vanillagreen/pi-claude-bridge/bundle/index.js"
+  ],
+  "llmThinkingOverride": "high"
+}
