@@ -177,6 +177,12 @@ map("f", "LEADER", act.EmitEvent("switch-font"))
 -- debug
 map("l", "SHIFT|CTRL", act.ShowDebugOverlay)
 -- terminal control
+-- Shift+Enter sends the Kitty-style \e\r so TUIs insert a newline instead of
+-- submitting. That byte pair is also legacy Alt+Enter, so the keyboard protocol
+-- has to be on for apps to tell them apart -- without it Pi reads Shift+Enter as
+-- Alt+Enter and queues a follow-up message instead of breaking the line.
+-- Progressive enhancement, so only apps that negotiate it are affected.
+config.enable_kitty_keyboard = true
 map("Enter", "SHIFT", wezterm.action({ SendString = "\x1b\r" }))
 
 map(
