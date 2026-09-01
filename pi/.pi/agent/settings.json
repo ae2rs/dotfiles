@@ -6,7 +6,7 @@
   "defaultProjectTrust": "ask",
   "packages": [
     "npm:@vanillagreen/pi-claude-bridge",
-    "npm:pi-mcp-adapter",
+    "npm:pi-hermes-memory",
     "npm:pi-subagents",
     "npm:taskplane",
     "npm:pi-markdown-preview"
