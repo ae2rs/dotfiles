@@ -8,6 +8,8 @@ return {
 
       return {
         keys.lazy({ 'n', 't' }, '<C-/>', '<cmd>ToggleTerm direction=float<CR>', 'Toggle floating terminal'),
+        -- When kitty keyboard is off, Ctrl+/ can arrive as Ctrl+_ instead.
+        keys.lazy({ 'n', 't' }, '<C-_>', '<cmd>ToggleTerm direction=float<CR>', 'Toggle floating terminal'),
         keys.lazy_leader('n', 'tt', '<cmd>ToggleTerm<CR>', 'Toggle terminal'),
         keys.lazy_leader('n', 'tf', '<cmd>ToggleTerm direction=float<CR>', 'Floating terminal'),
         keys.lazy_leader('n', 'th', '<cmd>ToggleTerm direction=horizontal<CR>', 'Horizontal terminal'),

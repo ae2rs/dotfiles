@@ -53,6 +53,10 @@ local map = function(key, mods, action)
 	end
 end
 
+local function basename(path)
+	return path and path:match("([^/\\]+)$") or path
+end
+
 wezterm.GLOBAL.enable_tab_bar = true
 local toggleTabBar = wezterm.action_callback(function(window)
 	wezterm.GLOBAL.enable_tab_bar = not wezterm.GLOBAL.enable_tab_bar
@@ -183,6 +187,23 @@ map("l", "SHIFT|CTRL", act.ShowDebugOverlay)
 -- Alt+Enter and queues a follow-up message instead of breaking the line.
 -- Progressive enhancement, so only apps that negotiate it are affected.
 config.enable_kitty_keyboard = true
+-- Neovim's kitty-keyboard negotiation breaks bare Esc in this setup; disable it
+-- only while the foreground process is vim/nvim so other TUIs keep the richer
+-- keyboard protocol (e.g. Pi's Shift+Enter handling).
+wezterm.on("update-right-status", function(window, pane)
+	local proc = basename(pane:get_foreground_process_name() or "")
+	local overrides = window:get_config_overrides() or {}
+	local want_kitty_keyboard = proc ~= "nvim" and proc ~= "vim"
+	local current = overrides.enable_kitty_keyboard
+	if current == nil then
+		current = config.enable_kitty_keyboard
+	end
+	if current == want_kitty_keyboard then
+		return
+	end
+	overrides.enable_kitty_keyboard = want_kitty_keyboard
+	window:set_config_overrides(overrides)
+end)
 map("Enter", "SHIFT", wezterm.action({ SendString = "\x1b\r" }))
 
 map(
