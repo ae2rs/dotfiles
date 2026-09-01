@@ -36,3 +36,15 @@ nvim/.config/nvim/.nvimlog
 
 # Zsh
 zsh/.config/zsh/secrets/*.dec.*
+
+# Pi
+pi/.pi/agent/sessions/
+pi/.pi/agent/npm/
+pi/.pi/agent/taskplane/
+pi/.pi/agent/auth.json
+pi/.pi/agent/models-store.json
+pi/.pi/agent/trust.json
+pi/.pi/agent/*.log
+
+# Agents (machine-local, app-provided)
+agents/.agents/skills/cua-driver
