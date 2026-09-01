@@ -9,19 +9,9 @@ compatibility: Requires the `linear` CLI (v2.x) authenticated to the `amoco` wor
 Linear is work-only tooling. Everything here goes through the `linear` CLI, which is
 already authenticated (`linear auth whoami` → lucasdc@amo.co, workspace `amoco`).
 
-## Scope guard — run this first, every time
-
-This skill only applies inside the work repos and their worktrees. Before any Linear
-action, confirm the current repo's origin remote:
-
-```sh
-git remote get-url origin 2>/dev/null | sed -E 's#^(git@github.com:|https://github.com/)##; s#\.git$##'
-```
-
-Proceed only if the result is `wesprint-io/monorepo` or `wesprint-io/infrastructure`
-(this covers every worktree, since all worktrees share the parent repo's remote). For
-anything else, stop and tell the user Linear tooling is scoped to the monorepo and
-infrastructure repos only.
+This skill is loaded only inside the work repos and their worktrees — the `linear`
+extension gates it on the cwd's git remote (`wesprint-io/monorepo` or
+`wesprint-io/infrastructure`), so you will not see it elsewhere.
 
 ## Conventions
 
@@ -91,7 +81,6 @@ title carrying the shared prefix. Echo back the new IDs/URLs when done.
   its exact title before appending ` | <detail>`.
 - Confirm before creating multiple tickets or deleting anything; deletion
   (`linear issue delete`) is destructive.
-- Never run this outside the two work repos (see scope guard).
 
 ## Verification
 
