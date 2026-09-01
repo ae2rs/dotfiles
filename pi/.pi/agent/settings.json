@@ -13,6 +13,6 @@
   ],
   "lastChangelogVersion": "0.84.4",
   "modelThinkingLevels": {
-    "pi-claude/claude-opus-5": "xhigh"
+    "pi-claude/claude-opus-5": "high"
   }
 }
