@@ -1,6 +1,6 @@
 {
   "defaultProvider": "pi-claude",
-  "defaultModel": "claude-fable-5",
+  "defaultModel": "claude-opus-5",
   "defaultThinkingLevel": "high",
   "theme": "dark",
   "defaultProjectTrust": "ask",
@@ -10,5 +10,9 @@
     "npm:pi-subagents",
     "npm:taskplane",
     "npm:pi-markdown-preview"
-  ]
+  ],
+  "lastChangelogVersion": "0.84.4",
+  "modelThinkingLevels": {
+    "pi-claude/claude-opus-5": "xhigh"
+  }
 }
