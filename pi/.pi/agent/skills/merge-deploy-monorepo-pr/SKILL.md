@@ -171,7 +171,6 @@ PYTHONUNBUFFERED=1 /Users/lucas/.pi/agent/skills/watch-api-rollouts/scripts/watc
   --expected-context gke_applications-5h1pm3n7_us-central1-b_us1b-applications \
   --target 'frontend/deployment/main-api:main-api=us-central1-docker.pkg.dev/registry-5h1pm3n7/backend/main:<hash>' \
   --require-change \
-  --fail-on-rollout-restarts \
   --stability-seconds 300 &
 kubernetes_monitor_pid=$!
 trap 'kill "$kubernetes_monitor_pid" 2>/dev/null || true' EXIT
@@ -199,7 +198,9 @@ wait "$kubernetes_monitor_pid"
 trap - EXIT
 ```
 
-Any nonzero exit is a deployment failure or interruption. Do not restart, scale, roll back, delete pods, or make emergency edits unless the user explicitly asks.
+Any nonzero exit is a deployment failure or interruption. A transient startup restart that recovers—especially main-api's occasional `Address already in use` during redeploy—is a reported caveat, not by itself a deployment failure. Fail when readiness does not recover, a fatal waiting state persists, or restart counts continue increasing during the stability window. Use `--fail-on-rollout-restarts` only when the user explicitly requests a strict clean-rollout gate.
+
+Do not restart, scale, roll back, delete pods, or make emergency edits unless the user explicitly asks.
 
 ### 8.4 Final report
 

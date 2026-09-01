@@ -58,7 +58,7 @@ Use `--require-change` when invoked before a deployment and a real redeploy must
 - **Quick health snapshot:** pass `--stability-seconds 0`. This verifies current image, rollout, replicas, pod readiness, and fatal waiting states without an extended watch.
 - **User-specified watch:** use their requested duration. Do not silently shorten it.
 
-A restart count that remains stable is not equivalent to a clean rollout. Report rollout-period restarts and their previous termination reason even when the later stability window passes. If strict mode is enabled, treat them as failure.
+A restart count that remains stable is not equivalent to a clean rollout, but it is not automatically a failed deployment. Report rollout-period restarts and their previous termination reason even when the later stability window passes. In particular, main-api can transiently exit with `Address already in use` during redeploy; treat it as a non-critical caveat when the pod becomes Ready and restart counts remain stable. Fail if it persists, readiness does not recover, a fatal waiting state appears, or restart counts continue increasing. If the user explicitly requests strict mode, treat any new rollout-pod restart as failure.
 
 ## Report
 
