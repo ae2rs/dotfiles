@@ -20,7 +20,6 @@ codex/.codex/vendor_imports/
 codex/.codex/history.jsonl
 codex/.codex/session_index.jsonl
 codex/.codex/*.sqlite*
-codex/.codex/config.toml
 codex/.codex/.codex-global-state.json
 codex/.codex/.personality_migration
 codex/.codex/.sandbox_migration
