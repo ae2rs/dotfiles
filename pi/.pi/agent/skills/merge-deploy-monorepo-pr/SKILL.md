@@ -1,7 +1,7 @@
 ---
 name: merge-deploy-monorepo-pr
-description: Merge the current wesprint-io/monorepo pull request after all CI is green, wait for its backend images on main, open an infrastructure image-version bump PR, wait for that PR's CI, and stop for manual merge. Use when asked to merge and deploy the monorepo PR checked out in the current branch end to end.
-compatibility: Requires gh, git, access to wesprint-io/monorepo and wesprint-io/infrastructure, and local checkouts at /Users/lucas/work/monorepo and /Users/lucas/work/infrastructure.
+description: Merge the current wesprint-io/monorepo pull request after green CI, publish its backend images, open a green infrastructure version-bump PR for manual merge, then monitor the exact infrastructure main deployment and Kubernetes rollout through a crash-free stability window. Use when asked to merge and deploy the monorepo PR checked out in the current branch end to end.
+compatibility: Requires gh, git, kubectl production-cluster access, access to wesprint-io/monorepo and wesprint-io/infrastructure, and local checkouts at /Users/lucas/work/monorepo and /Users/lucas/work/infrastructure.
 ---
 
 # Merge and deploy a monorepo PR
@@ -9,9 +9,19 @@ compatibility: Requires gh, git, access to wesprint-io/monorepo and wesprint-io/
 This workflow is intentionally asymmetric:
 
 - You **may merge exactly the current monorepo PR** after its CI is fully green.
-- You **must never merge the infrastructure PR**. Return it to the user after its CI is fully green.
+- You **must never merge the infrastructure PR**. Return it to the user after its CI is fully green, then resume deployment monitoring only after the user confirms that it was manually merged.
 
 Run commands non-interactively with explicit repository and PR identifiers. Do not use stacked-PR tooling, merge a stack, update other PRs, enable auto-merge, or merge via an ambiguous current-branch default.
+
+## Bundled helpers
+
+Use the read-only helpers in [`scripts/`](scripts/):
+
+- `wait-pr-ci.sh`: wait for a pinned PR SHA, including late external checks, and re-verify mergeability;
+- `watch-backend-release.sh`: pin the exact monorepo main run and extract the Metadata hash;
+- `watch-infrastructure-deploy.sh`: pin the exact infrastructure main Pulumi run and verify `Pulumi up`.
+
+Kubernetes monitoring lives in the sibling [`watch-api-rollouts`](../watch-api-rollouts/SKILL.md) skill and supports multiple API targets. Destructive PR merges and infrastructure edits deliberately remain unscripted so their safety and service-selection decisions stay explicit.
 
 ## 1. Identify and pin the monorepo PR
 
@@ -30,10 +40,11 @@ If no unique current PR can be established, stop and ask the user.
 
 ## 2. Wait for fully green PR CI
 
-Wait for checks on the pinned PR number, for example:
+Wait for checks on the pinned PR number with the bundled guard, which also pins the head SHA and re-verifies mergeability:
 
 ```bash
-gh pr checks "$pr" --repo wesprint-io/monorepo --watch --interval 15
+/Users/lucas/.pi/agent/skills/merge-deploy-monorepo-pr/scripts/wait-pr-ci.sh \
+  wesprint-io/monorepo "$pr" "$pinned_head_sha"
 ```
 
 If checks have not appeared yet, poll until at least one exists before watching. After the watch exits, query `statusCheckRollup` again and verify:
@@ -88,6 +99,13 @@ us-central1-docker.pkg.dev/registry-5h1pm3n7/backend/<image>:<hash>
 
 Take the hash from the Metadata output and require all visible Metadata image lines to agree. GitHub currently truncates the single multi-line `containers images` notice at about 64 KB, so an image late in the list (including `main`) may be absent from both the downloaded Metadata log and the check-run annotation. If the selected image is truncated, require it to appear in the successful `Build` step with the exact Metadata-derived hash. Do not derive the hash solely from the merge SHA.
 
+Use the bundled watcher for this exact-run and Metadata parsing logic:
+
+```bash
+/Users/lucas/.pi/agent/skills/merge-deploy-monorepo-pr/scripts/watch-backend-release.sh \
+  "$monorepo_merge_sha" "$backend_image_name"
+```
+
 ## 5. Select infrastructure services safely
 
 Map each built image to its production service name using the infrastructure declarations:
@@ -122,7 +140,7 @@ Work from `/Users/lucas/work/infrastructure`.
 
 Never include unrelated files or pre-existing changes.
 
-## 7. Wait for infrastructure CI, then stop
+## 7. Wait for infrastructure CI, then hand off for manual merge
 
 Wait until checks appear on the new infrastructure PR, then watch them to completion. Re-query all checks and require fully green terminal CI using the same criteria as the monorepo PR. The external `gke-applications/gke-applications - Update (preview)` Pulumi check can attach after the Actions jobs finish, so keep polling until the terminal check count is stable across multiple polls and that preview is present and successful.
 
@@ -133,4 +151,66 @@ Wait until checks appear on the new infrastructure PR, then watch them to comple
 - Metadata image hash;
 - bumped infrastructure services;
 - infrastructure PR URL and CI result;
-- any validation caveats.
+- any validation caveats;
+- an explicit request for the user to merge the infrastructure PR and tell you when it is done so monitoring can continue.
+
+## 8. After manual merge, monitor the production deployment
+
+Resume only after the user says the infrastructure PR was manually merged. Re-query it rather than trusting elapsed time, require `state: MERGED`, and record its `mergeCommit.oid`. This is the infrastructure deployment SHA.
+
+### 8.1 Resolve every workload
+
+For each bumped service, use the infrastructure source to derive the exact image, namespace, workload kind/name, and container name. Read and follow the sibling [`watch-api-rollouts`](../watch-api-rollouts/SKILL.md) skill. Ask if any mapping is ambiguous. Verify the current Kubernetes context; never switch it silently. Query known namespaces directly because this account may lack cluster-wide list permission.
+
+### 8.2 Start Kubernetes monitoring before waiting on CI
+
+Start the read-only multi-target monitor before the Pulumi update reaches Kubernetes so initial generations, images, pod UIDs, and restart counts are captured. Repeat `--target` for every service:
+
+```bash
+PYTHONUNBUFFERED=1 /Users/lucas/.pi/agent/skills/watch-api-rollouts/scripts/watch-api-rollouts.py \
+  --expected-context gke_applications-5h1pm3n7_us-central1-b_us1b-applications \
+  --target 'frontend/deployment/main-api:main-api=us-central1-docker.pkg.dev/registry-5h1pm3n7/backend/main:<hash>' \
+  --require-change \
+  --fail-on-rollout-restarts \
+  --stability-seconds 300 &
+kubernetes_monitor_pid=$!
+trap 'kill "$kubernetes_monitor_pid" 2>/dev/null || true' EXIT
+```
+
+If the exact image is already live when monitoring resumes, omit `--require-change`, verify the new ReplicaSet/revision from Kubernetes history, and disclose that pre-rollout pod state was not captured.
+
+The monitor intentionally remains active for five minutes after Kubernetes says the rollout is complete. Its phase and remaining-time output distinguishes the crash-free stability window from a stuck rollout. Use a different duration only when the user asks.
+
+### 8.3 Pin and watch the exact infrastructure main run
+
+In parallel with the Kubernetes monitor, watch only the infrastructure `Pulumi` push run whose `head_sha` equals the infrastructure merge SHA:
+
+```bash
+/Users/lucas/.pi/agent/skills/merge-deploy-monorepo-pr/scripts/watch-infrastructure-deploy.sh \
+  "$infrastructure_merge_sha"
+```
+
+This script queries the Actions API directly because `gh run list --workflow main.yaml` can omit fresh runs, and it requires successful `Reject stale runs`, `Deployment`, and `Pulumi up` steps. Never select merely the latest run. If `Reject stale runs` rejects it, find the newer successful main run containing the same desired version, verify the hash remains on main, and monitor that superseding deployment instead. Do not rerun or bypass a failed deployment without user approval.
+
+After CI succeeds, the Kubernetes monitor may correctly continue through its stability window:
+
+```bash
+wait "$kubernetes_monitor_pid"
+trap - EXIT
+```
+
+Any nonzero exit is a deployment failure or interruption. Do not restart, scale, roll back, delete pods, or make emergency edits unless the user explicitly asks.
+
+### 8.4 Final report
+
+Only call the deployment successful after both the exact infrastructure main run and the full Kubernetes stability window pass. Report:
+
+- infrastructure PR and merge SHA;
+- exact successful Pulumi run URL;
+- each service's namespace, workload kind/name, and image;
+- rollout completion and evidence that pod UIDs or revision changed;
+- requested and completed stability-window duration;
+- final ready/desired counts and restart deltas;
+- any rollout-period restarts, previous termination reason, or residual risk.
+
+If monitoring is interrupted, report the completed duration and never claim the full window passed.
