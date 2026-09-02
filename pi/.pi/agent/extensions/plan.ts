@@ -18,10 +18,19 @@ import { basename, resolve } from "node:path";
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 const CUSTOM_TYPE = "plan-mode";
+// One-shot handoff recorded in the replacement session by "clear context and execute",
+// so the fresh session keeps the model that was active instead of the configured default.
+const EXEC_HANDOFF_TYPE = "plan-mode-exec";
 
 type PlanState = {
 	active: boolean;
 	planFile: string; // absolute path
+};
+
+type ExecHandoff = {
+	provider: string;
+	modelId: string;
+	thinkingLevel?: ReturnType<ExtensionAPI["getThinkingLevel"]>;
 };
 
 // --- Bash guard (denylist: guardrails against accidental mutation, not a sandbox) ---
@@ -156,9 +165,17 @@ export default function planExtension(pi: ExtensionAPI) {
 		if (action === "execute") {
 			pi.sendUserMessage(kickoff);
 		} else if (action === "execute-fresh" && canNewSession) {
+			// A fresh session starts on the configured default model; carry the active one over.
+			// Only plain data may cross the boundary — captured pi/ctx are stale after the switch.
+			const handoff: ExecHandoff | undefined = ctx.model
+				? { provider: ctx.model.provider, modelId: ctx.model.id, thinkingLevel: pi.getThinkingLevel() }
+				: undefined;
 			// Terminal for this handler: the session is replaced and old ctx/pi are stale afterwards.
 			await commandCtx.newSession({
 				parentSession,
+				setup: async (sm) => {
+					if (handoff) sm.appendCustomEntry(EXEC_HANDOFF_TYPE, handoff);
+				},
 				withSession: async (newCtx) => {
 					await newCtx.sendUserMessage(kickoff);
 				},
@@ -241,7 +258,7 @@ export default function planExtension(pi: ExtensionAPI) {
 
 	// --- Restore state on session start/resume ---
 
-	pi.on("session_start", async (_event, ctx) => {
+	pi.on("session_start", async (event, ctx) => {
 		if (pi.getFlag("plan") === true && !state.active) {
 			state = { active: true, planFile: planFileFor(ctx.cwd) };
 		}
@@ -257,6 +274,27 @@ export default function planExtension(pi: ExtensionAPI) {
 		// A plan file path recorded for a different cwd is stale — reset it.
 		if (state.active && !state.planFile.startsWith(ctx.cwd)) {
 			state = { active: false, planFile: "" };
+		}
+
+		// Apply a pending exec handoff: "clear context and execute" records the model that
+		// was active so the fresh session doesn't fall back to the configured default.
+		if (event.reason === "new") {
+			for (const entry of ctx.sessionManager.getBranch()) {
+				if (entry.type === "custom" && (entry as { customType?: string }).customType === EXEC_HANDOFF_TYPE) {
+					const handoff = (entry as { data?: ExecHandoff }).data;
+					if (handoff?.provider && handoff?.modelId) {
+						const model = ctx.modelRegistry.find(handoff.provider, handoff.modelId);
+						if (model && (await pi.setModel(model))) {
+							if (handoff.thinkingLevel) pi.setThinkingLevel(handoff.thinkingLevel);
+						} else if (model) {
+							ctx.ui.notify(
+								`plan: no API key for ${handoff.provider}/${handoff.modelId} — staying on the default model.`,
+								"warning",
+							);
+						}
+					}
+				}
+			}
 		}
 
 		updateUI(ctx);
