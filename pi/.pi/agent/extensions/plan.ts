@@ -15,7 +15,7 @@
 
 import { existsSync } from "node:fs";
 import { basename, resolve } from "node:path";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 const CUSTOM_TYPE = "plan-mode";
 
@@ -129,24 +129,40 @@ export default function planExtension(pi: ExtensionAPI) {
 
 	async function disable(ctx: ExtensionContext): Promise<void> {
 		const planExists = state.planFile !== "" && existsSync(state.planFile);
-		let execute = false;
+		// newSession only exists on the command context, not on the shortcut context.
+		const commandCtx = ctx as ExtensionCommandContext;
+		const canNewSession = typeof commandCtx.newSession === "function";
+		let action: "execute" | "execute-fresh" | "exit" = "exit";
 		if (planExists && ctx.hasUI) {
-			const choice = await ctx.ui.select("Exit plan mode", [
-				"Execute the plan",
-				"Just exit plan mode",
-			]);
+			const options = ["Execute the plan"];
+			if (canNewSession) options.push("Clear context and execute the plan");
+			options.push("Exit plan mode");
+			const choice = await ctx.ui.select("Exit plan mode", options);
 			if (choice === undefined) return; // cancelled — stay in plan mode
-			execute = choice === "Execute the plan";
+			action =
+				choice === "Execute the plan"
+					? "execute"
+					: choice.startsWith("Clear context")
+						? "execute-fresh"
+						: "exit";
 		}
 		const planFile = state.planFile;
+		const parentSession = ctx.sessionManager.getSessionFile();
 		state = { active: false, planFile: "" };
 		persist();
 		updateUI(ctx);
 		ctx.ui.notify("Plan mode OFF — full access restored.", "info");
-		if (execute) {
-			pi.sendUserMessage(
-				`Plan mode is over. Read the plan at ${planFile} and execute it step by step. Verify each step as the plan specifies before moving to the next one.`,
-			);
+		const kickoff = `Plan mode is over. Read the plan at ${planFile} and execute it step by step. Verify each step as the plan specifies before moving to the next one.`;
+		if (action === "execute") {
+			pi.sendUserMessage(kickoff);
+		} else if (action === "execute-fresh" && canNewSession) {
+			// Terminal for this handler: the session is replaced and old ctx/pi are stale afterwards.
+			await commandCtx.newSession({
+				parentSession,
+				withSession: async (newCtx) => {
+					await newCtx.sendUserMessage(kickoff);
+				},
+			});
 		}
 	}
 
