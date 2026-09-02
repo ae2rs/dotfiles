@@ -2,7 +2,7 @@
  * usage — unified subscription-usage service for the statusline footer.
  *
  * Folds the old claude-usage.ts and kimi-usage.ts extensions into one module
- * and adds Codex quota capture from response headers. Exposes a single
+ * and adds Codex monthly-allowance polling. Exposes a single
  * UsageReading shape per provider; the footer picks the reading for the
  * active model's provider.
  *
@@ -12,22 +12,22 @@
  *   Kimi (kimi-coding):  GET api.kimi.com/coding/v1/usages (5h window only),
  *                        token from pi auth.json →
  *                        ~/.kimi-code/credentials/kimi-code.json.
- *   Codex (openai-codex): no polling — quota rides on every response in the
- *                        x-codex-primary-* / x-codex-secondary-* headers,
- *                        captured via the after_provider_response event.
+ *   Codex (openai-codex): GET chatgpt.com/backend-api/codex/usage, monthly
+ *                        allowance from spend_control.individual_limit,
+ *                        token from pi auth.json → ~/.codex/auth.json.
  *
  * Refresh cadence for the polled providers matches the old extensions: a
  * fresh fetch on session start, model select, and after each agent run
  * (throttled to 30 s), plus a 5-minute background poll.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 export type UsageProvider = "pi-claude" | "kimi-coding" | "openai-codex";
-export type UsageKind = "5h" | "wk";
+export type UsageKind = "5h" | "wk" | "mo";
 
 export interface UsageReading {
 	kind: UsageKind;
@@ -242,51 +242,147 @@ async function fetchKimiUsage(token: string): Promise<UsageReading | undefined> 
 }
 
 // ---------------------------------------------------------------------------
-// Codex (header-driven; parsing adapted from @wishx127/pi-tokyo-night)
+// Codex (monthly allowance)
 // ---------------------------------------------------------------------------
 
-function parseHeaderNumber(value: string | undefined): number | undefined {
-	if (value == null || value === "") return undefined;
-	const n = Number(value);
-	return Number.isFinite(n) ? n : undefined;
+const CODEX_USAGE_URL = "https://chatgpt.com/backend-api/codex/usage";
+const CODEX_USAGE_TIMEOUT_MS = 10_000;
+const CODEX_USAGE_MAX_BYTES = 64 * 1024;
+
+// ChatGPT's edge returns 403 to Node's and curl's TLS clients for this endpoint,
+// while Codex-compatible Python urllib succeeds. Credentials arrive only over
+// stdin, so they never appear in a process command line or diagnostic output.
+const CODEX_USAGE_REQUEST_SCRIPT = String.raw`
+import json
+import sys
+import urllib.request
+
+credentials = json.load(sys.stdin)
+request = urllib.request.Request(
+    ${JSON.stringify(CODEX_USAGE_URL)},
+    headers={
+        "Authorization": "Bearer " + credentials["accessToken"],
+        "chatgpt-account-id": credentials["accountId"],
+        "originator": "pi",
+        "User-Agent": "pi-statusline",
+    },
+)
+with urllib.request.urlopen(request, timeout=10) as response:
+    if response.status != 200:
+        raise RuntimeError("unexpected Codex usage status")
+    sys.stdout.write(response.read().decode("utf-8"))
+`;
+
+interface CodexMonthlyLimit {
+	remaining_percent?: unknown;
+	reset_at?: unknown;
+	reset_after_seconds?: unknown;
 }
 
-function codexWindowToReading(
-	used: number | undefined,
-	windowMinutes: number | undefined,
-	resetAfterSeconds: number | undefined,
-	now: number,
-): UsageReading | undefined {
-	if (used == null || windowMinutes == null || resetAfterSeconds == null) return undefined;
+interface CodexUsageResponse {
+	spend_control?: {
+		individual_limit?: CodexMonthlyLimit | null;
+	} | null;
+}
+
+interface CodexCredentials {
+	accessToken: string;
+	accountId: string;
+}
+
+function finiteCodexNumber(value: unknown): number | undefined {
+	if (typeof value !== "number" && typeof value !== "string") return undefined;
+	if (typeof value === "string" && !value.trim()) return undefined;
+	const number = Number(value);
+	return Number.isFinite(number) ? number : undefined;
+}
+
+/** Parse Codex's monthly spend-control allowance into a footer reading. Exported for tests. */
+export function parseCodexUsage(body: CodexUsageResponse | null | undefined, now = Date.now()): UsageReading | undefined {
+	const limit = body?.spend_control?.individual_limit;
+	if (!limit) return undefined;
+	const remainingPct = finiteCodexNumber(limit.remaining_percent);
+	if (remainingPct == null) return undefined;
+
+	const absoluteResetSeconds = finiteCodexNumber(limit.reset_at);
+	const resetAfterSeconds = finiteCodexNumber(limit.reset_after_seconds);
+	const resetsAt = absoluteResetSeconds != null
+		? absoluteResetSeconds * 1000
+		: resetAfterSeconds != null
+			? now + resetAfterSeconds * 1000
+			: undefined;
+
 	return {
-		kind: windowMinutes <= 360 ? "5h" : "wk",
-		remainingPct: Math.max(0, Math.round(100 - used)),
-		resetsAt: now + resetAfterSeconds * 1000,
+		kind: "mo",
+		remainingPct: Math.max(0, Math.min(100, Math.round(remainingPct))),
+		resetsAt,
 	};
 }
 
-/**
- * Parse Codex quota response headers into a reading. Prefers the primary
- * (session) window and falls back to the secondary (weekly) window.
- * Exported for tests.
- */
-export function parseCodexHeaders(headers: Record<string, string>, now = Date.now()): UsageReading | undefined {
-	const lower: Record<string, string> = {};
-	for (const [k, v] of Object.entries(headers)) lower[k.toLowerCase()] = v;
-	return (
-		codexWindowToReading(
-			parseHeaderNumber(lower["x-codex-primary-used-percent"]),
-			parseHeaderNumber(lower["x-codex-primary-window-minutes"]),
-			parseHeaderNumber(lower["x-codex-primary-reset-after-seconds"]),
-			now,
-		) ??
-		codexWindowToReading(
-			parseHeaderNumber(lower["x-codex-secondary-used-percent"]),
-			parseHeaderNumber(lower["x-codex-secondary-window-minutes"]),
-			parseHeaderNumber(lower["x-codex-secondary-reset-after-seconds"]),
-			now,
-		)
-	);
+function readCodexPiCredentials(): CodexCredentials | undefined {
+	const agentDir = process.env.PI_CODING_AGENT_DIR?.trim() || join(homedir(), ".pi", "agent");
+	const path = join(agentDir, "auth.json");
+	if (!existsSync(path)) return undefined;
+	try {
+		const entry = JSON.parse(readFileSync(path, "utf8"))?.["openai-codex"];
+		if (typeof entry?.access !== "string" || !entry.access) return undefined;
+		if (typeof entry?.accountId !== "string" || !entry.accountId) return undefined;
+		if (typeof entry.expires === "number" && entry.expires <= Date.now() + EXPIRY_MARGIN_MS) return undefined;
+		return { accessToken: entry.access, accountId: entry.accountId };
+	} catch {
+		return undefined;
+	}
+}
+
+function readCodexCliCredentials(): CodexCredentials | undefined {
+	const path = join(homedir(), ".codex", "auth.json");
+	if (!existsSync(path)) return undefined;
+	try {
+		const tokens = JSON.parse(readFileSync(path, "utf8"))?.tokens;
+		if (typeof tokens?.access_token !== "string" || !tokens.access_token) return undefined;
+		if (typeof tokens?.account_id !== "string" || !tokens.account_id) return undefined;
+		return { accessToken: tokens.access_token, accountId: tokens.account_id };
+	} catch {
+		return undefined;
+	}
+}
+
+function resolveCodexCredentials(): CodexCredentials | undefined {
+	return readCodexPiCredentials() ?? readCodexCliCredentials();
+}
+
+function fetchCodexUsage(credentials: CodexCredentials): Promise<UsageReading | undefined> {
+	return new Promise((resolve) => {
+		const child = spawn("python3", ["-c", CODEX_USAGE_REQUEST_SCRIPT], {
+			stdio: ["pipe", "pipe", "ignore"],
+		});
+		let output = "";
+		let settled = false;
+		const finish = (reading?: UsageReading) => {
+			if (settled) return;
+			settled = true;
+			clearTimeout(timeout);
+			child.kill();
+			resolve(reading);
+		};
+		const timeout = setTimeout(() => finish(), CODEX_USAGE_TIMEOUT_MS);
+
+		child.stdout.on("data", (chunk: Buffer | string) => {
+			output += chunk.toString();
+			if (Buffer.byteLength(output) > CODEX_USAGE_MAX_BYTES) finish();
+		});
+		child.once("error", () => finish());
+		child.once("close", (code) => {
+			if (code !== 0) return finish();
+			try {
+				finish(parseCodexUsage(JSON.parse(output) as CodexUsageResponse));
+			} catch {
+				finish();
+			}
+		});
+		child.stdin.once("error", () => finish());
+		child.stdin.end(JSON.stringify(credentials));
+	});
 }
 
 // ---------------------------------------------------------------------------
@@ -323,15 +419,25 @@ export function createUsageService(pi: ExtensionAPI): UsageService {
 		const gen = generation;
 		if (gen === 0) return;
 		const provider = usageProviderOf(ctx.model);
-		// Codex is header-driven; nothing to poll.
-		if (provider !== "pi-claude" && provider !== "kimi-coding") return;
+		if (!provider) return;
 		const now = Date.now();
 		if (!force && now - (lastFetchAt.get(provider) ?? 0) < MIN_FETCH_GAP_MS) return;
 		lastFetchAt.set(provider, now);
-		const token = provider === "pi-claude" ? resolveClaudeToken() : resolveKimiToken();
-		if (!token) return; // keep showing the previous reading
 		try {
-			const reading = provider === "pi-claude" ? await fetchClaudeUsage(token) : await fetchKimiUsage(token);
+			let reading: UsageReading | undefined;
+			if (provider === "pi-claude") {
+				const token = resolveClaudeToken();
+				if (!token) return; // keep showing the previous reading
+				reading = await fetchClaudeUsage(token);
+			} else if (provider === "kimi-coding") {
+				const token = resolveKimiToken();
+				if (!token) return; // keep showing the previous reading
+				reading = await fetchKimiUsage(token);
+			} else {
+				const credentials = resolveCodexCredentials();
+				if (!credentials) return; // keep showing the previous reading
+				reading = await fetchCodexUsage(credentials);
+			}
 			if (reading && gen === generation) {
 				readings.set(provider, reading);
 				emit();
@@ -344,7 +450,15 @@ export function createUsageService(pi: ExtensionAPI): UsageService {
 	function start(ctx: ExtensionContext): void {
 		stop();
 		const gen = generation;
-		void refresh(ctx, true);
+		if (usageProviderOf(ctx.model)) {
+			void refresh(ctx, true);
+		} else {
+			// Pi assigns the startup model after session_start. Retry on the next
+			// turn so an idle Codex footer does not wait for its first agent run.
+			setTimeout(() => {
+				if (gen === generation) void refresh(ctx, true);
+			}, 0);
+		}
 		// Background poll so the reading moves while a long agent run is in flight.
 		fetchTimer = setInterval(() => {
 			if (gen === generation) void refresh(ctx);
@@ -360,14 +474,6 @@ export function createUsageService(pi: ExtensionAPI): UsageService {
 	pi.on("session_start", (_event, ctx) => start(ctx));
 	pi.on("model_select", (_event, ctx) => void refresh(ctx, true));
 	pi.on("agent_settled", (_event, ctx) => void refresh(ctx, true));
-	pi.on("after_provider_response", (event, ctx) => {
-		if (usageProviderOf(ctx.model) !== "openai-codex") return;
-		const reading = parseCodexHeaders(event.headers);
-		if (reading) {
-			readings.set("openai-codex", reading);
-			emit();
-		}
-	});
 	pi.on("session_shutdown", () => stop());
 
 	return {
