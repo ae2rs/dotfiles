@@ -9,8 +9,8 @@
  *   Claude (pi-claude):  GET api.anthropic.com/api/oauth/usage (5h window),
  *                        token from env → ~/.claude/.credentials.json →
  *                        macOS Keychain ("Claude Code-credentials").
- *   Kimi (kimi-coding):  GET api.kimi.com/coding/v1/usages (5h window,
- *                        weekly fallback), token from pi auth.json →
+ *   Kimi (kimi-coding):  GET api.kimi.com/coding/v1/usages (5h window only),
+ *                        token from pi auth.json →
  *                        ~/.kimi-code/credentials/kimi-code.json.
  *   Codex (openai-codex): no polling — quota rides on every response in the
  *                        x-codex-primary-* / x-codex-secondary-* headers,
@@ -196,11 +196,20 @@ function kimiWindowToReading(detail: KimiRawWindowDetail | undefined, kind: Usag
 	if (!detail) return undefined;
 	const limit = Number(detail.limit);
 	const remaining = Number(detail.remaining);
-	if (!Number.isFinite(limit) || limit <= 0 || !Number.isFinite(remaining)) return undefined;
+	const used = Number(detail.used);
+	if (!Number.isFinite(limit) || limit <= 0) return undefined;
+	// Kimi omits `remaining` once a window is exhausted; derive it from `used`
+	// so a full 5h quota remains visible as 0% remaining.
+	const remainingPct = Number.isFinite(remaining)
+		? (remaining / limit) * 100
+		: Number.isFinite(used)
+			? 100 - (used / limit) * 100
+			: Number.NaN;
+	if (!Number.isFinite(remainingPct)) return undefined;
 	const resetMs = detail.resetTime ? Date.parse(detail.resetTime) : Number.NaN;
 	return {
 		kind,
-		remainingPct: Math.max(0, Math.round((remaining / limit) * 100)),
+		remainingPct: Math.max(0, Math.min(100, Math.round(remainingPct))),
 		resetsAt: Number.isFinite(resetMs) ? resetMs : undefined,
 	};
 }
@@ -208,7 +217,8 @@ function kimiWindowToReading(detail: KimiRawWindowDetail | undefined, kind: Usag
 /** Parse the Kimi usages response body into a reading. Exported for tests. */
 export function parseKimiUsage(body: KimiUsageResponse | null | undefined): UsageReading | undefined {
 	if (!body) return undefined;
-	// Prefer the short (5h / ≤360-minute) window, matching the Claude reading.
+	// Display only Kimi's short (5h / ≤360-minute) window. The weekly
+	// summary is intentionally ignored, including while the short window is full.
 	for (const row of body.limits ?? []) {
 		const w = row?.window;
 		if (w?.timeUnit === "TIME_UNIT_MINUTE" && typeof w.duration === "number" && w.duration <= 360) {
@@ -216,8 +226,7 @@ export function parseKimiUsage(body: KimiUsageResponse | null | undefined): Usag
 			if (reading) return reading;
 		}
 	}
-	// Fall back to the weekly summary.
-	return kimiWindowToReading(body.usage ?? undefined, "wk");
+	return undefined;
 }
 
 async function fetchKimiUsage(token: string): Promise<UsageReading | undefined> {
