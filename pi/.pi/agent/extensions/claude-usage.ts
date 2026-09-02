@@ -108,6 +108,9 @@ export default function (pi: ExtensionAPI) {
 	let lastFetch = 0;
 	let fetchTimer: ReturnType<typeof setInterval> | undefined;
 	let renderTimer: ReturnType<typeof setInterval> | undefined;
+	// Bumped on every start/stop so stale timers and in-flight fetches from a
+	// replaced/reloaded session bail before touching the now-dead ctx.
+	let generation = 0;
 
 	const isClaudeSubscription = (ctx: ExtensionContext): boolean => ctx.model?.provider === PROVIDER_ID;
 
@@ -125,6 +128,8 @@ export default function (pi: ExtensionAPI) {
 	}
 
 	async function refresh(ctx: ExtensionContext, force = false): Promise<void> {
+		const gen = generation;
+		if (gen === 0) return;
 		if (!isClaudeSubscription(ctx)) {
 			cached = undefined;
 			render(ctx);
@@ -137,23 +142,29 @@ export default function (pi: ExtensionAPI) {
 		if (!token) return; // keep showing the previous reading
 		try {
 			const fiveHour = await fetchFiveHour(token);
-			if (fiveHour) cached = fiveHour;
+			if (fiveHour && gen === generation) cached = fiveHour;
 		} catch {
 			// Network blip — keep the previous reading rather than blanking it.
 		}
-		render(ctx);
+		if (gen === generation) render(ctx);
 	}
 
 	function start(ctx: ExtensionContext): void {
 		stop();
+		const gen = generation;
 		void refresh(ctx, true);
 		// Background poll so the reading moves while a long agent run is in flight.
-		fetchTimer = setInterval(() => void refresh(ctx), FETCH_INTERVAL_MS);
+		fetchTimer = setInterval(() => {
+			if (gen === generation) void refresh(ctx);
+		}, FETCH_INTERVAL_MS);
 		// Cheap re-render so the reset countdown ticks over on the minute.
-		renderTimer = setInterval(() => render(ctx), RENDER_INTERVAL_MS);
+		renderTimer = setInterval(() => {
+			if (gen === generation) render(ctx);
+		}, RENDER_INTERVAL_MS);
 	}
 
 	function stop(): void {
+		generation++;
 		if (fetchTimer) clearInterval(fetchTimer);
 		if (renderTimer) clearInterval(renderTimer);
 		fetchTimer = undefined;
