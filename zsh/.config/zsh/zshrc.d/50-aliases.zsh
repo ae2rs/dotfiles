@@ -201,6 +201,36 @@ alias allunused='./tools/unused_imports.py && ./tools/proto_unused_imports.py'
 alias allowners='bazel run //tools/owners -- generate && bazel run //tools/owners -- format'
 alias devlocal='(cd /Users/lucas/work/monorepo/rs/engine/dev-local/ && docker compose up -d) && bazel run //rs/engine/dev-local'
 alias devkill="kill -9 $(ps aux | pgrep -fl dev-local/process-compose.yml | awk 'NR==1 {print $1}')"
+
+pglocal() {
+    local PGDIR="/Users/lucas/work/monorepo/rs/engine/dev-local/postgres"
+    { docker start dev-local-postgres 2>/dev/null || \
+      docker run -d --name dev-local-postgres \
+        -p 5432:5432 \
+        -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=postgres \
+        -e PGDATA=/var/lib/postgresql/data/pgdata \
+        -v dev-local-pgdata:/var/lib/postgresql/data \
+        -v "$PGDIR/init:/seed/init:ro" \
+        -v "$PGDIR/migrations:/seed/migrations:ro" \
+        -v "$PGDIR/testdata:/seed/testdata:ro" \
+        postgis/postgis:16-3.4 \
+        -c max_connections=1000 -c wal_level=logical \
+        -c max_wal_senders=64 -c max_replication_slots=64; } && \
+    docker exec -e PGPASSWORD=password dev-local-postgres sh -ec '
+      until pg_isready -q -U postgres; do echo "waiting for postgres..."; sleep 0.5; done
+      fail=0
+      for d in init migrations testdata; do
+        echo "=== postgres $d ==="
+        for f in $(ls /seed/$d/*.sql 2>/dev/null | sort); do
+          echo "--- $f"
+          out=$(psql -U postgres -d postgres -v ON_ERROR_ROLLBACK=on -f "$f" 2>&1) || true
+          bad=$(echo "$out" | grep -E "ERROR:" | grep -Eiv "already exists|duplicate key value" || true)
+          if [ -n "$bad" ]; then echo "$bad"; echo "PHASE $d FAILED on $f"; fail=1; fi
+        done
+      done
+      if [ "$fail" -eq 0 ]; then echo "postgres ready on localhost:5432 (postgres / password)"; fi
+      exit "$fail"'
+}
 alias devclean='docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && docker volume ls -q | xargs -r docker volume rm'
 alias xcode='(cd /Users/lucas/work/monorepo/ && bazel run //iosapp/Apps/Location:xcodeproj && xed iosapp/Apps/Location/Location.xcodeproj)'
 alias lspmux_restart='launchctl kickstart -k gui/$(id -u)/org.codeberg.p2502.lspmux'
