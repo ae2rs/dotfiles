@@ -6,10 +6,10 @@
   "defaultProjectTrust": "ask",
   "packages": [
     "npm:@vanillagreen/pi-claude-bridge",
-    "npm:pi-hermes-memory",
     "npm:pi-subagents",
     "npm:taskplane",
-    "npm:pi-markdown-preview"
+    "npm:pi-markdown-preview",
+    "git:github.com/ae2rs/pi-hermes-memory@b669bc8"
   ],
   "lastChangelogVersion": "0.84.4",
   "modelThinkingLevels": {
