@@ -3,7 +3,7 @@
  *
  * Line 1: model + thinking level (left), subscription-usage bar for the
  *         active provider + context-window bar (right). No API cost anywhere
- *         — subscription headroom only.
+ *         — usage fills both bars.
  * Line 2: PLAN/AUTO mode badge, git branch, shortened cwd (left), other
  *         extensions' statuses (right).
  *
@@ -112,9 +112,9 @@ export function installFooter(ctx: ExtensionContext, pi: ExtensionAPI, usage: Us
 		if (provider) {
 			const reading = usage.getUsage(provider);
 			if (reading) {
-				const pct = formatPct(reading.remainingPct);
-				const color = barColor(reading.remainingPct, "remaining");
-				let seg = `${theme.fg("dim", reading.kind)} ${renderBar(fg, reading.remainingPct, { mode: "remaining" })} ${theme.fg(color, pct)}`;
+				const used = 100 - reading.remainingPct;
+				const color = barColor(used, "used");
+				let seg = `${theme.fg("dim", reading.kind)} ${renderBar(fg, used, { mode: "used" })} ${theme.fg(color, formatPct(used))}`;
 				if (withReset) {
 					const reset = formatResetsAt(reading);
 					if (reset) seg += ` ${theme.fg("dim", `· ${ICONS.clock} resets ${reset}`)}`;
