@@ -2,7 +2,7 @@
   "defaultProvider": "pi-claude",
   "defaultModel": "claude-opus-5",
   "defaultThinkingLevel": "high",
-  "theme": "dark",
+  "theme": "tokyo-night",
   "defaultProjectTrust": "ask",
   "packages": [
     "npm:@vanillagreen/pi-claude-bridge",
