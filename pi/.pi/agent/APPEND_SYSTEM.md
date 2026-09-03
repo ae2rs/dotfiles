@@ -28,5 +28,4 @@ about a specific project belong in that project's AGENTS.md instead.
 When working in `/Users/lucas/work/monorepo`:
 
 - Split work by domain: keep `rs/mobile` and `rs/engine` changes in separate PRs whenever they can land independently.
-- Do not run Clippy unless explicitly asked.
-- When asked, lint only each distinct Bazel package containing edited Rust source: run `./tools/clippy.py /absolute/path/to/edited.rs` once per package. Do not omit the file argument, which lints the entire `//rs/...` tree.
+- Run `tools/clippy.py` only on each distinct Bazel package containing edited Rust source: run `./tools/clippy.py /absolute/path/to/edited.rs` once per package. Do not omit the file argument, which lints the entire `//rs/...` tree.
