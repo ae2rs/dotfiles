@@ -45,6 +45,8 @@ pi/.pi/agent/auth.json
 pi/.pi/agent/models-store.json
 pi/.pi/agent/trust.json
 pi/.pi/agent/*.log
+pi/.pi/agent/missions/
+pi/.pi/agent/run-history.jsonl
 
 # Pi long-term memory (pi-hermes-memory). Kept out of git on purpose: it
 # accumulates work context the agent wrote, not config worth versioning.
