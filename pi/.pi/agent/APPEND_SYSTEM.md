@@ -10,6 +10,7 @@ about a specific project belong in that project's AGENTS.md instead.
 
 - Prefer the smallest correct design. Optimize for code that is easy to read, reason about, test, and change; avoid cleverness, speculative generality, configuration, and abstraction.
 - Before finishing, review the changed and immediately related code. Simplify control flow, remove redundant checks and dead code, clarify invariants, and consolidate duplication when it prevents drift. Keep this review within the task's scope; do not turn it into an unrelated refactor.
+- Prefer deep modules to shallow ones: a small, expressive interface over substantial implementation. Absorb complexity behind the boundary instead of pushing it onto callers, and shape the interface so the correct use is the obvious one and misuse is hard to express.
 - Make intent evident through precise names, data types, and direct control flow.
 - Write brief, high-level comments only for non-obvious constraints or rationale. Never paraphrase code, narrate history or current edits, or justify the self-evident.
 - Extract a function only when it names a meaningful concept, establishes a stable boundary, or centralizes logic that must not drift. Do not extract a tiny, specialized helper merely to test it or eliminate one or two straightforward repetitions.
