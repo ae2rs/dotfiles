@@ -3,6 +3,7 @@
   "defaultModel": "claude-opus-5",
   "defaultThinkingLevel": "high",
   "theme": "tokyo-night",
+  "quietStartup": true,
   "defaultProjectTrust": "ask",
   "branchSummary": {
     "skipPrompt": true
