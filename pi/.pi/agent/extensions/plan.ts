@@ -25,7 +25,13 @@ const EXEC_HANDOFF_TYPE = "plan-mode-exec";
 type PlanState = {
 	active: boolean;
 	planFile: string; // absolute path
+	custom: boolean;
 };
+
+export function resolvePlanFile(cwd: string, pathArg?: string, gitRoot?: string): string {
+	const path = pathArg?.trim();
+	return resolve(path ? cwd : gitRoot || cwd, path || "PLAN.md");
+}
 
 type ExecHandoff = {
 	provider: string;
@@ -119,14 +125,24 @@ Keep the plan in ${basename(planFile)} current — context & goal, current state
 // --- Extension ---
 
 export default function planExtension(pi: ExtensionAPI) {
-	let state: PlanState = { active: false, planFile: "" };
+	let state: PlanState = { active: false, planFile: "", custom: false };
 
-	function planFileFor(cwd: string, pathArg?: string): string {
-		return resolve(cwd, pathArg?.trim() || "PLAN.md");
+	async function planFileFor(cwd: string, pathArg?: string): Promise<string> {
+		if (pathArg?.trim()) return resolvePlanFile(cwd, pathArg);
+		try {
+			const result = await pi.exec("git", ["-C", cwd, "rev-parse", "--show-toplevel"], {
+				cwd,
+				timeout: 5000,
+			});
+			if (result.code === 0 && result.stdout.trim()) return resolvePlanFile(cwd, undefined, result.stdout.trim());
+		} catch {
+			// A non-git cwd should still get a local PLAN.md.
+		}
+		return resolvePlanFile(cwd);
 	}
 
 	function persist(): void {
-		pi.appendEntry(CUSTOM_TYPE, { active: state.active, planFile: state.planFile });
+		pi.appendEntry(CUSTOM_TYPE, state);
 	}
 
 	function updateUI(ctx: ExtensionContext): void {
@@ -138,7 +154,7 @@ export default function planExtension(pi: ExtensionAPI) {
 	}
 
 	async function enable(ctx: ExtensionContext, pathArg?: string): Promise<void> {
-		state = { active: true, planFile: planFileFor(ctx.cwd, pathArg) };
+		state = { active: true, planFile: await planFileFor(ctx.cwd, pathArg), custom: Boolean(pathArg?.trim()) };
 		persist();
 		updateUI(ctx);
 		const exists = existsSync(state.planFile);
@@ -169,7 +185,7 @@ export default function planExtension(pi: ExtensionAPI) {
 		}
 		const planFile = state.planFile;
 		const parentSession = ctx.sessionManager.getSessionFile();
-		state = { active: false, planFile: "" };
+		state = { active: false, planFile: "", custom: false };
 		persist();
 		updateUI(ctx);
 		ctx.ui.notify("Plan mode OFF — full access restored.", "info");
@@ -286,20 +302,22 @@ export default function planExtension(pi: ExtensionAPI) {
 
 	pi.on("session_start", async (event, ctx) => {
 		if (pi.getFlag("plan") === true && !state.active) {
-			state = { active: true, planFile: planFileFor(ctx.cwd) };
+			state = { active: true, planFile: await planFileFor(ctx.cwd), custom: false };
 		}
 
-		// Branch-aware restore: replay the latest persisted state.
+		// Branch-aware restore: replay the latest persisted state. Old entries did not
+		// record custom, so treat their paths as defaults and recompute them below.
 		for (const entry of ctx.sessionManager.getBranch()) {
 			if (entry.type === "custom" && (entry as { customType?: string }).customType === CUSTOM_TYPE) {
 				const data = (entry as { data?: PlanState }).data;
-				if (data) state = { active: data.active ?? false, planFile: data.planFile ?? "" };
+				if (data) state = { active: data.active ?? false, planFile: data.planFile ?? "", custom: data.custom ?? false };
 			}
 		}
 
-		// A plan file path recorded for a different cwd is stale — reset it.
-		if (state.active && !state.planFile.startsWith(ctx.cwd)) {
-			state = { active: false, planFile: "" };
+		// Default plans belong at the current repo/worktree root. Explicit /plan
+		// paths are deliberate and remain valid across resumed sessions.
+		if (state.active && !state.custom && state.planFile !== (await planFileFor(ctx.cwd))) {
+			state = { active: false, planFile: "", custom: false };
 		}
 
 		// Apply a pending exec handoff: "clear context and execute" records the model that
