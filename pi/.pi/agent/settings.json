@@ -4,6 +4,9 @@
   "defaultThinkingLevel": "high",
   "theme": "tokyo-night",
   "defaultProjectTrust": "ask",
+  "branchSummary": {
+    "skipPrompt": true
+  },
   "packages": [
     "npm:@vanillagreen/pi-claude-bridge",
     "npm:pi-subagents",
