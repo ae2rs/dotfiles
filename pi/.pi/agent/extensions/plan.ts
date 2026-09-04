@@ -104,6 +104,18 @@ Rules:
 - If the task turns out to be trivial, say so and propose skipping the plan instead of writing a bloated one.`;
 }
 
+// A compact restatement of the plan prompt, injected into the user's turn before every
+// LLM call. The system prompt alone is not enough: provider bridges may drop
+// before_agent_start system-prompt changes (pi-claude forwards only whitelisted prompt
+// sources), which leaves a blocked tool call as the model's first hint that plan mode is
+// on. This rides the context event instead, so it is never persisted and leaves no
+// residue in the session once plan mode ends.
+function buildPlanReminder(planFile: string): string {
+	return `[PLAN MODE ACTIVE — ${basename(planFile)}]
+This turn is read-only: research and discuss, do not implement. Every file write except ${planFile} is blocked, as are bash commands that mutate the filesystem, git, packages, system state, or remotes.
+Keep the plan in ${basename(planFile)} current — context & goal, current state, approach, verifiable steps, open questions — and do not start executing it. The user exits plan mode with /plan once the plan is ready.`;
+}
+
 // --- Extension ---
 
 export default function planExtension(pi: ExtensionAPI) {
@@ -244,7 +256,7 @@ export default function planExtension(pi: ExtensionAPI) {
 		}
 	});
 
-	// --- System prompt injection ---
+	// --- Prompt injection ---
 
 	pi.on("before_agent_start", async (event) => {
 		if (!state.active) return;
@@ -254,6 +266,20 @@ export default function planExtension(pi: ExtensionAPI) {
 				"\n\n" +
 				buildPlanPrompt(state.planFile, existsSync(state.planFile)),
 		};
+	});
+
+	pi.on("context", async (event) => {
+		if (!state.active) return;
+		// Extend the user's own message instead of appending a message of its own: a stable
+		// message count keeps provider-side conversation bookkeeping intact.
+		const target = event.messages.findLast((message) => message.role === "user");
+		if (target?.role !== "user") return;
+		const reminder = { type: "text" as const, text: buildPlanReminder(state.planFile) };
+		target.content =
+			typeof target.content === "string"
+				? [{ type: "text", text: target.content }, reminder]
+				: [...target.content, reminder];
+		return { messages: event.messages };
 	});
 
 	// --- Restore state on session start/resume ---
