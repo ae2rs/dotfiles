@@ -365,6 +365,7 @@ export default function hooks(pi: ExtensionAPI) {
 			job.exitSignal = signal;
 			updateStatus();
 			if (job.cancelled) {
+				jobs.delete(id);
 				if (uiCtx?.hasUI) uiCtx.ui.notify(`Detached job #${id} cancelled`, "info");
 				return;
 			}
