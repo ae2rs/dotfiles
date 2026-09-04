@@ -9,6 +9,7 @@
 export const ICONS = {
 	model: "󰚩",
 	thinking: "󰧑",
+	tool: "󰖱",
 	branch: "",
 	context: "󰨊",
 	clock: "󰅐",
