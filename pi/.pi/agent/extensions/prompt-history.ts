@@ -10,7 +10,7 @@
 import { basename, dirname } from "node:path";
 import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
 import { Input, Key, matchesKey, truncateToWidth } from "@earendil-works/pi-tui";
-import { PromptHistoryCache, type Prompt } from "./prompt-history/data.ts";
+import { PromptHistoryCache } from "./prompt-history/data.ts";
 import { type PromptMatch, searchPrompts } from "./prompt-history/search.ts";
 
 const MAX_VISIBLE_PROMPTS = 12;
@@ -44,11 +44,20 @@ function windowLine(line: string, ranges: Ranges, width: number): { text: string
 	const truncated = text.length < windowed.length;
 	return {
 		text,
-		ranges: clampRanges(ranges, scrolled ? ELLIPSIS.length - offset : 0, text.length - (truncated ? ELLIPSIS.length : 0)),
+		ranges: clampRanges(
+			ranges,
+			scrolled ? ELLIPSIS.length - offset : 0,
+			text.length - (truncated ? ELLIPSIS.length : 0),
+		),
 	};
 }
 
-function styleRanges(text: string, ranges: Ranges, match: (s: string) => string, rest: (s: string) => string): string {
+function styleRanges(
+	text: string,
+	ranges: Ranges,
+	match: (s: string) => string,
+	rest: (s: string) => string,
+): string {
 	let styled = "";
 	let cursor = 0;
 	for (const [start, end] of ranges) {
@@ -79,114 +88,136 @@ function age(timestamp: number): string {
 	return "now";
 }
 
-async function pickPrompt(ctx: ExtensionContext, cache: PromptHistoryCache): Promise<Prompt | undefined> {
+async function openHistory(ctx: ExtensionContext, cache: PromptHistoryCache): Promise<void> {
 	if (ctx.mode !== "tui") {
 		ctx.ui.notify("Prompt history is available in the interactive TUI only.", "warning");
-		return undefined;
+		return;
 	}
 
 	const sessionsRoot = dirname(ctx.sessionManager.getSessionDir());
 	const prompts = await cache.load(sessionsRoot);
 	if (prompts.length === 0) {
 		ctx.ui.notify("No saved user prompts found.", "info");
-		return undefined;
+		return;
 	}
 
 	const editorText = ctx.ui.getEditorText();
 	const initialQuery = editorText.includes("\n") ? "" : editorText;
-	return ctx.ui.custom<Prompt | undefined>((tui, theme, _keybindings, done) => {
-		const input = new Input({ prompt: "Search: ", placeholder: "type to filter saved prompts" });
-		input.focused = true;
-		input.setValue(initialQuery);
-		let matches = searchPrompts(prompts, initialQuery);
-		let selectedIndex = 0;
-		let query = initialQuery;
+	return ctx.ui.custom<void>(
+		(tui, theme, _keybindings, done) => {
+			const input = new Input({ prompt: "Search: ", placeholder: "type to filter saved prompts" });
+			input.focused = true;
+			input.setValue(initialQuery);
+			let matches = searchPrompts(prompts, initialQuery);
+			let selectedIndex = 0;
+			let query = initialQuery;
 
-		const refreshMatches = () => {
-			const nextQuery = input.getValue();
-			if (nextQuery === query) return;
-			query = nextQuery;
-			matches = searchPrompts(prompts, query);
-			selectedIndex = 0;
-			tui.requestRender();
-		};
-		input.onSubmit = () => done(matches[selectedIndex]?.prompt);
+			const refreshMatches = () => {
+				const nextQuery = input.getValue();
+				if (nextQuery === query) return;
+				query = nextQuery;
+				matches = searchPrompts(prompts, query);
+				selectedIndex = 0;
+				tui.requestRender();
+			};
+			/**
+			 * Neither `setEditorText` nor `pasteToEditor` requests a repaint, and the
+			 * editor's own `onChange` does not either, so an insertion made after this
+			 * overlay closed would sit invisible until the next keystroke. Insert while
+			 * a `tui` to render with is still in scope, as Pi's own programmatic paste
+			 * does. Paste handling also collapses anything over 10 lines or 1000
+			 * characters to a `[paste #N]` marker; it inserts at the cursor, so drop
+			 * whatever text seeded the search first.
+			 */
+			const insertAndClose = (entry?: PromptMatch) => {
+				if (entry) {
+					ctx.ui.setEditorText("");
+					ctx.ui.pasteToEditor(entry.prompt.text);
+					tui.requestRender();
+				}
+				done();
+			};
+			input.onSubmit = () => insertAndClose(matches[selectedIndex]);
 
-		return {
-			render(width: number): string[] {
-				const contentWidth = Math.max(1, width - 2);
-				const lines = [
-					theme.fg("accent", theme.bold(" Prompt history")),
-					...input.render(contentWidth).map((line) => ` ${line}`),
-					"",
-				];
-				if (matches.length === 0) {
-					lines.push(theme.fg("warning", " No matching prompts"));
-				} else {
-					const start = Math.min(
-						Math.max(0, selectedIndex - Math.floor(MAX_VISIBLE_PROMPTS / 2)),
-						Math.max(0, matches.length - MAX_VISIBLE_PROMPTS),
-					);
-					for (let index = start; index < Math.min(matches.length, start + MAX_VISIBLE_PROMPTS); index += 1) {
-						const entry = matches[index];
-						const selected = index === selectedIndex;
-						const prefix = selected ? theme.fg("accent", "> ") : "  ";
-						lines.push(prefix + renderRow(entry, contentWidth - 2, theme, selected));
-						const { cwd, sessionFile, timestamp } = entry.prompt;
-						const project = cwd ? basename(cwd) : basename(dirname(sessionFile));
-						lines.push(theme.fg("dim", `    ${project} · ${age(timestamp)}`));
+			return {
+				render(width: number): string[] {
+					const contentWidth = Math.max(1, width - 2);
+					const lines = [
+						theme.fg("accent", theme.bold(" Prompt history")),
+						...input.render(contentWidth).map((line) => ` ${line}`),
+						"",
+					];
+					if (matches.length === 0) {
+						lines.push(theme.fg("warning", " No matching prompts"));
+					} else {
+						const start = Math.min(
+							Math.max(0, selectedIndex - Math.floor(MAX_VISIBLE_PROMPTS / 2)),
+							Math.max(0, matches.length - MAX_VISIBLE_PROMPTS),
+						);
+						for (
+							let index = start;
+							index < Math.min(matches.length, start + MAX_VISIBLE_PROMPTS);
+							index += 1
+						) {
+							const entry = matches[index];
+							const selected = index === selectedIndex;
+							const prefix = selected ? theme.fg("accent", "> ") : "  ";
+							lines.push(prefix + renderRow(entry, contentWidth - 2, theme, selected));
+							const { cwd, sessionFile, timestamp } = entry.prompt;
+							const project = cwd ? basename(cwd) : basename(dirname(sessionFile));
+							lines.push(theme.fg("dim", `    ${project} · ${age(timestamp)}`));
+						}
 					}
-				}
-				lines.push("", theme.fg("dim", " ↑↓ navigate · Enter insert · Esc cancel"));
-				return lines;
-			},
-			invalidate() {},
-			handleInput(data: string) {
-				if (matchesKey(data, Key.escape)) {
-					done(undefined);
-					return;
-				}
-				if (matchesKey(data, Key.up)) {
-					selectedIndex = Math.max(0, selectedIndex - 1);
-					tui.requestRender();
-					return;
-				}
-				if (matchesKey(data, Key.down)) {
-					selectedIndex = Math.min(Math.max(0, matches.length - 1), selectedIndex + 1);
-					tui.requestRender();
-					return;
-				}
-				if (matchesKey(data, Key.pageUp)) {
-					selectedIndex = Math.max(0, selectedIndex - MAX_VISIBLE_PROMPTS);
-					tui.requestRender();
-					return;
-				}
-				if (matchesKey(data, Key.pageDown)) {
-					selectedIndex = Math.min(Math.max(0, matches.length - 1), selectedIndex + MAX_VISIBLE_PROMPTS);
-					tui.requestRender();
-					return;
-				}
-				input.handleInput(data);
-				refreshMatches();
-			},
-		};
-	}, { overlay: true, overlayOptions: { width: "80%", margin: 2 } });
+					lines.push("", theme.fg("dim", " ↑↓ navigate · Enter insert · Esc cancel"));
+					return lines;
+				},
+				invalidate() {},
+				handleInput(data: string) {
+					if (matchesKey(data, Key.escape)) {
+						done();
+						return;
+					}
+					if (matchesKey(data, Key.up)) {
+						selectedIndex = Math.max(0, selectedIndex - 1);
+						tui.requestRender();
+						return;
+					}
+					if (matchesKey(data, Key.down)) {
+						selectedIndex = Math.min(Math.max(0, matches.length - 1), selectedIndex + 1);
+						tui.requestRender();
+						return;
+					}
+					if (matchesKey(data, Key.pageUp)) {
+						selectedIndex = Math.max(0, selectedIndex - MAX_VISIBLE_PROMPTS);
+						tui.requestRender();
+						return;
+					}
+					if (matchesKey(data, Key.pageDown)) {
+						selectedIndex = Math.min(
+							Math.max(0, matches.length - 1),
+							selectedIndex + MAX_VISIBLE_PROMPTS,
+						);
+						tui.requestRender();
+						return;
+					}
+					input.handleInput(data);
+					refreshMatches();
+				},
+			};
+		},
+		{ overlay: true, overlayOptions: { width: "80%", margin: 2 } },
+	);
 }
 
 export default function promptHistory(pi: ExtensionAPI): void {
 	const cache = new PromptHistoryCache();
 
-	async function open(ctx: ExtensionContext): Promise<void> {
-		const prompt = await pickPrompt(ctx, cache);
-		if (prompt) ctx.ui.setEditorText(prompt.text);
-	}
-
 	pi.registerCommand("history", {
 		description: "Search user prompts across all saved sessions",
-		handler: async (_args, ctx) => open(ctx),
+		handler: async (_args, ctx) => openHistory(ctx, cache),
 	});
 	pi.registerShortcut("ctrl+r", {
 		description: "Search saved user prompts",
-		handler: async (ctx) => open(ctx),
+		handler: async (ctx) => openHistory(ctx, cache),
 	});
 }
