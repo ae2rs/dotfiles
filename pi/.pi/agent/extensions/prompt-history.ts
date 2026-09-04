@@ -1,7 +1,7 @@
 /**
  * Cross-session reverse search for user prompts.
  *
- * Ctrl+R (or /prompts) searches every persisted Pi session and inserts the
+ * Ctrl+R (or /history) searches every persisted Pi session and inserts the
  * selected prompt into the editor. Rows show the line that matched, with the
  * matched text highlighted, so the ranking in `prompt-history/search.ts` is
  * legible rather than something the reader has to take on faith.
@@ -181,7 +181,7 @@ export default function promptHistory(pi: ExtensionAPI): void {
 		if (prompt) ctx.ui.setEditorText(prompt.text);
 	}
 
-	pi.registerCommand("prompts", {
+	pi.registerCommand("history", {
 		description: "Search user prompts across all saved sessions",
 		handler: async (_args, ctx) => open(ctx),
 	});
