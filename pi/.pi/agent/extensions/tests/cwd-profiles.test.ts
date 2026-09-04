@@ -27,6 +27,7 @@ describe("cwd profile selection", () => {
 	test("uses the default profile when no rule matches", () => {
 		const profiles = config(
 			fixture({
+				base: { instructions: ["boundary.md"] },
 				default: { instructions: ["default.md"], skills: ["default-skill"] },
 				profiles: { monorepo: { skills: ["monorepo-skill"] } },
 			}),
@@ -35,7 +36,7 @@ describe("cwd profile selection", () => {
 		expect(selectProfile(profiles, "/work/other")).toMatchObject({
 			name: "default",
 			skills: [expect.stringContaining("default-skill")],
-			instructions: [expect.stringContaining("default.md")],
+			instructions: [expect.stringContaining("boundary.md"), expect.stringContaining("default.md")],
 		});
 	});
 

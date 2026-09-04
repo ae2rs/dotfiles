@@ -90,7 +90,7 @@ pi() {
             ;;
         *)
             local agent_dir=${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}
-            command pi --no-context-files --no-skills \
+            CLAUDE_BRIDGE_ISOLATED=1 command pi --no-context-files --no-skills \
                 --append-system-prompt "$agent_dir/APPEND_SYSTEM.md" "$@"
             ;;
     esac
