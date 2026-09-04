@@ -330,6 +330,11 @@ function killJobTree(job: Job): void {
 
 export default function hooks(pi: ExtensionAPI) {
 	let uiCtx: ExtensionContext | undefined;
+	const jobChangeListeners = new Set<() => void>();
+
+	function notifyJobChange(): void {
+		for (const listener of jobChangeListeners) listener();
+	}
 
 	function updateStatus(): void {
 		if (!uiCtx?.hasUI) return;
@@ -366,14 +371,17 @@ export default function hooks(pi: ExtensionAPI) {
 			updateStatus();
 			if (job.cancelled) {
 				jobs.delete(id);
+				notifyJobChange();
 				if (uiCtx?.hasUI) uiCtx.ui.notify(`Detached job #${id} cancelled`, "info");
 				return;
 			}
+			notifyJobChange();
 			wake(job);
 		});
 		proc.unref();
 
 		updateStatus();
+		notifyJobChange();
 		return job;
 	}
 
@@ -580,11 +588,11 @@ export default function hooks(pi: ExtensionAPI) {
 				return;
 			}
 
-			const entries: Array<{ job: Job } | { run: HookRun }> = [
+			const entries = (): Array<{ job: Job } | { run: HookRun }> => [
 				...[...jobs.values()].sort((a, b) => a.id - b.id).map((job) => ({ job })),
 				...recentRuns.slice(-10).reverse().map((run) => ({ run })),
 			];
-			if (entries.length === 0) {
+			if (entries().length === 0) {
 				ctx.ui.notify("No detached jobs or hook runs yet", "info");
 				return;
 			}
@@ -593,10 +601,26 @@ export default function hooks(pi: ExtensionAPI) {
 				return;
 			}
 
+			let unsubscribe: (() => void) | undefined;
 			const choice = await ctx.ui.custom<number | null>((tui, theme, _kb, done) => {
 				let selected = 0;
 				let notice = "";
+				let cancellingJobId: number | undefined;
 				const refresh = () => tui.requestRender();
+				const currentEntries = () => {
+					const value = entries();
+					selected = Math.min(selected, Math.max(0, value.length - 1));
+					return value;
+				};
+				const onJobChange = () => {
+					if (cancellingJobId !== undefined && !jobs.has(cancellingJobId)) {
+						cancellingJobId = undefined;
+						notice = "";
+					}
+					refresh();
+				};
+				jobChangeListeners.add(onJobChange);
+				unsubscribe = () => jobChangeListeners.delete(onJobChange);
 				const label = (entry: { job: Job } | { run: HookRun }) => {
 					if ("job" in entry) {
 						const { job } = entry;
@@ -617,14 +641,17 @@ export default function hooks(pi: ExtensionAPI) {
 				return {
 					render(width: number) {
 						const max = Math.max(20, width - 2);
+						const visibleEntries = currentEntries();
 						return [
 							theme.bold("Hooks"),
 							theme.fg("dim", "↑/↓ select   Enter view output   x cancel selected job   Esc close"),
 							...(notice ? [theme.fg("warning", notice)] : []),
-							...entries.map((entry, index) => {
-								const prefix = index === selected ? theme.fg("accent", "› ") : "  ";
-								return prefix + truncate(label(entry), max);
-							}),
+							...(visibleEntries.length === 0
+								? [theme.fg("dim", "No detached jobs or hook runs.")]
+								: visibleEntries.map((entry, index) => {
+									const prefix = index === selected ? theme.fg("accent", "› ") : "  ";
+									return prefix + truncate(label(entry), max);
+								})),
 						];
 					},
 					invalidate() {},
@@ -633,26 +660,28 @@ export default function hooks(pi: ExtensionAPI) {
 							done(null);
 							return;
 						}
-						if (matchesKey(data, Key.up)) {
-							selected = (selected - 1 + entries.length) % entries.length;
+						const visibleEntries = currentEntries();
+						if (matchesKey(data, Key.up) && visibleEntries.length > 0) {
+							selected = (selected - 1 + visibleEntries.length) % visibleEntries.length;
 							refresh();
 							return;
 						}
-						if (matchesKey(data, Key.down)) {
-							selected = (selected + 1) % entries.length;
+						if (matchesKey(data, Key.down) && visibleEntries.length > 0) {
+							selected = (selected + 1) % visibleEntries.length;
 							refresh();
 							return;
 						}
-						if (matchesKey(data, Key.enter)) {
+						if (matchesKey(data, Key.enter) && visibleEntries.length > 0) {
 							done(selected);
 							return;
 						}
 						if (data === "x") {
-							const entry = entries[selected];
-							if (!("job" in entry) || entry.job.endedAt !== undefined || entry.job.cancelled) {
+							const entry = visibleEntries[selected];
+							if (!entry || !("job" in entry) || entry.job.endedAt !== undefined || entry.job.cancelled) {
 								notice = "Only a running job can be cancelled.";
 							} else {
 								cancelJob(entry.job);
+								cancellingJobId = entry.job.id;
 								notice = `Cancelling detached job #${entry.job.id}…`;
 							}
 							refresh();
@@ -660,8 +689,10 @@ export default function hooks(pi: ExtensionAPI) {
 					},
 				};
 			});
+			unsubscribe?.();
 			if (choice === null) return;
-			const entry = entries[choice];
+			const entry = entries()[choice];
+			if (!entry) return;
 			if ("job" in entry) await viewFile(ctx, entry.job.logFile, entry.job.endedAt === undefined);
 			else await viewRun(ctx, entry.run);
 		},
