@@ -1,0 +1,30 @@
+{
+  "base": {
+    "instructions": ["AGENTS.md"]
+  },
+  "default": {
+    "skills": ["../../.agents/skills/find-skills"]
+  },
+  "profiles": {
+    "monorepo": {
+      "instructions": ["profiles/monorepo.md"],
+      "skills": [
+        "skills/merge-deploy-monorepo-pr",
+        "skills/watch-api-rollouts",
+        "linear/skills/linear"
+      ]
+    }
+  },
+  "directoryRules": [
+    {
+      "directory": "/Users/lucas/work/monorepo",
+      "profile": "monorepo"
+    }
+  ],
+  "originRules": [
+    {
+      "origin": "wesprint-io/monorepo",
+      "profile": "monorepo"
+    }
+  ]
+}
