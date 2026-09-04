@@ -15,7 +15,11 @@
 
 import { existsSync } from "node:fs";
 import { basename, resolve } from "node:path";
-import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionCommandContext,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 
 const CUSTOM_TYPE = "plan-mode";
 // One-shot handoff recorded in the replacement session by "clear context and execute",
@@ -43,27 +47,56 @@ type ExecHandoff = {
 
 const BLOCKED_BASH: Array<{ pattern: RegExp; label: string }> = [
 	// File redirects (but not 2>&1, >=, ->, =>)
-	{ pattern: /(?<![\d&\-=])>{1,2}(?![&=])/, label: "file redirect (use the write tool for PLAN.md)" },
+	{
+		pattern: /(?<![\d&\-=])>{1,2}(?![&=])/,
+		label: "file redirect (use the write tool for PLAN.md)",
+	},
 	// Filesystem mutation
-	{ pattern: /\b(rm|rmdir|mv|cp|mkdir|touch|chmod|chown|chgrp|ln|tee|truncate|dd|shred|rsync|scp)\b/, label: "filesystem mutation" },
+	{
+		pattern:
+			/\b(rm|rmdir|mv|cp|mkdir|touch|chmod|chown|chgrp|ln|tee|truncate|dd|shred|rsync|scp)\b/,
+		label: "filesystem mutation",
+	},
 	{ pattern: /\bsed\s+(-\w*i\w*|\S+\s+-i)\b/, label: "in-place sed" },
 	// Editors / pagers that can edit
 	{ pattern: /\b(vim?|nvim|nano|emacs)\b/, label: "editor" },
 	// Git write operations (read-only: status, log, diff, show, branch, ls-*, blame, rev-parse, ...)
-	{ pattern: /\bgit\s+(add|commit|push|pull|merge|rebase|reset|checkout|restore|switch|stash|cherry-pick|revert|tag|init|clone|apply|am|clean|worktree|fetch)\b/, label: "git write operation" },
+	{
+		pattern:
+			/\bgit\s+(add|commit|push|pull|merge|rebase|reset|checkout|restore|switch|stash|cherry-pick|revert|tag|init|clone|apply|am|clean|worktree|fetch)\b/,
+		label: "git write operation",
+	},
 	{ pattern: /\bgit\s+branch\s+(-[dD]\b|--delete|--move|-m\b|-M\b)/, label: "git branch mutation" },
 	{ pattern: /\bgit\s+config\s+(?!(--get|--list|-l\b))/, label: "git config write" },
 	// Package managers (mutating subcommands only)
-	{ pattern: /\b(npm|pnpm|yarn|bun)\s+(install|i|add|remove|uninstall|rm|update|upgrade|ci|link|publish)\b/, label: "package manager mutation" },
+	{
+		pattern:
+			/\b(npm|pnpm|yarn|bun)\s+(install|i|add|remove|uninstall|rm|update|upgrade|ci|link|publish)\b/,
+		label: "package manager mutation",
+	},
 	{ pattern: /\b(pip3?|uv)\s+(pip\s+)?(install|uninstall)\b/, label: "package manager mutation" },
-	{ pattern: /\bbrew\s+(install|uninstall|upgrade|reinstall)\b/, label: "package manager mutation" },
-	{ pattern: /\bapt(-get)?\s+(install|remove|purge|update|upgrade)\b/, label: "package manager mutation" },
+	{
+		pattern: /\bbrew\s+(install|uninstall|upgrade|reinstall)\b/,
+		label: "package manager mutation",
+	},
+	{
+		pattern: /\bapt(-get)?\s+(install|remove|purge|update|upgrade)\b/,
+		label: "package manager mutation",
+	},
 	// System state
 	{ pattern: /\b(sudo|su|shutdown|reboot|launchctl)\b/, label: "system mutation" },
 	{ pattern: /\bsystemctl\s+(start|stop|restart|enable|disable)\b/, label: "system mutation" },
 	// Remote mutations via CLIs (local reads stay allowed)
-	{ pattern: /\bgh\s+(pr\s+(create|merge|close|reopen|edit|ready)|issue\s+(create|close|reopen|edit)|repo\s+(create|delete|fork)|release\s+(create|delete|edit)|workflow\s+(run|enable|disable))/, label: "remote mutation via gh" },
-	{ pattern: /\bkubectl\s+(apply|create|delete|edit|patch|replace|scale|rollout\s+(restart|undo)|drain|cordon|uncordon|taint|label|annotate)\b/, label: "cluster mutation via kubectl" },
+	{
+		pattern:
+			/\bgh\s+(pr\s+(create|merge|close|reopen|edit|ready)|issue\s+(create|close|reopen|edit)|repo\s+(create|delete|fork)|release\s+(create|delete|edit)|workflow\s+(run|enable|disable))/,
+		label: "remote mutation via gh",
+	},
+	{
+		pattern:
+			/\bkubectl\s+(apply|create|delete|edit|patch|replace|scale|rollout\s+(restart|undo)|drain|cordon|uncordon|taint|label|annotate)\b/,
+		label: "cluster mutation via kubectl",
+	},
 ];
 
 function checkBash(command: string): { safe: boolean; reason?: string } {
@@ -134,7 +167,8 @@ export default function planExtension(pi: ExtensionAPI) {
 				cwd,
 				timeout: 5000,
 			});
-			if (result.code === 0 && result.stdout.trim()) return resolvePlanFile(cwd, undefined, result.stdout.trim());
+			if (result.code === 0 && result.stdout.trim())
+				return resolvePlanFile(cwd, undefined, result.stdout.trim());
 		} catch {
 			// A non-git cwd should still get a local PLAN.md.
 		}
@@ -147,14 +181,21 @@ export default function planExtension(pi: ExtensionAPI) {
 
 	function updateUI(ctx: ExtensionContext): void {
 		if (state.active) {
-			ctx.ui.setStatus("plan-mode", ctx.ui.theme.fg("warning", `⏸ plan: ${basename(state.planFile)}`));
+			ctx.ui.setStatus(
+				"plan-mode",
+				ctx.ui.theme.fg("warning", `⏸ plan: ${basename(state.planFile)}`),
+			);
 		} else {
 			ctx.ui.setStatus("plan-mode", undefined);
 		}
 	}
 
 	async function enable(ctx: ExtensionContext, pathArg?: string): Promise<void> {
-		state = { active: true, planFile: await planFileFor(ctx.cwd, pathArg), custom: Boolean(pathArg?.trim()) };
+		state = {
+			active: true,
+			planFile: await planFileFor(ctx.cwd, pathArg),
+			custom: Boolean(pathArg?.trim()),
+		};
 		persist();
 		updateUI(ctx);
 		const exists = existsSync(state.planFile);
@@ -196,7 +237,11 @@ export default function planExtension(pi: ExtensionAPI) {
 			// A fresh session starts on the configured default model; carry the active one over.
 			// Only plain data may cross the boundary — captured pi/ctx are stale after the switch.
 			const handoff: ExecHandoff | undefined = ctx.model
-				? { provider: ctx.model.provider, modelId: ctx.model.id, thinkingLevel: pi.getThinkingLevel() }
+				? {
+						provider: ctx.model.provider,
+						modelId: ctx.model.id,
+						thinkingLevel: pi.getThinkingLevel(),
+					}
 				: undefined;
 			// Terminal for this handler: the session is replaced and old ctx/pi are stale afterwards.
 			await commandCtx.newSession({
@@ -239,7 +284,8 @@ export default function planExtension(pi: ExtensionAPI) {
 	// --- Command & shortcut ---
 
 	pi.registerCommand("plan", {
-		description: "Toggle plan mode (read-only; only PLAN.md can be modified). /plan <path> to use a custom plan file",
+		description:
+			"Toggle plan mode (read-only; only PLAN.md can be modified). /plan <path> to use a custom plan file",
 		handler: async (args, ctx) => toggle(ctx, args),
 	});
 
@@ -278,9 +324,7 @@ export default function planExtension(pi: ExtensionAPI) {
 		if (!state.active) return;
 		return {
 			systemPrompt:
-				event.systemPrompt +
-				"\n\n" +
-				buildPlanPrompt(state.planFile, existsSync(state.planFile)),
+				event.systemPrompt + "\n\n" + buildPlanPrompt(state.planFile, existsSync(state.planFile)),
 		};
 	});
 
@@ -308,9 +352,17 @@ export default function planExtension(pi: ExtensionAPI) {
 		// Branch-aware restore: replay the latest persisted state. Old entries did not
 		// record custom, so treat their paths as defaults and recompute them below.
 		for (const entry of ctx.sessionManager.getBranch()) {
-			if (entry.type === "custom" && (entry as { customType?: string }).customType === CUSTOM_TYPE) {
+			if (
+				entry.type === "custom" &&
+				(entry as { customType?: string }).customType === CUSTOM_TYPE
+			) {
 				const data = (entry as { data?: PlanState }).data;
-				if (data) state = { active: data.active ?? false, planFile: data.planFile ?? "", custom: data.custom ?? false };
+				if (data)
+					state = {
+						active: data.active ?? false,
+						planFile: data.planFile ?? "",
+						custom: data.custom ?? false,
+					};
 			}
 		}
 
@@ -324,7 +376,10 @@ export default function planExtension(pi: ExtensionAPI) {
 		// was active so the fresh session doesn't fall back to the configured default.
 		if (event.reason === "new") {
 			for (const entry of ctx.sessionManager.getBranch()) {
-				if (entry.type === "custom" && (entry as { customType?: string }).customType === EXEC_HANDOFF_TYPE) {
+				if (
+					entry.type === "custom" &&
+					(entry as { customType?: string }).customType === EXEC_HANDOFF_TYPE
+				) {
 					const handoff = (entry as { data?: ExecHandoff }).data;
 					if (handoff?.provider && handoff?.modelId) {
 						const model = ctx.modelRegistry.find(handoff.provider, handoff.modelId);

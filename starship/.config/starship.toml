@@ -71,4 +71,3 @@ disabled = false
 format = '[$symbol]($style)'
 symbol = "● "
 style = "bold yellow"
-

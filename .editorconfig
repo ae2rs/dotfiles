@@ -1,0 +1,37 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = tab
+
+# shfmt reads this section; the keys below indent_style are its own.
+[*.{sh,bash}]
+indent_style = tab
+binary_next_line = true
+switch_case_indent = true
+
+# Not auto-formatted: shfmt has no zsh support, so editors keep the style in place.
+[*.{zsh,zshrc,zshenv,zprofile}]
+indent_style = space
+indent_size = 2
+
+[*.{json,jsonc,yaml,yml,md,toml}]
+indent_style = space
+indent_size = 2
+
+[*.py]
+indent_style = space
+indent_size = 4
+
+[Brewfile]
+indent_style = space
+indent_size = 2
+
+# stylua is the authority for Lua. nvim/ carries its own .stylua.toml so the
+# style survives being stowed into ~/.config/nvim.
+[nvim/.config/nvim/**.lua]
+indent_style = space
+indent_size = 2

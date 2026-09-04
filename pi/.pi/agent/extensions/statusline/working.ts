@@ -21,7 +21,7 @@ function pluralize(count: number, noun: string): string {
 }
 
 function summarizeTool(toolName: string, args: unknown): string {
-	const input = args && typeof args === "object" ? args as Record<string, unknown> : {};
+	const input = args && typeof args === "object" ? (args as Record<string, unknown>) : {};
 	const detail =
 		typeof input.command === "string"
 			? input.command
@@ -58,7 +58,11 @@ export function setupWorkingIndicator(pi: ExtensionAPI): void {
 		activity = nextActivity;
 		try {
 			const color =
-				nextActivity === "command" ? "bashMode" : nextActivity === "tool" ? "accent" : TONE_COLORS[nextTone];
+				nextActivity === "command"
+					? "bashMode"
+					: nextActivity === "tool"
+						? "accent"
+						: TONE_COLORS[nextTone];
 			ctx.ui.setWorkingIndicator({
 				frames: WORKING_FRAMES.map((frame) => ctx.ui.theme.fg(color, frame)),
 				intervalMs: 100,

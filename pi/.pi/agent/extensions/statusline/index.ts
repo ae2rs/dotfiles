@@ -27,7 +27,9 @@ export default function statuslineExtension(pi: ExtensionAPI) {
 
 	pi.on("session_start", (_event, ctx) => {
 		if (ctx.mode !== "tui" || !ctx.hasUI) return;
-		ctx.ui.setEditorComponent((tui, theme, keybindings) => new BoxedEditor(tui, theme, keybindings));
+		ctx.ui.setEditorComponent(
+			(tui, theme, keybindings) => new BoxedEditor(tui, theme, keybindings),
+		);
 		footer?.dispose();
 		footer = installFooter(ctx, pi, usage);
 	});

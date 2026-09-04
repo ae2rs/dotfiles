@@ -6,7 +6,9 @@ local scheme = wezterm.color.get_builtin_schemes()[color_scheme]
 local palette = {
 	bg = scheme.background,
 	fg = scheme.foreground,
-	surface = scheme.tab_bar and scheme.tab_bar.inactive_tab and scheme.tab_bar.inactive_tab.bg_color
+	surface = scheme.tab_bar
+			and scheme.tab_bar.inactive_tab
+			and scheme.tab_bar.inactive_tab.bg_color
 		or scheme.background,
 	muted = scheme.tab_bar and scheme.tab_bar.inactive_tab and scheme.tab_bar.inactive_tab.fg_color
 		or scheme.brights[1],
@@ -98,13 +100,19 @@ local popTab = wezterm.action_callback(function(window, pane)
 			table.insert(args, "--right")
 			if i == 2 then
 				table.insert(args, "--percent")
-				table.insert(args, tostring(math.floor(info.width / (first.width + info.width) * 100 + 0.5)))
+				table.insert(
+					args,
+					tostring(math.floor(info.width / (first.width + info.width) * 100 + 0.5))
+				)
 			end
 		elseif info.top >= first.top + first.height then
 			table.insert(args, "--bottom")
 			if i == 2 then
 				table.insert(args, "--percent")
-				table.insert(args, tostring(math.floor(info.height / (first.height + info.height) * 100 + 0.5)))
+				table.insert(
+					args,
+					tostring(math.floor(info.height / (first.height + info.height) * 100 + 0.5))
+				)
 			end
 		elseif info.left + info.width <= first.left then
 			table.insert(args, "--left")
@@ -308,7 +316,8 @@ local function disk_usage()
 		return disk_usage_cache
 	end
 
-	local handle = popen("(df -k /System/Volumes/Data 2>/dev/null || df -k / 2>/dev/null) | tail -1")
+	local handle =
+		popen("(df -k /System/Volumes/Data 2>/dev/null || df -k / 2>/dev/null) | tail -1")
 	if not handle then
 		disk_usage_cache = " -- "
 		disk_usage_last = now
@@ -351,7 +360,8 @@ local function net_usage()
 		return net_cache
 	end
 
-	local handle = io.popen("netstat -ibn 2>/dev/null | awk '/^en/ {rx+=$7; tx+=$10} END {print rx, tx}'")
+	local handle =
+		io.popen("netstat -ibn 2>/dev/null | awk '/^en/ {rx+=$7; tx+=$10} END {print rx, tx}'")
 	if not handle then
 		return net_cache
 	end

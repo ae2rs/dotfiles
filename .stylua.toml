@@ -1,0 +1,7 @@
+# Applies to Lua outside nvim/, which ships its own .stylua.toml so the style
+# travels with the config once stow links it into ~/.config/nvim.
+column_width = 100
+line_endings = "Unix"
+indent_type = "Tabs"
+quote_style = "AutoPreferDouble"
+call_parentheses = "Always"

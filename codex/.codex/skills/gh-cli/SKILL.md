@@ -12,6 +12,7 @@ Provides specialized utilities for GitHub CLI operations with three powerful Pyt
 ## Core Capabilities
 
 ### 1. Enhanced Code Search
+
 Use `scripts/gh_code_search.py` for advanced GitHub code search with filtering, formatting, and sorting capabilities.
 
 **Key features:** Multiple output formats, rate limiting handling, fork/private repo filtering, match count filtering
@@ -19,6 +20,7 @@ Use `scripts/gh_code_search.py` for advanced GitHub code search with filtering, 
 **Documentation:** `references/README_gh_code_search.md`
 
 ### 2. Workflow Failure Analysis
+
 Use `scripts/gh_failed_run.py` to analyze GitHub Actions workflow failures and extract detailed error information.
 
 **Key features:** Finds most recent failed run, extracts error patterns from logs, outputs structured JSON with run info and failed jobs
@@ -26,6 +28,7 @@ Use `scripts/gh_failed_run.py` to analyze GitHub Actions workflow failures and e
 **Documentation:** `references/README_gh_failed_run.md`
 
 ### 3. GitHub Pages Management
+
 Use `scripts/gh_pages_deploy.py` for GitHub Pages deployment automation including enabling Pages, status checks, and workflow generation.
 
 **Key features:** Enable/configure Pages, check deployment status, trigger rebuilds, generate workflow templates

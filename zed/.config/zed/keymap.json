@@ -12,29 +12,29 @@
       "space s f": "file_finder::Toggle",
       "space s g": ["pane::DeploySearch", { "replace_enabled": true }],
       "space space": "tab_switcher::ToggleAll",
-      "\\": "workspace::ToggleLeftDock"
-    }
+      "\\": "workspace::ToggleLeftDock",
+    },
   },
   {
     "context": "vim_mode == visual",
     "bindings": {
       "space s g": "pane::DeploySearch",
-      "space space": "tab_switcher::ToggleAll"
-    }
+      "space space": "tab_switcher::ToggleAll",
+    },
   },
   {
     "context": "Editor && edit_prediction",
     "bindings": {
       // "ctrl-y": "editor::ConfirmCompletionInsert",
-      "ctrl-m": "editor::AcceptEditPrediction"
-    }
+      "ctrl-m": "editor::AcceptEditPrediction",
+    },
   },
   {
     "context": "Editor && edit_prediction_conflict",
     "bindings": {
       // "ctrl-y": "editor::ConfirmCompletionInsert",
-      "ctrl-m": "editor::AcceptEditPrediction"
-    }
+      "ctrl-m": "editor::AcceptEditPrediction",
+    },
   },
   {
     "context": "Pane",
@@ -47,8 +47,8 @@
       "cmd-6": ["pane::ActivateItem", 5],
       "cmd-7": ["pane::ActivateItem", 6],
       "cmd-8": ["pane::ActivateItem", 7],
-      "cmd-9": ["pane::ActivateItem", 8]
-    }
+      "cmd-9": ["pane::ActivateItem", 8],
+    },
   },
   {
     "context": "Workspace",
@@ -78,12 +78,12 @@
       "ctrl-w h": "workspace::ActivatePaneRight",
       "ctrl-w k": "workspace::ActivatePaneUp",
       "ctrl-w j": "workspace::ActivatePaneDown",
-      "cmd-w": "workspace::CloseActiveDock"
-    }
+      "cmd-w": "workspace::CloseActiveDock",
+    },
   },
   {
     "context": "Workspace && !editing",
-    "bindings": {}
+    "bindings": {},
   },
   {
     "context": "ProjectPanel && !editing",
@@ -93,7 +93,7 @@
       "x": "project_panel::Delete",
       "r": "project_panel::Rename",
       "escape": "workspace::ToggleLeftDock",
-      "enter": ["workspace::SendKeystrokes", "enter \\"]
-    }
-  }
+      "enter": ["workspace::SendKeystrokes", "enter \\"],
+    },
+  },
 ]

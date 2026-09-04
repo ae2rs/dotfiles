@@ -18,9 +18,21 @@ return {
       }
     end,
     opts = {
+      -- Mirrors dotfiles/format.sh, so editing a config here and running the
+      -- repo's formatter never fight each other.
       formatters_by_ft = {
         lua = { 'stylua' },
         go = { 'goimports', 'gofumpt' },
+        typescript = { 'prettier' },
+        javascript = { 'prettier' },
+        json = { 'prettier' },
+        jsonc = { 'prettier' },
+        yaml = { 'prettier' },
+        markdown = { 'prettier' },
+        python = { 'ruff_format' },
+        sh = { 'shfmt' },
+        bash = { 'shfmt' },
+        toml = { 'taplo' },
       },
       format_on_save = function(bufnr)
         local bo = vim.bo[bufnr]

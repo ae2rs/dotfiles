@@ -9,13 +9,22 @@
 import { CustomEditor } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-function buildBorderLine(width: number, left: string, right: string, borderColor: (text: string) => string): string {
+function buildBorderLine(
+	width: number,
+	left: string,
+	right: string,
+	borderColor: (text: string) => string,
+): string {
 	if (width <= 0) return "";
 	if (width === 1) return borderColor(left);
 	return borderColor(`${left}${"─".repeat(Math.max(0, width - 2))}${right}`);
 }
 
-function buildBoxedContentLine(width: number, content: string, borderColor: (text: string) => string): string {
+function buildBoxedContentLine(
+	width: number,
+	content: string,
+	borderColor: (text: string) => string,
+): string {
 	if (width <= 0) return "";
 	if (width === 1) return borderColor("│");
 	const innerWidth = Math.max(0, width - 2);

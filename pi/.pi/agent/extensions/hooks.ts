@@ -40,11 +40,22 @@
  */
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	appendFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { AgentToolResult, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type {
+	AgentToolResult,
+	ExtensionAPI,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import { Key, matchesKey } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
@@ -108,7 +119,9 @@ function entriesFor(config: HooksConfig, event: HookEvent, toolName?: string): H
 	if (!Array.isArray(list)) return [];
 	return list.filter(
 		(e): e is HookEntry =>
-			!!e && typeof e === "object" && typeof e.command === "string" &&
+			!!e &&
+			typeof e === "object" &&
+			typeof e.command === "string" &&
 			(toolName === undefined || matches(e.matcher, toolName)),
 	);
 }
@@ -386,9 +399,10 @@ export default function hooks(pi: ExtensionAPI) {
 	}
 
 	function wake(job: Job): void {
-		const status = job.exitCode !== null && job.exitCode !== undefined
-			? `exit code ${job.exitCode}`
-			: `signal ${job.exitSignal}`;
+		const status =
+			job.exitCode !== null && job.exitCode !== undefined
+				? `exit code ${job.exitCode}`
+				: `signal ${job.exitSignal}`;
 		const output = combinedOutput(job, WAKE_OUTPUT_CHARS);
 		try {
 			pi.sendMessage(
@@ -405,7 +419,10 @@ export default function hooks(pi: ExtensionAPI) {
 			);
 		} catch (err) {
 			if (uiCtx?.hasUI) {
-				uiCtx.ui.notify(`Detached job #${job.id} finished (${status}) but wake-up failed: ${err}`, "warning");
+				uiCtx.ui.notify(
+					`Detached job #${job.id} finished (${status}) but wake-up failed: ${err}`,
+					"warning",
+				);
 			}
 		}
 	}
@@ -482,11 +499,14 @@ export default function hooks(pi: ExtensionAPI) {
 
 			let blockReason: string | undefined;
 			if (result.code === 2) {
-				blockReason = result.stderr.trim() || result.stdout.trim() || `Blocked by hook: ${entry.command}`;
+				blockReason =
+					result.stderr.trim() || result.stdout.trim() || `Blocked by hook: ${entry.command}`;
 			} else if (result.code === 0) {
 				const json = tryParseJson(result.stdout);
 				if (json && typeof json === "object" && (json as { block?: unknown }).block === true) {
-					blockReason = String((json as { reason?: unknown }).reason ?? `Blocked by hook: ${entry.command}`);
+					blockReason = String(
+						(json as { reason?: unknown }).reason ?? `Blocked by hook: ${entry.command}`,
+					);
 				}
 			}
 			recordRun("tool_call", entry, result, blockReason !== undefined);
@@ -545,7 +565,8 @@ export default function hooks(pi: ExtensionAPI) {
 			"Run a shell command detached in the background. Returns immediately with a job id; " +
 			"when the command exits, its exit code and output tail are delivered as a follow-up message. " +
 			"The user can inspect live output or cancel the job at any time with the /hooks command.",
-		promptSnippet: "Run long shell commands in the background; get woken with their output when they finish",
+		promptSnippet:
+			"Run long shell commands in the background; get woken with their output when they finish",
 		promptGuidelines: [
 			"Use run_detached for commands expected to run long (builds, test suites, dev servers, watchers) instead of a blocking bash call.",
 			"After run_detached returns, end your turn — you will be woken with the command's exit code and output when it finishes.",
@@ -555,9 +576,16 @@ export default function hooks(pi: ExtensionAPI) {
 			command: Type.String({ description: "Shell command to run detached" }),
 		}),
 
-		async execute(_toolCallId, params, signal): Promise<AgentToolResult<{ jobId?: number; command: string }>> {
+		async execute(
+			_toolCallId,
+			params,
+			signal,
+		): Promise<AgentToolResult<{ jobId?: number; command: string }>> {
 			if (signal?.aborted) {
-				return { content: [{ type: "text", text: "Cancelled" }], details: { command: params.command } };
+				return {
+					content: [{ type: "text", text: "Cancelled" }],
+					details: { command: params.command },
+				};
 			}
 			const job = startJob(params.command);
 			return {
@@ -578,7 +606,8 @@ export default function hooks(pi: ExtensionAPI) {
 	// ── /hooks command ───────────────────────────────────────────────
 
 	pi.registerCommand("hooks", {
-		description: "Detached jobs & hook runs: view output, cancel jobs. Usage: /hooks [cancel <id|all>]",
+		description:
+			"Detached jobs & hook runs: view output, cancel jobs. Usage: /hooks [cancel <id|all>]",
 		handler: async (args, ctx) => {
 			uiCtx = ctx;
 			const parts = args.trim().split(/\s+/).filter(Boolean);
@@ -590,14 +619,20 @@ export default function hooks(pi: ExtensionAPI) {
 
 			const entries = (): Array<{ job: Job } | { run: HookRun }> => [
 				...[...jobs.values()].sort((a, b) => a.id - b.id).map((job) => ({ job })),
-				...recentRuns.slice(-10).reverse().map((run) => ({ run })),
+				...recentRuns
+					.slice(-10)
+					.reverse()
+					.map((run) => ({ run })),
 			];
 			if (entries().length === 0) {
 				ctx.ui.notify("No detached jobs or hook runs yet", "info");
 				return;
 			}
 			if (ctx.mode !== "tui") {
-				ctx.ui.notify(`Jobs: ${runningJobs().length} running, ${jobs.size} total. Hook runs: ${recentRuns.length}.`, "info");
+				ctx.ui.notify(
+					`Jobs: ${runningJobs().length} running, ${jobs.size} total. Hook runs: ${recentRuns.length}.`,
+					"info",
+				);
 				return;
 			}
 
@@ -624,13 +659,14 @@ export default function hooks(pi: ExtensionAPI) {
 				const label = (entry: { job: Job } | { run: HookRun }) => {
 					if ("job" in entry) {
 						const { job } = entry;
-						const state = job.endedAt !== undefined
-							? job.cancelled
-								? "✕ cancelled"
-								: `✓ exit ${job.exitCode ?? job.exitSignal}`
-							: job.cancelled
-								? "✕ cancelling"
-								: `⏳ ${elapsedSeconds(job.startedAt)}s`;
+						const state =
+							job.endedAt !== undefined
+								? job.cancelled
+									? "✕ cancelled"
+									: `✓ exit ${job.exitCode ?? job.exitSignal}`
+								: job.cancelled
+									? "✕ cancelling"
+									: `⏳ ${elapsedSeconds(job.startedAt)}s`;
 						return `job #${job.id}  ${state}  ${job.command}`;
 					}
 					const { run } = entry;
@@ -649,9 +685,9 @@ export default function hooks(pi: ExtensionAPI) {
 							...(visibleEntries.length === 0
 								? [theme.fg("dim", "No detached jobs or hook runs.")]
 								: visibleEntries.map((entry, index) => {
-									const prefix = index === selected ? theme.fg("accent", "› ") : "  ";
-									return prefix + truncate(label(entry), max);
-								})),
+										const prefix = index === selected ? theme.fg("accent", "› ") : "  ";
+										return prefix + truncate(label(entry), max);
+									})),
 						];
 					},
 					invalidate() {},
@@ -677,7 +713,12 @@ export default function hooks(pi: ExtensionAPI) {
 						}
 						if (data === "x") {
 							const entry = visibleEntries[selected];
-							if (!entry || !("job" in entry) || entry.job.endedAt !== undefined || entry.job.cancelled) {
+							if (
+								!entry ||
+								!("job" in entry) ||
+								entry.job.endedAt !== undefined ||
+								entry.job.cancelled
+							) {
 								notice = "Only a running job can be cancelled.";
 							} else {
 								cancelJob(entry.job);

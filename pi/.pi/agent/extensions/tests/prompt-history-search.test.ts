@@ -45,7 +45,9 @@ describe("prompt search ranking", () => {
 
 	test("prefers hits that start a word and hits that appear early", () => {
 		expect(ranked(history("unplanned work", "plan the work"), "plan")[0]).toBe("plan the work");
-		expect(ranked(history("first do the audit then plan", "plan the audit"), "plan")[0]).toBe("plan the audit");
+		expect(ranked(history("first do the audit then plan", "plan the audit"), "plan")[0]).toBe(
+			"plan the audit",
+		);
 	});
 
 	test("still finds typos, but only below every literal match", () => {
@@ -55,7 +57,10 @@ describe("prompt search ranking", () => {
 
 	test("scores a near-contiguous typo above a scattered subsequence", () => {
 		const prompts = history("t need to ask if the plane is here", "taslkplane");
-		expect(ranked(prompts, "taskplane")).toEqual(["taslkplane", "t need to ask if the plane is here"]);
+		expect(ranked(prompts, "taskplane")).toEqual([
+			"taslkplane",
+			"t need to ask if the plane is here",
+		]);
 	});
 
 	test("does not let a stray early character inflate a typo's span", () => {
@@ -116,7 +121,10 @@ describe("prompt search display", () => {
 		const prompts = history("mentions bazel only\nboth bazel and clippy\nmentions clippy only");
 		const [match] = searchPrompts(prompts, "bazel clippy");
 		expect(match.line).toBe("both bazel and clippy");
-		expect(match.ranges.map(([start, end]) => match.line.slice(start, end))).toEqual(["bazel", "clippy"]);
+		expect(match.ranges.map(([start, end]) => match.line.slice(start, end))).toEqual([
+			"bazel",
+			"clippy",
+		]);
 	});
 
 	test("merges overlapping ranges from repeated and nested terms", () => {

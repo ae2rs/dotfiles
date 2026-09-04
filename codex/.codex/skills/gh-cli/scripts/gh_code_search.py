@@ -14,6 +14,7 @@ from typing import List, Dict, Any, Optional
 
 class GHSearchError(Exception):
     """Custom exception for gh search errors."""
+
     pass
 
 
@@ -83,12 +84,7 @@ def execute_search(cmd: List[str]) -> List[Dict[str, Any]]:
         GHSearchError: If the command fails
     """
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
         # Parse JSON output
         if result.stdout.strip():
@@ -139,10 +135,7 @@ def filter_results(results: List[Dict[str, Any]], args: argparse.Namespace) -> L
 
     # Filter by minimum match count
     if args.min_matches:
-        filtered = [
-            r for r in filtered
-            if len(r.get("textMatches", [])) >= args.min_matches
-        ]
+        filtered = [r for r in filtered if len(r.get("textMatches", [])) >= args.min_matches]
 
     return filtered
 
@@ -260,37 +253,48 @@ Examples:
   %(prog)s "error handling" --repo microsoft/vscode --output pretty
   %(prog)s "TODO" --extension md --exclude-forks --output summary
   %(prog)s "class.*Component" --language typescript --sort-by matches
-        """
+        """,
     )
 
     # Required arguments
     parser.add_argument("query", help="Search query (supports GitHub code search syntax)")
 
     # gh search code options
-    parser.add_argument("-L", "--limit", type=int, default=30,
-                        help="Maximum number of results (default: 30)")
+    parser.add_argument(
+        "-L", "--limit", type=int, default=30, help="Maximum number of results (default: 30)"
+    )
     parser.add_argument("--language", help="Filter by programming language")
     parser.add_argument("--filename", help="Filter by filename")
     parser.add_argument("--extension", help="Filter by file extension")
-    parser.add_argument("-R", "--repo", action="append", help="Filter by repository (can specify multiple)")
+    parser.add_argument(
+        "-R", "--repo", action="append", help="Filter by repository (can specify multiple)"
+    )
     parser.add_argument("--owner", action="append", help="Filter by owner (can specify multiple)")
-    parser.add_argument("--match", choices=["file", "content"],
-                        help="Restrict search to file path or content")
+    parser.add_argument(
+        "--match", choices=["file", "content"], help="Restrict search to file path or content"
+    )
     parser.add_argument("--size", help="Filter by file size range (e.g., '10..100' in KB)")
 
     # Custom filtering options
-    parser.add_argument("--exclude-forks", action="store_true",
-                        help="Exclude results from forked repositories")
-    parser.add_argument("--exclude-private", action="store_true",
-                        help="Exclude results from private repositories")
-    parser.add_argument("--min-matches", type=int,
-                        help="Minimum number of text matches per file")
+    parser.add_argument(
+        "--exclude-forks", action="store_true", help="Exclude results from forked repositories"
+    )
+    parser.add_argument(
+        "--exclude-private", action="store_true", help="Exclude results from private repositories"
+    )
+    parser.add_argument("--min-matches", type=int, help="Minimum number of text matches per file")
 
     # Output options
-    parser.add_argument("-o", "--output", choices=["json", "pretty", "summary"],
-                        default="pretty", help="Output format (default: pretty)")
-    parser.add_argument("--sort-by", choices=["matches", "repo", "path"],
-                        help="Sort results by criteria")
+    parser.add_argument(
+        "-o",
+        "--output",
+        choices=["json", "pretty", "summary"],
+        default="pretty",
+        help="Output format (default: pretty)",
+    )
+    parser.add_argument(
+        "--sort-by", choices=["matches", "repo", "path"], help="Sort results by criteria"
+    )
 
     args = parser.parse_args()
 

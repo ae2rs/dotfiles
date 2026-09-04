@@ -2,6 +2,7 @@
 description: Load Linear (amoco) tooling and act on tickets — view IDs, or create/update from a request
 argument-hint: "[CBE-1234 ...] | [create/update request]"
 ---
+
 Linear tooling is available here because this is a work repo (the `linear`
 extension only loads it inside monorepo/infrastructure and their worktrees).
 

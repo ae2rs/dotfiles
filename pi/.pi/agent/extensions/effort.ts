@@ -41,11 +41,13 @@ export default function effortExtension(pi: ExtensionAPI) {
 		description: "Pick the current model's effort level",
 		getArgumentCompletions: (prefix) => {
 			const normalized = prefix.trim().toLowerCase();
-			const items = THINKING_LEVELS.filter((level) => level.startsWith(normalized)).map((level) => ({
-				value: level,
-				label: level,
-				description: LEVEL_DESCRIPTIONS[level],
-			}));
+			const items = THINKING_LEVELS.filter((level) => level.startsWith(normalized)).map(
+				(level) => ({
+					value: level,
+					label: level,
+					description: LEVEL_DESCRIPTIONS[level],
+				}),
+			);
 			return items.length > 0 ? items : null;
 		},
 		handler: async (args, ctx) => {
@@ -67,8 +69,8 @@ export default function effortExtension(pi: ExtensionAPI) {
 				return;
 			}
 
-			const choices = supported.map((level) =>
-				`${level === current ? "• " : "  "}${level} — ${LEVEL_DESCRIPTIONS[level]}`,
+			const choices = supported.map(
+				(level) => `${level === current ? "• " : "  "}${level} — ${LEVEL_DESCRIPTIONS[level]}`,
 			);
 			const choice = await ctx.ui.select("Select effort", choices);
 			if (!choice) return;

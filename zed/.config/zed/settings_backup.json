@@ -21,31 +21,31 @@
       "alt": false,
       "shift": false,
       "platform": false,
-      "function": false
-    }
+      "function": false,
+    },
   },
   // "disable_ai": true,
   "preview_tabs": {
-    "enable_preview_from_code_navigation": false
+    "enable_preview_from_code_navigation": false,
   },
   "relative_line_numbers": "enabled",
   "gutter": {
-    "line_numbers": true
+    "line_numbers": true,
   },
   "minimap": {
-    "show": "always"
+    "show": "always",
   },
   "autosave": null,
   "base_keymap": "VSCode",
   "telemetry": {
     "diagnostics": false,
-    "metrics": false
+    "metrics": false,
   },
   "vim_mode": true,
   "ui_font_size": 18.0,
   "buffer_font_size": 15,
   "theme": "One Dark",
   "features": {
-    "edit_prediction_provider": "copilot"
-  }
+    "edit_prediction_provider": "copilot",
+  },
 }

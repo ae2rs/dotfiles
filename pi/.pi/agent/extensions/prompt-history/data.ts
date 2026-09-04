@@ -31,11 +31,12 @@ function textContent(content: unknown): string | undefined {
 	if (typeof content === "string") return content.trim() || undefined;
 	if (!Array.isArray(content)) return undefined;
 	const text = content
-		.filter((block): block is TextBlock =>
-			typeof block === "object" &&
-			block !== null &&
-			(block as { type?: unknown }).type === "text" &&
-			typeof (block as { text?: unknown }).text === "string",
+		.filter(
+			(block): block is TextBlock =>
+				typeof block === "object" &&
+				block !== null &&
+				(block as { type?: unknown }).type === "text" &&
+				typeof (block as { text?: unknown }).text === "string",
 		)
 		.map((block) => block.text)
 		.join("\n")
@@ -105,7 +106,9 @@ async function sessionFiles(sessionsRoot: string): Promise<string[]> {
 	for (const projectDirectory of projectDirectories) {
 		if (!projectDirectory.isDirectory()) continue;
 		try {
-			const entries = await readdir(join(sessionsRoot, projectDirectory.name), { withFileTypes: true });
+			const entries = await readdir(join(sessionsRoot, projectDirectory.name), {
+				withFileTypes: true,
+			});
 			for (const entry of entries) {
 				if (entry.isFile() && entry.name.endsWith(".jsonl")) {
 					files.push(join(sessionsRoot, projectDirectory.name, entry.name));
@@ -135,7 +138,10 @@ export class PromptHistoryCache {
 			if (cached?.mtimeMs === fileStat.mtimeMs) continue;
 			try {
 				const content = await readFile(file, "utf8");
-				this.sessions.set(file, { mtimeMs: fileStat.mtimeMs, prompts: parseSessionPrompts(content, file) });
+				this.sessions.set(file, {
+					mtimeMs: fileStat.mtimeMs,
+					prompts: parseSessionPrompts(content, file),
+				});
 			} catch {
 				this.sessions.delete(file);
 			}

@@ -10,11 +10,13 @@ A Python script that analyzes the most recent failed GitHub Actions workflow run
 ## Installation
 
 1. Ensure you have the GitHub CLI installed:
+
    ```bash
    gh --version
    ```
 
 2. Make sure you're authenticated:
+
    ```bash
    gh auth status
    ```
@@ -29,11 +31,13 @@ A Python script that analyzes the most recent failed GitHub Actions workflow run
 ### Basic Usage
 
 Analyze the most recent failed run in the current repository:
+
 ```bash
 ./gh_failed_run.py
 ```
 
 Or with Python:
+
 ```bash
 python3 gh_failed_run.py
 ```
@@ -47,6 +51,7 @@ python3 gh_failed_run.py
 ### Pretty-Print JSON Output
 
 For more readable output with indentation:
+
 ```bash
 ./gh_failed_run.py --pretty
 ```
@@ -103,6 +108,7 @@ The script outputs JSON with the following structure:
 ## Error Patterns Detected
 
 The script looks for common error indicators:
+
 - Lines containing "error", "failed", "failure"
 - Exception messages
 - Exit code messages
@@ -130,12 +136,15 @@ Since the output is JSON, you can easily pipe it to other tools:
 ## Troubleshooting
 
 ### "gh CLI is not installed or not in PATH"
+
 Install the GitHub CLI from https://cli.github.com/
 
 ### "No failed runs found"
+
 This means there are no failed workflow runs in the repository. The script only looks for runs with `failure` status.
 
 ### "Error running gh command"
+
 Make sure you're authenticated with `gh auth login` and have access to the repository you're trying to analyze.
 
 ## Exit Codes

@@ -128,7 +128,11 @@ function locateLine(text: string, needles: string[]): Pick<PromptMatch, "line" |
 		let covered = 0;
 		for (const needle of needles) {
 			const before = ranges.length;
-			for (let at = lower.indexOf(needle); at !== -1; at = lower.indexOf(needle, at + needle.length)) {
+			for (
+				let at = lower.indexOf(needle);
+				at !== -1;
+				at = lower.indexOf(needle, at + needle.length)
+			) {
 				ranges.push([at, at + needle.length]);
 			}
 			if (ranges.length > before) covered += 1;

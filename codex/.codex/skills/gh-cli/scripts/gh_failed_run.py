@@ -28,12 +28,7 @@ def run_gh_command(cmd: List[str]) -> Dict[str, Any]:
         SystemExit: If gh command fails
     """
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return json.loads(result.stdout) if result.stdout else {}
     except subprocess.CalledProcessError as e:
         print(f"Error running gh command: {' '.join(cmd)}", file=sys.stderr)
@@ -56,10 +51,15 @@ def get_most_recent_failed_run(repo: Optional[str] = None) -> Optional[Dict[str,
         Run information dictionary or None if no failed runs found
     """
     cmd = [
-        "gh", "run", "list",
-        "--status", "failure",
-        "--limit", "1",
-        "--json", "databaseId,number,conclusion,status,createdAt,displayTitle,url,headBranch,headSha,event"
+        "gh",
+        "run",
+        "list",
+        "--status",
+        "failure",
+        "--limit",
+        "1",
+        "--json",
+        "databaseId,number,conclusion,status,createdAt,displayTitle,url,headBranch,headSha,event",
     ]
 
     if repo:
@@ -84,10 +84,7 @@ def get_failed_jobs(run_id: int, repo: Optional[str] = None) -> List[Dict[str, A
     Returns:
         List of failed job dictionaries
     """
-    cmd = [
-        "gh", "run", "view", str(run_id),
-        "--json", "jobs"
-    ]
+    cmd = ["gh", "run", "view", str(run_id), "--json", "jobs"]
 
     if repo:
         cmd.extend(["--repo", repo])
@@ -96,10 +93,7 @@ def get_failed_jobs(run_id: int, repo: Optional[str] = None) -> List[Dict[str, A
     jobs = result.get("jobs", [])
 
     # Filter for failed jobs (conclusion is failure, timed_out, cancelled, etc.)
-    failed_jobs = [
-        job for job in jobs
-        if job.get("conclusion") not in ["success", "skipped", None]
-    ]
+    failed_jobs = [job for job in jobs if job.get("conclusion") not in ["success", "skipped", None]]
 
     return failed_jobs
 
@@ -131,7 +125,7 @@ def extract_error_excerpts(log_text: str, max_lines: int = 50) -> List[str]:
     ]
 
     excerpts = []
-    lines = log_text.split('\n')
+    lines = log_text.split("\n")
 
     for line in lines:
         line = line.strip()
@@ -142,8 +136,10 @@ def extract_error_excerpts(log_text: str, max_lines: int = 50) -> List[str]:
         for pattern in error_patterns:
             if re.search(pattern, line, re.IGNORECASE):
                 # Remove ANSI color codes and timestamps if present
-                clean_line = re.sub(r'\x1b\[[0-9;]*m', '', line)
-                clean_line = re.sub(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*', '', clean_line)
+                clean_line = re.sub(r"\x1b\[[0-9;]*m", "", line)
+                clean_line = re.sub(
+                    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*", "", clean_line
+                )
 
                 if clean_line and clean_line not in excerpts:
                     excerpts.append(clean_line)
@@ -166,39 +162,22 @@ def get_job_logs(run_id: int, job_name: str, repo: Optional[str] = None) -> str:
     Returns:
         Log text for the job
     """
-    cmd = [
-        "gh", "run", "view", str(run_id),
-        "--log-failed",
-        "--job", job_name
-    ]
+    cmd = ["gh", "run", "view", str(run_id), "--log-failed", "--job", job_name]
 
     if repo:
         cmd.extend(["--repo", repo])
 
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         return result.stdout
     except subprocess.CalledProcessError:
         # If specific job logs fail, try getting all failed logs
-        cmd_all = [
-            "gh", "run", "view", str(run_id),
-            "--log-failed"
-        ]
+        cmd_all = ["gh", "run", "view", str(run_id), "--log-failed"]
         if repo:
             cmd_all.extend(["--repo", repo])
 
         try:
-            result = subprocess.run(
-                cmd_all,
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(cmd_all, capture_output=True, text=True, check=True)
             return result.stdout
         except subprocess.CalledProcessError:
             return ""
@@ -218,10 +197,7 @@ def analyze_failed_run(repo: Optional[str] = None) -> Dict[str, Any]:
     run = get_most_recent_failed_run(repo)
 
     if not run:
-        return {
-            "error": "No failed runs found",
-            "repository": repo or "current"
-        }
+        return {"error": "No failed runs found", "repository": repo or "current"}
 
     # Get failed jobs using databaseId
     failed_jobs = get_failed_jobs(run["databaseId"], repo)
@@ -238,10 +214,10 @@ def analyze_failed_run(repo: Optional[str] = None) -> Dict[str, Any]:
             "created_at": run["createdAt"],
             "branch": run.get("headBranch"),
             "commit": run.get("headSha"),
-            "event": run.get("event")
+            "event": run.get("event"),
         },
         "failed_jobs": [],
-        "repository": repo or "current"
+        "repository": repo or "current",
     }
 
     # Analyze each failed job
@@ -252,7 +228,7 @@ def analyze_failed_run(repo: Optional[str] = None) -> Dict[str, Any]:
             "status": job.get("status"),
             "started_at": job.get("startedAt"),
             "completed_at": job.get("completedAt"),
-            "error_excerpts": []
+            "error_excerpts": [],
         }
 
         # Get logs and extract errors using databaseId
@@ -274,30 +250,20 @@ def main():
 Examples:
   %(prog)s                        # Analyze current repository
   %(prog)s --repo owner/name      # Analyze specific repository
-        """
+        """,
     )
 
-    parser.add_argument(
-        "--repo",
-        type=str,
-        help="Repository to analyze in format 'owner/name'"
-    )
+    parser.add_argument("--repo", type=str, help="Repository to analyze in format 'owner/name'")
 
     parser.add_argument(
-        "--pretty",
-        action="store_true",
-        help="Pretty-print JSON output with indentation"
+        "--pretty", action="store_true", help="Pretty-print JSON output with indentation"
     )
 
     args = parser.parse_args()
 
     # Check if gh CLI is installed
     try:
-        subprocess.run(
-            ["gh", "--version"],
-            capture_output=True,
-            check=True
-        )
+        subprocess.run(["gh", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("Error: gh CLI is not installed or not in PATH", file=sys.stderr)
         print("Install it from: https://cli.github.com/", file=sys.stderr)

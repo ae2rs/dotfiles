@@ -13,13 +13,20 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 export default function (pi: ExtensionAPI) {
-  const shutdown = async (_args: string, ctx: { ui: { notify: (m: string, l: string) => void }; isIdle: () => boolean; shutdown: () => void }) => {
-    ctx.ui.notify(ctx.isIdle() ? "Exiting…" : "Exiting once the current run finishes…", "info");
-    ctx.shutdown();
-  };
+	const shutdown = async (
+		_args: string,
+		ctx: {
+			ui: { notify: (m: string, l: string) => void };
+			isIdle: () => boolean;
+			shutdown: () => void;
+		},
+	) => {
+		ctx.ui.notify(ctx.isIdle() ? "Exiting…" : "Exiting once the current run finishes…", "info");
+		ctx.shutdown();
+	};
 
-  pi.registerCommand("exit", {
-    description: "Exit Pi cleanly once the agent is idle",
-    handler: shutdown,
-  });
+	pi.registerCommand("exit", {
+		description: "Exit Pi cleanly once the agent is idle",
+		handler: shutdown,
+	});
 }

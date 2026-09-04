@@ -28,9 +28,18 @@ end
 
 local function git_branch_is_unmerged(name)
   -- True if `name` has commits not reachable from HEAD.
-  local result = vim.system({
-    'git', '-C', repo_root(), 'branch', '--no-merged', 'HEAD', '--list', name,
-  }, { text = true }):wait()
+  local result = vim
+    .system({
+      'git',
+      '-C',
+      repo_root(),
+      'branch',
+      '--no-merged',
+      'HEAD',
+      '--list',
+      name,
+    }, { text = true })
+    :wait()
   if result.code ~= 0 then
     return false
   end
@@ -38,9 +47,16 @@ local function git_branch_is_unmerged(name)
 end
 
 local function git_delete_branch(name, force)
-  local result = vim.system({
-    'git', '-C', repo_root(), 'branch', force and '-D' or '-d', name,
-  }, { text = true }):wait()
+  local result = vim
+    .system({
+      'git',
+      '-C',
+      repo_root(),
+      'branch',
+      force and '-D' or '-d',
+      name,
+    }, { text = true })
+    :wait()
   local stderr = (result.stderr or ''):gsub('%s+$', '')
   return result.code == 0, stderr
 end
@@ -57,15 +73,17 @@ local function fetch_branches()
   end
 
   local fmt = '%(HEAD)|%(refname:short)|%(upstream:short)|%(upstream:track)|%(subject)'
-  local result = vim.system({
-    'git',
-    '-C',
-    root,
-    'for-each-ref',
-    'refs/heads',
-    '--sort=-committerdate',
-    '--format=' .. fmt,
-  }, { text = true }):wait()
+  local result = vim
+    .system({
+      'git',
+      '-C',
+      root,
+      'for-each-ref',
+      'refs/heads',
+      '--sort=-committerdate',
+      '--format=' .. fmt,
+    }, { text = true })
+    :wait()
 
   if result.code ~= 0 then
     return {}
@@ -142,18 +160,15 @@ local function build_section()
     local head_hl = b.is_head and 'NeogitBranch' or nil
     local upstream_hl = b.is_head and 'NeogitBranch' or 'NeogitRemote'
 
-    local marker_text = b.is_head and text.highlight(head_hl)('* ') or text '  '
-    local name_text = b.is_head and text.highlight(head_hl)(pad_display(b.name, widths.name))
-      or text(pad_display(b.name, widths.name))
+    local marker_text = b.is_head and text.highlight(head_hl) '* ' or text '  '
+    local name_text = b.is_head and text.highlight(head_hl)(pad_display(b.name, widths.name)) or text(pad_display(b.name, widths.name))
 
     local upstream_value = b.upstream or ''
-    local upstream_text = upstream_value ~= ''
-        and text.highlight(upstream_hl)(pad_display(upstream_value, widths.upstream))
+    local upstream_text = upstream_value ~= '' and text.highlight(upstream_hl)(pad_display(upstream_value, widths.upstream))
       or text(pad_display('', widths.upstream))
 
     local trail = format_trail(b)
-    local trail_text = trail ~= '' and text.highlight 'NeogitGraphYellow'(pad_display(trail, widths.trail))
-      or text(pad_display('', widths.trail))
+    local trail_text = trail ~= '' and text.highlight 'NeogitGraphYellow'(pad_display(trail, widths.trail)) or text(pad_display('', widths.trail))
 
     local children = {
       marker_text,
@@ -432,7 +447,7 @@ local function uninstall_cursor_park()
   end
 end
 
-local release  -- forward decl
+local release -- forward decl
 
 local function acquire(opts)
   if M._busy then
@@ -881,8 +896,8 @@ function M.new_branch_under_cursor(self)
     M._run_op {
       op = 'new_branch',
       label = ("creating '%s' from '%s'"):format(name, base),
-      target = { name = base },       -- spinner stays on base row during creation
-      cursor_target = name,            -- cursor lands on the new branch after refresh
+      target = { name = base }, -- spinner stays on base row during creation
+      cursor_target = name, -- cursor lands on the new branch after refresh
       status = status,
       refresh_event = 'branch_create',
       work = function()

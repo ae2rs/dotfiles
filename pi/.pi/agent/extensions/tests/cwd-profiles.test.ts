@@ -8,7 +8,8 @@ import { filterSkillsFromPrompt, loadProfileConfig, selectProfile } from "../cwd
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
-	for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { force: true, recursive: true });
+	for (const directory of temporaryDirectories.splice(0))
+		rmSync(directory, { force: true, recursive: true });
 });
 
 function fixture(config: unknown): string {
@@ -93,9 +94,14 @@ describe("cwd profile selection", () => {
 			{ name: "selected", description: "", filePath: "/profiles/selected/SKILL.md" },
 			{ name: "other", description: "", filePath: "/profiles/other/SKILL.md" },
 		] as unknown as Skill[];
-		const format = (available: Skill[]) => available.map((skill) => `<name>${skill.name}</name>`).join("\n");
+		const format = (available: Skill[]) =>
+			available.map((skill) => `<name>${skill.name}</name>`).join("\n");
 
-		expect(filterSkillsFromPrompt(prompt, skills, ["/profiles/selected"], "read", format)).toContain("<name>selected</name>");
-		expect(filterSkillsFromPrompt(prompt, skills, ["/profiles/selected"], "read", format)).not.toContain("<name>other</name>");
+		expect(
+			filterSkillsFromPrompt(prompt, skills, ["/profiles/selected"], "read", format),
+		).toContain("<name>selected</name>");
+		expect(
+			filterSkillsFromPrompt(prompt, skills, ["/profiles/selected"], "read", format),
+		).not.toContain("<name>other</name>");
 	});
 });

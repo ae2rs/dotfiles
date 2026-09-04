@@ -135,6 +135,7 @@ Work from `/Users/lucas/work/infrastructure`.
    ```
 
    Always pass `-o` to the build: the default output name `production` collides with the repository's `production/` directory. If a check fails for an unrelated environmental reason, report it explicitly; do not hide it.
+
 7. Commit one logical change using the repository's existing imperative subject style.
 8. Push with upstream tracking and create a PR against `main`. Include the monorepo PR URL, merge SHA, backend release run URL, image hash, and exact services bumped in the PR body.
 

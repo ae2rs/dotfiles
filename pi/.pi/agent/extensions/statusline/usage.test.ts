@@ -39,7 +39,11 @@ describe("parseCodexUsage", () => {
 
 	test("rejects missing and malformed allowances", () => {
 		expect(parseCodexUsage(undefined)).toBeUndefined();
-		expect(parseCodexUsage({ spend_control: { individual_limit: { remaining_percent: "nope" } } })).toBeUndefined();
-		expect(parseCodexUsage({ spend_control: { individual_limit: { remaining_percent: null } } })).toBeUndefined();
+		expect(
+			parseCodexUsage({ spend_control: { individual_limit: { remaining_percent: "nope" } } }),
+		).toBeUndefined();
+		expect(
+			parseCodexUsage({ spend_control: { individual_limit: { remaining_percent: null } } }),
+		).toBeUndefined();
 	});
 });

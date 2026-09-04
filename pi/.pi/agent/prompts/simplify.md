@@ -2,6 +2,7 @@
 description: Simplify recent changes without altering behaviour
 argument-hint: "[path]"
 ---
+
 Simplify ${1:-the code changed in the working copy}, preserving behaviour exactly.
 
 Look for: duplicated logic that an existing helper already covers, indirection that

@@ -43,7 +43,9 @@ export interface UsageService {
 	onChange(callback: () => void): () => void;
 }
 
-export function usageProviderOf(model: { provider?: string } | undefined): UsageProvider | undefined {
+export function usageProviderOf(
+	model: { provider?: string } | undefined,
+): UsageProvider | undefined {
 	const provider = model?.provider;
 	if (provider === "pi-claude" || provider === "kimi-coding" || provider === "openai-codex") {
 		return provider;
@@ -78,7 +80,8 @@ function readClaudeCredentialsFileToken(): string | undefined {
 		const parsed = JSON.parse(readFileSync(path, "utf8"));
 		const oauth = parsed?.claudeAiOauth;
 		if (typeof oauth?.accessToken !== "string" || !oauth.accessToken) return undefined;
-		if (typeof oauth.expiresAt === "number" && oauth.expiresAt <= Date.now() + EXPIRY_MARGIN_MS) return undefined;
+		if (typeof oauth.expiresAt === "number" && oauth.expiresAt <= Date.now() + EXPIRY_MARGIN_MS)
+			return undefined;
 		return oauth.accessToken;
 	} catch {
 		return undefined;
@@ -88,14 +91,19 @@ function readClaudeCredentialsFileToken(): string | undefined {
 function readClaudeKeychainToken(): string | undefined {
 	if (platform() !== "darwin") return undefined;
 	try {
-		const raw = execFileSync("security", ["find-generic-password", "-s", "Claude Code-credentials", "-w"], {
-			encoding: "utf8",
-			stdio: ["ignore", "pipe", "ignore"],
-			timeout: 5000,
-		}).trim();
+		const raw = execFileSync(
+			"security",
+			["find-generic-password", "-s", "Claude Code-credentials", "-w"],
+			{
+				encoding: "utf8",
+				stdio: ["ignore", "pipe", "ignore"],
+				timeout: 5000,
+			},
+		).trim();
 		const oauth = JSON.parse(raw)?.claudeAiOauth;
 		if (typeof oauth?.accessToken !== "string" || !oauth.accessToken) return undefined;
-		if (typeof oauth.expiresAt === "number" && oauth.expiresAt <= Date.now() + EXPIRY_MARGIN_MS) return undefined;
+		if (typeof oauth.expiresAt === "number" && oauth.expiresAt <= Date.now() + EXPIRY_MARGIN_MS)
+			return undefined;
 		return oauth.accessToken;
 	} catch {
 		return undefined;
@@ -109,7 +117,9 @@ function resolveClaudeToken(): string | undefined {
 }
 
 /** Parse the Anthropic OAuth usage response body into a reading. Exported for tests. */
-export function parseClaudeUsage(body: ClaudeUsageResponse | null | undefined): UsageReading | undefined {
+export function parseClaudeUsage(
+	body: ClaudeUsageResponse | null | undefined,
+): UsageReading | undefined {
 	const fiveHour = body?.five_hour;
 	if (!fiveHour || typeof fiveHour.utilization !== "number") return undefined;
 	const resetMs = fiveHour.resets_at ? Date.parse(fiveHour.resets_at) : Number.NaN;
@@ -138,7 +148,10 @@ async function fetchClaudeUsage(token: string): Promise<UsageReading | undefined
 // ---------------------------------------------------------------------------
 
 function kimiUsageUrl(): string {
-	const base = (process.env.KIMI_CODE_BASE_URL?.trim() || "https://api.kimi.com/coding/v1").replace(/\/+$/, "");
+	const base = (process.env.KIMI_CODE_BASE_URL?.trim() || "https://api.kimi.com/coding/v1").replace(
+		/\/+$/,
+		"",
+	);
 	return `${base}/usages`;
 }
 
@@ -165,7 +178,8 @@ function readKimiPiAuthToken(): string | undefined {
 		const parsed = JSON.parse(readFileSync(path, "utf8"));
 		const entry = parsed?.["kimi-coding"];
 		if (typeof entry?.access !== "string" || !entry.access) return undefined;
-		if (typeof entry.expires === "number" && entry.expires <= Date.now() + EXPIRY_MARGIN_MS) return undefined;
+		if (typeof entry.expires === "number" && entry.expires <= Date.now() + EXPIRY_MARGIN_MS)
+			return undefined;
 		return entry.access;
 	} catch {
 		return undefined;
@@ -179,7 +193,10 @@ function readKimiCliToken(): string | undefined {
 		const parsed = JSON.parse(readFileSync(path, "utf8"));
 		if (typeof parsed?.access_token !== "string" || !parsed.access_token) return undefined;
 		// kimi CLI stores expires_at in epoch seconds
-		if (typeof parsed.expires_at === "number" && parsed.expires_at * 1000 <= Date.now() + EXPIRY_MARGIN_MS) {
+		if (
+			typeof parsed.expires_at === "number" &&
+			parsed.expires_at * 1000 <= Date.now() + EXPIRY_MARGIN_MS
+		) {
 			return undefined;
 		}
 		return parsed.access_token;
@@ -192,7 +209,10 @@ function resolveKimiToken(): string | undefined {
 	return readKimiPiAuthToken() ?? readKimiCliToken();
 }
 
-function kimiWindowToReading(detail: KimiRawWindowDetail | undefined, kind: UsageKind): UsageReading | undefined {
+function kimiWindowToReading(
+	detail: KimiRawWindowDetail | undefined,
+	kind: UsageKind,
+): UsageReading | undefined {
 	if (!detail) return undefined;
 	const limit = Number(detail.limit);
 	const remaining = Number(detail.remaining);
@@ -215,7 +235,9 @@ function kimiWindowToReading(detail: KimiRawWindowDetail | undefined, kind: Usag
 }
 
 /** Parse the Kimi usages response body into a reading. Exported for tests. */
-export function parseKimiUsage(body: KimiUsageResponse | null | undefined): UsageReading | undefined {
+export function parseKimiUsage(
+	body: KimiUsageResponse | null | undefined,
+): UsageReading | undefined {
 	if (!body) return undefined;
 	// Display only Kimi's short (5h / ≤360-minute) window. The weekly
 	// summary is intentionally ignored, including while the short window is full.
@@ -298,7 +320,10 @@ function finiteCodexNumber(value: unknown): number | undefined {
 }
 
 /** Parse Codex's monthly spend-control allowance into a footer reading. Exported for tests. */
-export function parseCodexUsage(body: CodexUsageResponse | null | undefined, now = Date.now()): UsageReading | undefined {
+export function parseCodexUsage(
+	body: CodexUsageResponse | null | undefined,
+	now = Date.now(),
+): UsageReading | undefined {
 	const limit = body?.spend_control?.individual_limit;
 	if (!limit) return undefined;
 	const remainingPct = finiteCodexNumber(limit.remaining_percent);
@@ -306,11 +331,12 @@ export function parseCodexUsage(body: CodexUsageResponse | null | undefined, now
 
 	const absoluteResetSeconds = finiteCodexNumber(limit.reset_at);
 	const resetAfterSeconds = finiteCodexNumber(limit.reset_after_seconds);
-	const resetsAt = absoluteResetSeconds != null
-		? absoluteResetSeconds * 1000
-		: resetAfterSeconds != null
-			? now + resetAfterSeconds * 1000
-			: undefined;
+	const resetsAt =
+		absoluteResetSeconds != null
+			? absoluteResetSeconds * 1000
+			: resetAfterSeconds != null
+				? now + resetAfterSeconds * 1000
+				: undefined;
 
 	return {
 		kind: "mo",
@@ -327,7 +353,8 @@ function readCodexPiCredentials(): CodexCredentials | undefined {
 		const entry = JSON.parse(readFileSync(path, "utf8"))?.["openai-codex"];
 		if (typeof entry?.access !== "string" || !entry.access) return undefined;
 		if (typeof entry?.accountId !== "string" || !entry.accountId) return undefined;
-		if (typeof entry.expires === "number" && entry.expires <= Date.now() + EXPIRY_MARGIN_MS) return undefined;
+		if (typeof entry.expires === "number" && entry.expires <= Date.now() + EXPIRY_MARGIN_MS)
+			return undefined;
 		return { accessToken: entry.access, accountId: entry.accountId };
 	} catch {
 		return undefined;

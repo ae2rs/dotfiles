@@ -1,0 +1,15 @@
+{
+  "useTabs": true,
+  "printWidth": 100,
+  "embeddedLanguageFormatting": "off",
+  "overrides": [
+    {
+      "files": ["*.json", "*.jsonc", "*.yaml", "*.yml", "*.md"],
+      "options": { "useTabs": false, "tabWidth": 2 }
+    },
+    {
+      "files": ["zed/.config/zed/*.json"],
+      "options": { "parser": "jsonc" }
+    }
+  ]
+}

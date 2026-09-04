@@ -120,9 +120,9 @@ def template_image(item: dict[str, Any], container: str) -> str:
 
 
 def active_pod_statuses(target: Target, item: dict[str, Any]) -> list[dict[str, Any]]:
-    pods = kubectl_json(
-        "get", "pods", "-n", target.namespace, "-l", selector_for(item)
-    ).get("items", [])
+    pods = kubectl_json("get", "pods", "-n", target.namespace, "-l", selector_for(item)).get(
+        "items", []
+    )
     statuses: list[dict[str, Any]] = []
     for pod in pods:
         if pod.get("metadata", {}).get("deletionTimestamp") is not None:
@@ -218,20 +218,23 @@ def validate_pods(target: Target, item: dict[str, Any]) -> list[dict[str, Any]]:
                 f"{target.display}: {pod['name']} phase={pod['phase']} ready={pod['ready']}"
             )
         if pod["waiting"] in FATAL_WAITING_REASONS:
-            raise MonitorError(
-                f"{target.display}: {pod['name']} waiting={pod['waiting']}"
-            )
+            raise MonitorError(f"{target.display}: {pod['name']} waiting={pod['waiting']}")
         if pod["terminated"] is not None:
-            raise MonitorError(
-                f"{target.display}: {pod['name']} target container is terminated"
-            )
+            raise MonitorError(f"{target.display}: {pod['name']} target container is terminated")
     return pods
 
 
 def diagnostics(target: Target) -> None:
     print(f"\n--- diagnostics for {target.display} ---", file=sys.stderr)
     item_result = run(
-        "kubectl", "get", target.kind, target.name, "-n", target.namespace, "-o", "json",
+        "kubectl",
+        "get",
+        target.kind,
+        target.name,
+        "-n",
+        target.namespace,
+        "-o",
+        "json",
         check=False,
     )
     if item_result.returncode != 0:
@@ -256,8 +259,14 @@ def diagnostics(target: Target) -> None:
         if pod["restarts"] > 0 or pod["waiting"] or not pod["ready"]:
             for previous in (False, True):
                 command = [
-                    "kubectl", "logs", "-n", target.namespace, pod["name"],
-                    "-c", target.container, "--tail=100",
+                    "kubectl",
+                    "logs",
+                    "-n",
+                    target.namespace,
+                    pod["name"],
+                    "-c",
+                    target.container,
+                    "--tail=100",
                 ]
                 if previous:
                     command.append("--previous")
@@ -329,9 +338,7 @@ def monitor(args: argparse.Namespace) -> int:
                 if pod["image"] != target.image:
                     continue
                 if pod["waiting"] in FATAL_WAITING_REASONS:
-                    raise MonitorError(
-                        f"{target.display}: {pod['name']} waiting={pod['waiting']}"
-                    )
+                    raise MonitorError(f"{target.display}: {pod['name']} waiting={pod['waiting']}")
                 if pod["restarts"] > 0:
                     is_new = pod["uid"] not in states[target].pod_uids
                     provenance = "new rollout pod" if is_new else "active pod"
@@ -363,8 +370,14 @@ def monitor(args: argparse.Namespace) -> int:
     # Confirm Kubernetes' native rollout predicate after our pod-by-pod polling.
     for target in targets:
         result = run(
-            "kubectl", "rollout", "status", target.ref, "-n", target.namespace,
-            "--timeout=30s", check=False,
+            "kubectl",
+            "rollout",
+            "status",
+            target.ref,
+            "-n",
+            target.namespace,
+            "--timeout=30s",
+            check=False,
         )
         if result.returncode != 0:
             raise MonitorError(result.stderr.strip() or f"rollout failed for {target.display}")
@@ -381,9 +394,7 @@ def monitor(args: argparse.Namespace) -> int:
             key = (target, pod["uid"])
             if key not in rollout_warnings_by_pod:
                 provenance = (
-                    "new rollout pod"
-                    if pod["uid"] not in states[target].pod_uids
-                    else "active pod"
+                    "new rollout pod" if pod["uid"] not in states[target].pod_uids else "active pod"
                 )
                 rollout_warnings_by_pod[key] = (
                     f"{target.display}: {provenance} {pod['name']} has restarted "
@@ -433,7 +444,10 @@ def monitor(args: argparse.Namespace) -> int:
             )
         elapsed = int(time.monotonic() - start)
         remaining = max(0, stability - elapsed)
-        print(f"stability poll {poll}: elapsed={elapsed}s remaining={remaining}s; " + "; ".join(summaries))
+        print(
+            f"stability poll {poll}: elapsed={elapsed}s remaining={remaining}s; "
+            + "; ".join(summaries)
+        )
         if elapsed >= stability:
             break
         poll += 1
@@ -450,7 +464,10 @@ def monitor(args: argparse.Namespace) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--target", action="append", type=parse_target, required=True,
+        "--target",
+        action="append",
+        type=parse_target,
+        required=True,
         help="repeatable: namespace/kind/name:container=image",
     )
     parser.add_argument("--expected-context", help="fail rather than switching context")
@@ -459,11 +476,13 @@ def main() -> int:
     parser.add_argument("--stability-seconds", type=int, default=300)
     parser.add_argument("--poll-seconds", type=int, default=15)
     parser.add_argument(
-        "--require-change", action="store_true",
+        "--require-change",
+        action="store_true",
         help="require generation, image, or pod UIDs to change after startup",
     )
     parser.add_argument(
-        "--fail-on-rollout-restarts", action="store_true",
+        "--fail-on-rollout-restarts",
+        action="store_true",
         help="fail if a newly rolled-out pod restarted before the stability window",
     )
     args = parser.parse_args()
@@ -475,7 +494,9 @@ def main() -> int:
     try:
         return monitor(args)
     except KeyboardInterrupt:
-        print("\nMonitoring interrupted by user; no cluster mutation was performed.", file=sys.stderr)
+        print(
+            "\nMonitoring interrupted by user; no cluster mutation was performed.", file=sys.stderr
+        )
         return 130
     except MonitorError as error:
         print(f"\nFAILURE: {error}", file=sys.stderr)

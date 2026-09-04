@@ -87,12 +87,16 @@ local function run_git(args, on_done)
     cmd[#cmd + 1] = a
   end
   local gen = state.generation
-  vim.system(cmd, { text = true, cwd = cwd }, vim.schedule_wrap(function(result)
-    if gen ~= state.generation then
-      return
-    end
-    on_done(result)
-  end))
+  vim.system(
+    cmd,
+    { text = true, cwd = cwd },
+    vim.schedule_wrap(function(result)
+      if gen ~= state.generation then
+        return
+      end
+      on_done(result)
+    end)
+  )
 end
 
 local function truncate(lines, limit)
@@ -258,7 +262,7 @@ local function refresh()
     dispatch = function()
       render_git({ 'show', '--stat', '--patch', '--no-color', commit_oid }, 'git')
     end
-  elseif item and item.name and item.name:match('^stash@{%d+}$') then
+  elseif item and item.name and item.name:match '^stash@{%d+}$' then
     kind, key = 'stash', 'stash:' .. item.name
     local name = item.name
     dispatch = function()

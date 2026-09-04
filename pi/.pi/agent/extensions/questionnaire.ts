@@ -52,19 +52,24 @@ interface QuestionnaireResult {
 const QuestionOptionSchema = Type.Object({
 	value: Type.String({ description: "The value returned when selected" }),
 	label: Type.String({ description: "Display label for the option" }),
-	description: Type.Optional(Type.String({ description: "Optional description shown below label" })),
+	description: Type.Optional(
+		Type.String({ description: "Optional description shown below label" }),
+	),
 });
 
 const QuestionSchema = Type.Object({
 	id: Type.String({ description: "Unique identifier for this question" }),
 	label: Type.Optional(
 		Type.String({
-			description: "Short contextual label for tab bar, e.g. 'Scope', 'Priority' (defaults to Q1, Q2)",
+			description:
+				"Short contextual label for tab bar, e.g. 'Scope', 'Priority' (defaults to Q1, Q2)",
 		}),
 	),
 	prompt: Type.String({ description: "The full question text to display" }),
 	options: Type.Array(QuestionOptionSchema, { description: "Available options to choose from" }),
-	allowOther: Type.Optional(Type.Boolean({ description: "Allow 'Type something' option (default: true)" })),
+	allowOther: Type.Optional(
+		Type.Boolean({ description: "Allow 'Type something' option (default: true)" }),
+	),
 });
 
 const QuestionnaireParams = Type.Object({
@@ -173,7 +178,13 @@ export default function questionnaire(pi: ExtensionAPI) {
 					refresh();
 				}
 
-				function saveAnswer(questionId: string, value: string, label: string, wasCustom: boolean, index?: number) {
+				function saveAnswer(
+					questionId: string,
+					value: string,
+					label: string,
+					wasCustom: boolean,
+					index?: number,
+				) {
 					answers.set(questionId, { id: questionId, value, label, wasCustom, index });
 				}
 
@@ -302,7 +313,9 @@ export default function questionnaire(pi: ExtensionAPI) {
 							const box = isAnswered ? "■" : "□";
 							const color = isAnswered ? "success" : "muted";
 							const text = ` ${box} ${lbl} `;
-							const styled = isActive ? theme.bg("selectedBg", theme.fg("text", text)) : theme.fg(color, text);
+							const styled = isActive
+								? theme.bg("selectedBg", theme.fg("text", text))
+								: theme.fg(color, text);
 							tabs.push(`${styled} `);
 						}
 						const canSubmit = allAnswered();

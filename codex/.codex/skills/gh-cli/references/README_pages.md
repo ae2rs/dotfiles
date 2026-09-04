@@ -12,6 +12,7 @@ A simple Python script to automate GitHub Pages deployment using the GitHub CLI 
 ## Prerequisites
 
 1. **GitHub CLI (`gh`)** - Must be installed and authenticated
+
    ```bash
    # Install GitHub CLI (see https://cli.github.com/)
    # macOS
@@ -56,6 +57,7 @@ python gh_pages_deploy.py enable owner/repo
 ```
 
 **Options:**
+
 - `--branch BRANCH` - Source branch (default: `main`)
 - `--path PATH` - Source path: `/` or `/docs` (default: `/`)
 - `--build-type TYPE` - Build type: `workflow` (GitHub Actions) or `legacy` (Jekyll)
@@ -83,6 +85,7 @@ python gh_pages_deploy.py status owner/repo
 ```
 
 **Options:**
+
 - `--build-info` - Also show latest build information
 
 **Example:**
@@ -133,6 +136,7 @@ python gh_pages_deploy.py create-workflow
 ```
 
 **Options:**
+
 - `--output PATH` - Custom output path (default: `.github/workflows/pages.yml`)
 
 **Example:**
@@ -146,12 +150,14 @@ python gh_pages_deploy.py create-workflow --output .github/workflows/deploy.yml
 ```
 
 This creates a workflow that:
+
 1. Runs on push to `main` branch
 2. Builds your site (customize the build step)
 3. Uploads the built site as an artifact
 4. Deploys to GitHub Pages
 
 **After creating the workflow:**
+
 1. Edit `.github/workflows/pages.yml` to add your build commands
 2. Commit and push the workflow to your repository
 3. The deployment will run automatically on the next push
@@ -205,6 +211,7 @@ This is the **official, recommended approach** for GitHub Pages deployment.
 Edit the "Build site" step in `.github/workflows/pages.yml`:
 
 ### Static HTML Site
+
 ```yaml
 - name: Build site
   run: |
@@ -213,6 +220,7 @@ Edit the "Build site" step in `.github/workflows/pages.yml`:
 ```
 
 ### Node.js / npm
+
 ```yaml
 - name: Build site
   run: |
@@ -223,6 +231,7 @@ Edit the "Build site" step in `.github/workflows/pages.yml`:
 ```
 
 ### Python / MkDocs
+
 ```yaml
 - name: Setup Python
   uses: actions/setup-python@v4
@@ -237,6 +246,7 @@ Edit the "Build site" step in `.github/workflows/pages.yml`:
 ```
 
 ### Jekyll
+
 ```yaml
 - name: Setup Ruby
   uses: ruby/setup-ruby@v1
@@ -305,6 +315,7 @@ https://github.com/owner/repo/settings/pages
 ```
 
 Ensure the "Source" is set to:
+
 - **GitHub Actions** (if using `build_type='workflow'`)
 - **Deploy from a branch** (if using `build_type='legacy'`)
 

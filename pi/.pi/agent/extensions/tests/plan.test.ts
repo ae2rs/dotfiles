@@ -3,7 +3,9 @@ import { resolvePlanFile } from "../plan.ts";
 
 describe("plan file resolution", () => {
 	test("uses the git worktree root for the default plan", () => {
-		expect(resolvePlanFile("/worktree/project/src", undefined, "/worktree/project")).toBe("/worktree/project/PLAN.md");
+		expect(resolvePlanFile("/worktree/project/src", undefined, "/worktree/project")).toBe(
+			"/worktree/project/PLAN.md",
+		);
 	});
 
 	test("falls back to cwd outside a git repository", () => {

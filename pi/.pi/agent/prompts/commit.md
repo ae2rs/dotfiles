@@ -1,6 +1,7 @@
 ---
 description: Commit the working copy as one or more clean commits
 ---
+
 Commit the current changes.
 
 1. Run `git status` and `git diff` first. If the working copy contains changes that are

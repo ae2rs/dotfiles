@@ -12,10 +12,16 @@ mock.module("@earendil-works/pi-tui", () => ({
 const { installFooter } = await import("./footer.ts");
 
 function renderFooter(width: number): string[] {
-	let factory: ((tui: { requestRender(): void }, theme: { fg(_color: string, text: string): string }, footerData: unknown) => {
-		render(width: number): string[];
-		dispose(): void;
-	}) | undefined;
+	let factory:
+		| ((
+				tui: { requestRender(): void },
+				theme: { fg(_color: string, text: string): string },
+				footerData: unknown,
+		  ) => {
+				render(width: number): string[];
+				dispose(): void;
+		  })
+		| undefined;
 	const ctx = {
 		model: { id: "gpt-5.6-terra", provider: "openai-codex" },
 		cwd: "/Users/test/project",

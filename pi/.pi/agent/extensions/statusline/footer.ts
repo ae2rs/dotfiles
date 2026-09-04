@@ -80,7 +80,11 @@ function detectPlanMode(ctx: ExtensionContext, footerData: ReadonlyFooterDataPro
 	return footerData.getExtensionStatuses().has("plan-mode");
 }
 
-export function installFooter(ctx: ExtensionContext, pi: ExtensionAPI, usage: UsageService): FooterHandle {
+export function installFooter(
+	ctx: ExtensionContext,
+	pi: ExtensionAPI,
+	usage: UsageService,
+): FooterHandle {
 	let tui: TUI | undefined;
 	let disposed = false;
 
@@ -153,10 +157,17 @@ export function installFooter(ctx: ExtensionContext, pi: ExtensionAPI, usage: Us
 				return left + " ".repeat(gap) + right;
 			}
 		}
-		return truncateToWidth(`${buildLine1Left(theme, false)} ${buildLine1Right(theme, false)}`, width);
+		return truncateToWidth(
+			`${buildLine1Left(theme, false)} ${buildLine1Right(theme, false)}`,
+			width,
+		);
 	}
 
-	function buildLine2Left(theme: Theme, footerData: ReadonlyFooterDataProvider, withCwd: boolean): string {
+	function buildLine2Left(
+		theme: Theme,
+		footerData: ReadonlyFooterDataProvider,
+		withCwd: boolean,
+	): string {
 		const planActive = detectPlanMode(ctx, footerData);
 		const badge = planActive
 			? theme.inverse(theme.fg("warning", " PLAN "))
@@ -182,7 +193,11 @@ export function installFooter(ctx: ExtensionContext, pi: ExtensionAPI, usage: Us
 		return statuses.join(theme.fg("dim", " · "));
 	}
 
-	function renderLine2(theme: Theme, footerData: ReadonlyFooterDataProvider, width: number): string {
+	function renderLine2(
+		theme: Theme,
+		footerData: ReadonlyFooterDataProvider,
+		width: number,
+	): string {
 		// Drop sections in order: cwd, then other extension statuses.
 		for (const [withCwd, withStatuses] of [
 			[true, true],

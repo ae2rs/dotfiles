@@ -2,6 +2,7 @@
 description: Survey an unfamiliar codebase and record what routine work would not teach
 argument-hint: "[path or area]"
 ---
+
 Build a working understanding of ${1:-this repository}.
 
 ## Survey
@@ -29,7 +30,7 @@ rather than smoothing over it.
 
 Memory here is `pi-hermes-memory`, which already reviews the conversation every 10 turns or
 15 tool calls and saves what it judges durable. Routine work therefore accumulates memory on
-its own. Your job is only the part that automatic capture will *not* reach: the structural
+its own. Your job is only the part that automatic capture will _not_ reach: the structural
 understanding that comes from a deliberate orientation pass rather than from touching files.
 
 The project store holds roughly **5000 characters in total**, shared with everything saved

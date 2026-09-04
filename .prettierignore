@@ -1,0 +1,10 @@
+# Tool-owned files: their producer rewrites them and owns the layout.
+nvim/.config/nvim/lazy-lock.json
+uv/.config/uv/uv-receipt.json
+gh/.config/gh/*.yml
+
+# sops-encrypted; formatting would corrupt the MAC.
+zsh/.config/zsh/secrets/*.yaml
+
+# Vendored.
+nvim/.config/nvim/LICENSE.md
