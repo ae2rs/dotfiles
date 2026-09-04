@@ -1,19 +1,12 @@
-/**
- * working — adaptive working indicator for streaming.
- *
- * MDI clock frames (󰪞…󰪥) at 120 ms, colored by state: accent while one or
- * more tools execute, otherwise by how long ago the last token arrived
- * (green < 10 s, yellow < 30 s, red ≥ 30 s). The working message gets an
- * elapsed-time suffix (󰅐 12.3s) that ticks while the agent runs, plus the
- * names of currently running tools (󰖱 bash, edit).
- */
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { ICONS, WORKING_FRAMES } from "./icons.ts";
+import { WORKING_FRAMES } from "./icons.ts";
 
-type Tone = "green" | "yellow" | "red" | "tool";
-const TONE_COLORS = { green: "success", yellow: "warning", red: "error", tool: "accent" } as const;
-const MAX_TOOL_NAMES = 3;
-const FRAME_INTERVAL_MS = 120;
+type Tone = "green" | "yellow" | "red";
+type Activity = "thinking" | "command" | "tool";
+type ActiveTool = { name: string; detail: string };
+
+const TONE_COLORS = { green: "success", yellow: "warning", red: "error" } as const;
+const COMMAND_TOOLS = new Set(["bash", "powershell"]);
 const TICK_MS = 250;
 
 function formatElapsed(ms: number): string {
@@ -23,48 +16,86 @@ function formatElapsed(ms: number): string {
 	return `${minutes}m ${seconds}s`;
 }
 
+function pluralize(count: number, noun: string): string {
+	return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+function summarizeTool(toolName: string, args: unknown): string {
+	const input = args && typeof args === "object" ? args as Record<string, unknown> : {};
+	const detail =
+		typeof input.command === "string"
+			? input.command
+			: typeof input.path === "string"
+				? `${toolName} ${input.path}`
+				: typeof input.pattern === "string"
+					? `${toolName} ${input.pattern}`
+					: typeof input.query === "string"
+						? `${toolName} ${input.query}`
+						: toolName;
+	const oneLine = detail.replace(/\s+/g, " ").trim();
+	return oneLine.length > 80 ? `${oneLine.slice(0, 79)}…` : oneLine;
+}
+
+function currentActivity(activeTools: Map<string, ActiveTool>): Activity {
+	const tools = [...activeTools.values()];
+	const currentTool = tools[tools.length - 1];
+	if (!currentTool) return "thinking";
+	return COMMAND_TOOLS.has(currentTool.name) ? "command" : "tool";
+}
+
 export function setupWorkingIndicator(pi: ExtensionAPI): void {
 	let timer: ReturnType<typeof setInterval> | undefined;
 	let lastTokenAt = 0;
 	let agentStartAt = 0;
 	let tone: Tone | undefined;
-	// toolCallId → toolName for in-flight tool executions
-	const activeTools = new Map<string, string>();
+	let activity: Activity | undefined;
+	const activeTools = new Map<string, ActiveTool>();
+	let commandsStarted = 0;
+	let toolsStarted = 0;
 
-	function applyIndicator(ctx: ExtensionContext, next: Tone): void {
-		tone = next;
+	function applyIndicator(ctx: ExtensionContext, nextTone: Tone, nextActivity: Activity): void {
+		tone = nextTone;
+		activity = nextActivity;
 		try {
+			const color =
+				nextActivity === "command" ? "bashMode" : nextActivity === "tool" ? "accent" : TONE_COLORS[nextTone];
 			ctx.ui.setWorkingIndicator({
-				frames: WORKING_FRAMES.map((frame) => ctx.ui.theme.fg(TONE_COLORS[next], frame)),
-				intervalMs: FRAME_INTERVAL_MS,
+				frames: WORKING_FRAMES.map((frame) => ctx.ui.theme.fg(color, frame)),
+				intervalMs: 100,
 			});
 		} catch {
-			// stale ctx after session replacement/reload — ignore
+			// Stale ctx after session replacement or reload.
 		}
 	}
 
 	function tick(ctx: ExtensionContext): void {
 		const now = Date.now();
-		const toolNames = [...new Set(activeTools.values())];
-		const next: Tone =
-			toolNames.length > 0
-				? "tool"
-				: now - lastTokenAt < 10_000
-					? "green"
-					: now - lastTokenAt < 30_000
-						? "yellow"
-						: "red";
-		if (next !== tone) applyIndicator(ctx, next);
-		if (agentStartAt) {
-			const shown = toolNames.slice(0, MAX_TOOL_NAMES).join(", ");
-			const extra = toolNames.length > MAX_TOOL_NAMES ? ` +${toolNames.length - MAX_TOOL_NAMES}` : "";
-			const toolSuffix = toolNames.length > 0 ? `  ${ICONS.tool} ${shown}${extra}` : "";
-			try {
-				ctx.ui.setWorkingMessage(`Working…  ${ICONS.clock} ${formatElapsed(now - agentStartAt)}${toolSuffix}`);
-			} catch {
-				// stale ctx — ignore
-			}
+		const nextActivity = currentActivity(activeTools);
+		const nextTone: Tone =
+			now - lastTokenAt < 10_000 ? "green" : now - lastTokenAt < 30_000 ? "yellow" : "red";
+		if (nextTone !== tone || nextActivity !== activity) applyIndicator(ctx, nextTone, nextActivity);
+		if (!agentStartAt) return;
+
+		const tools = [...activeTools.values()];
+		const currentTool = tools[tools.length - 1];
+		const message =
+			nextActivity === "thinking"
+				? "Thinking…"
+				: nextActivity === "command"
+					? `Running ${pluralize(commandsStarted, "command")}…`
+					: `Using ${pluralize(toolsStarted, "tool")}…`;
+		const detail = currentTool?.detail ?? formatElapsed(now - agentStartAt);
+		try {
+			ctx.ui.setWorkingMessage(`${message}  ${ctx.ui.theme.fg("dim", detail)}`);
+		} catch {
+			// Stale ctx after session replacement or reload.
 		}
+	}
+
+	function reset(): void {
+		activeTools.clear();
+		commandsStarted = 0;
+		toolsStarted = 0;
 	}
 
 	function stopTimer(): void {
@@ -76,26 +107,21 @@ export function setupWorkingIndicator(pi: ExtensionAPI): void {
 		if (ctx.mode !== "tui") return;
 		stopTimer();
 		tone = undefined;
+		activity = undefined;
 		agentStartAt = 0;
-		activeTools.clear();
-		// Defer so the SDK's resetExtensionUI() (which restores the default
-		// indicator) runs before we override it.
+		reset();
 		setTimeout(() => {
-			try {
-				if (ctx.mode === "tui") applyIndicator(ctx, "green");
-			} catch {
-				// stale ctx — ignore
-			}
+			if (ctx.mode === "tui") applyIndicator(ctx, "green", "thinking");
 		}, 0);
 	});
 
 	pi.on("agent_start", (_event, ctx) => {
 		if (ctx.mode !== "tui") return;
 		stopTimer();
-		activeTools.clear();
+		reset();
 		agentStartAt = Date.now();
 		lastTokenAt = agentStartAt;
-		applyIndicator(ctx, "green");
+		applyIndicator(ctx, "green", "thinking");
 		tick(ctx);
 		timer = setInterval(() => tick(ctx), TICK_MS);
 	});
@@ -106,14 +132,18 @@ export function setupWorkingIndicator(pi: ExtensionAPI): void {
 
 	pi.on("tool_execution_start", (event, ctx) => {
 		if (ctx.mode !== "tui") return;
-		activeTools.set(event.toolCallId, event.toolName);
+		activeTools.set(event.toolCallId, {
+			name: event.toolName,
+			detail: summarizeTool(event.toolName, event.args),
+		});
+		if (COMMAND_TOOLS.has(event.toolName)) commandsStarted += 1;
+		else toolsStarted += 1;
 		tick(ctx);
 	});
 
 	pi.on("tool_execution_end", (event, ctx) => {
 		if (ctx.mode !== "tui") return;
 		activeTools.delete(event.toolCallId);
-		// A tool ending means the API round-trip resumes next; treat as fresh activity.
 		lastTokenAt = Date.now();
 		tick(ctx);
 	});
@@ -121,13 +151,12 @@ export function setupWorkingIndicator(pi: ExtensionAPI): void {
 	pi.on("agent_end", (_event, ctx) => {
 		stopTimer();
 		agentStartAt = 0;
-		activeTools.clear();
-		// Restore the default working message shortly after streaming ends.
+		reset();
 		setTimeout(() => {
 			try {
 				ctx.ui.setWorkingMessage();
 			} catch {
-				// stale ctx — ignore
+				// Stale ctx after session replacement or reload.
 			}
 		}, 2000);
 	});

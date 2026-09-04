@@ -9,11 +9,10 @@
 export const ICONS = {
 	model: "󰚩",
 	thinking: "󰧑",
-	tool: "󰖱",
 	branch: "",
 	context: "󰨊",
 	clock: "󰅐",
 } as const;
 
-/** MDI clock cycle, used for the adaptive working indicator. */
-export const WORKING_FRAMES = ["󰪞", "󰪟", "󰪠", "󰪡", "󰪢", "󰪣", "󰪤", "󰪥"] as const;
+/** Braille spinner frames used for the adaptive working indicator. */
+export const WORKING_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
