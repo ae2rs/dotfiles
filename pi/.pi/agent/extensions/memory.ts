@@ -66,7 +66,7 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_save",
 		label: "Memory Save",
 		description:
-			"Save a durable memory (fact, preference, convention, failure, insight) to the persistent store. Keep entries small and focused — one fact each. Use type and tags to make it findable.",
+			"Save a durable memory. Types: preference (how the user wants things done), fact (objective project/environment/tool knowledge), decision (a choice and its rationale), failure (what did not work). Keep entries small and focused — one fact each. Use tags to make them findable.",
 		promptSnippet: "save a durable typed/tagged memory",
 		promptGuidelines: [
 			"Use memory_save proactively when the user states a preference, corrects you, or a durable environment/project fact emerges.",
@@ -94,7 +94,7 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_search",
 		label: "Memory Search",
 		description:
-			"Search persistent memories. Full-text over content (BM25-ranked), optionally filtered by type, tags, and scope. Omit the query to list most recently updated entries.",
+			"Search persistent memories. Full-text over content (BM25-ranked), optionally filtered by type (preference, fact, decision, failure), tags, and scope. Omit the query to list most recently updated entries.",
 		promptSnippet: "search persistent memories by text, type, tag, or scope",
 		promptGuidelines: [
 			"Use memory_search when the current task may depend on durable context from previous sessions.",
@@ -136,7 +136,8 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "memory_update",
 		label: "Memory Update",
-		description: "Update a memory's content, type, or tags by id (ids come from memory_search results).",
+		description:
+			"Update a memory's content, type (preference, fact, decision, failure), or tags by id (ids come from memory_search results).",,
 		promptSnippet: "update a memory by id",
 		parameters: Type.Object({
 			id: Type.String({ description: "Memory id from memory_search" }),
