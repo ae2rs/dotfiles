@@ -11,6 +11,11 @@ const c = store.save({ content: "The edit tool rejects JSON-encoded edits arrays
 assert.equal(store.census().count, 3);
 assert.deepEqual(store.census().types, ["convention", "tool-quirk"]);
 assert.deepEqual(a.tags, ["monorepo", "package-manager"], "tags normalized to lowercase");
+assert.deepEqual(store.tagCounts(), [
+	{ tag: "git", count: 1 },
+	{ tag: "monorepo", count: 1 },
+	{ tag: "package-manager", count: 1 },
+]);
 
 // Full-text search ranks matches
 const fts = store.search({ query: "pnpm" });
@@ -38,6 +43,7 @@ assert.deepEqual(updated?.tags, ["pkg"]);
 assert.equal(store.search({ query: "never npm" }).length, 0, "old content gone from FTS");
 assert.equal(store.search({ query: "Always use pnpm" }).length, 1);
 assert.equal(store.search({ tags: ["monorepo"] }).length, 0, "old tags replaced");
+assert.deepEqual(store.tagCounts(), [{ tag: "git", count: 1 }, { tag: "pkg", count: 1 }]);
 assert.ok(updated!.updated >= a.updated);
 
 assert.equal(store.update("nope", { content: "x" }), undefined);

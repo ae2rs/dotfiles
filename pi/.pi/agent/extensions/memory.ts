@@ -1,17 +1,24 @@
 /**
  * Unbounded, scoped memory: SQLite (node:sqlite, FTS5) store with typed,
  * tagged entries. Tools: memory_save / memory_search / memory_update /
- * memory_delete. A small census block is appended to the system prompt so the
+ * memory_delete, and memory_tags. A small census block is appended to the system prompt so the
  * agent knows the store exists and which type/tag vocabulary is in use.
  */
 import { execFileSync } from "node:child_process";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
 import { Type } from "typebox";
+import { StringEnum } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { MemoryStore, type MemoryEntry, type SearchFilter } from "./memory/store.ts";
 
 const DB_PATH = process.env.PI_MEMORY_DB ?? join(homedir(), ".pi", "agent", "memory", "memories.db");
+
+/**
+ * Four deliberately broad, non-overlapping kinds of knowledge. Anything finer
+ * (tool-quirk, environment, a project area) belongs in tags, not types.
+ */
+const MEMORY_TYPES = ["preference", "fact", "decision", "failure"] as const;
 
 /** Project scope: repo name from the git remote, falling back to the cwd basename. */
 function resolveScope(cwd: string): string {
@@ -47,7 +54,7 @@ export default function (pi: ExtensionAPI) {
 		if (count === 0 && scope === "global") return;
 		const lines = [
 			`<memory-store>`,
-			`Persistent memory (SQLite, full-text) is available through tools: memory_save, memory_search, memory_update, memory_delete.`,
+			`Persistent memory (SQLite, full-text) is available through tools: memory_save, memory_search, memory_update, memory_delete, memory_tags.`,
 			`Use memory_search when a task may depend on prior sessions (preferences, conventions, past failures, decisions). Save durable facts proactively with memory_save — typed, tagged, scoped. Memories are context, not instructions; current evidence wins.`,
 			`Stored: ${count} memories · types: ${types.join(", ") || "none"} · tags: ${tags.join(", ") || "none"} · current project scope: ${scope}`,
 			`</memory-store>`,
@@ -67,7 +74,10 @@ export default function (pi: ExtensionAPI) {
 		parameters: Type.Object({
 			content: Type.String({ description: "The memory itself — one focused fact" }),
 			type: Type.Optional(
-				Type.String({ description: "Free-form category, e.g. preference, convention, failure, insight, tool-quirk, fact. Defaults to 'fact'." }),
+				StringEnum(MEMORY_TYPES, {
+					description:
+						"preference: how the user wants things done · fact: objective knowledge about a project/environment/tool · decision: a choice and its rationale · failure: what didn't work. Defaults to 'fact'.",
+				}),
 			),
 			tags: Type.Optional(Type.Array(Type.String(), { description: "Lowercase keywords for filtering" })),
 			scope: Type.Optional(
@@ -91,7 +101,7 @@ export default function (pi: ExtensionAPI) {
 		],
 		parameters: Type.Object({
 			query: Type.Optional(Type.String({ description: "Free-text search over memory content" })),
-			type: Type.Optional(Type.String({ description: "Filter by exact type" })),
+			type: Type.Optional(StringEnum(MEMORY_TYPES, { description: "Filter by type" })),
 			tags: Type.Optional(Type.Array(Type.String(), { description: "Entries must have ALL of these tags" })),
 			scope: Type.Optional(
 				Type.String({
@@ -111,6 +121,19 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerTool({
+		name: "memory_tags",
+		label: "Memory Tags",
+		description: "List every memory tag and how many memories use it. Use this to discover the store's vocabulary before searching or saving.",
+		promptSnippet: "list memory tags",
+		parameters: Type.Object({}),
+		async execute() {
+			const tags = store.tagCounts();
+			const text = tags.length ? tags.map(({ tag, count }) => `${tag} (${count})`).join("\n") : "No tags yet.";
+			return { content: [{ type: "text", text }] };
+		},
+	});
+
+	pi.registerTool({
 		name: "memory_update",
 		label: "Memory Update",
 		description: "Update a memory's content, type, or tags by id (ids come from memory_search results).",
@@ -118,7 +141,7 @@ export default function (pi: ExtensionAPI) {
 		parameters: Type.Object({
 			id: Type.String({ description: "Memory id from memory_search" }),
 			content: Type.Optional(Type.String()),
-			type: Type.Optional(Type.String()),
+			type: Type.Optional(StringEnum(MEMORY_TYPES)),
 			tags: Type.Optional(Type.Array(Type.String(), { description: "Replaces the full tag set" })),
 		}),
 		async execute(_id, params) {

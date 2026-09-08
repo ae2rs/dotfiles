@@ -195,6 +195,12 @@ export class MemoryStore {
 		return { count, types, tags };
 	}
 
+	tagCounts(): Array<{ tag: string; count: number }> {
+		return this.db
+			.prepare("SELECT tag, COUNT(*) AS count FROM memory_tags GROUP BY tag ORDER BY count DESC, tag")
+			.all() as Array<{ tag: string; count: number }>;
+	}
+
 	private tagsFor(id: string): string[] {
 		return (
 			this.db.prepare("SELECT tag FROM memory_tags WHERE memory_id = ? ORDER BY tag").all(id) as { tag: string }[]
