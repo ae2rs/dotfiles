@@ -3,7 +3,7 @@
     "instructions": ["AGENTS.md"]
   },
   "default": {
-    "skills": ["../../.agents/skills/find-skills"]
+    "skills": ["../../.agents/skills/find-skills", "skills/learn-codebase"]
   },
   "profiles": {
     "monorepo": {
