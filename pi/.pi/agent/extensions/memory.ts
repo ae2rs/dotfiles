@@ -135,7 +135,7 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_update",
 		label: "Memory Update",
 		description:
-			"Update a memory's content, type (preference, fact, decision, failure), or tags by id (ids come from memory_search results).",,
+			"Update a memory's content, type (preference, fact, decision, failure), or tags by id (ids come from memory_search results).",
 		promptSnippet: "update a memory by id",
 		parameters: Type.Object({
 			id: Type.String({ description: "Memory id from memory_search" }),
