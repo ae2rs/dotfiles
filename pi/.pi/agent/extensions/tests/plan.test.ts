@@ -2,14 +2,17 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
-import { planFileFor, SessionPlanStore } from "../plan/store.ts";
+import { planFileFor, SessionPlanStore, sessionStoreDir } from "../plan/store.ts";
 
 const noQueue = async <T>(_file: string, operation: () => Promise<T>): Promise<T> => operation();
 
 describe("session plan storage", () => {
-	test("keeps each session plan outside the working tree", () => {
+	test("keeps each session's files outside the working tree", () => {
+		expect(sessionStoreDir("session-a", "/Users/me/.pi/agent")).toBe(
+			"/Users/me/.pi/agent/plans/session-a",
+		);
 		expect(planFileFor("session-a", "/Users/me/.pi/agent")).toBe(
-			"/Users/me/.pi/agent/plans/session-a.md",
+			"/Users/me/.pi/agent/plans/session-a/plan.md",
 		);
 	});
 

@@ -4,7 +4,7 @@
  * /plan toggles planning mode. The model can only change the plan through the
  * plan_read, plan_write, and plan_edit tools; project writes and mutating bash
  * commands remain blocked. The document is kept outside the working tree at
- * ~/.pi/agent/plans/<session-id>.md, so it never creates a repository PLAN.md.
+ * ~/.pi/agent/plans/<session-id>/plan.md, so it never creates a repository PLAN.md.
  */
 
 import { spawn } from "node:child_process";

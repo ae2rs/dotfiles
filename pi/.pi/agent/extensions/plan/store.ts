@@ -3,8 +3,12 @@ import { dirname, join } from "node:path";
 
 export type FileMutationQueue = <T>(filePath: string, operation: () => Promise<T>) => Promise<T>;
 
+export function sessionStoreDir(sessionId: string, agentDir: string): string {
+	return join(agentDir, "plans", sessionId);
+}
+
 export function planFileFor(sessionId: string, agentDir: string): string {
-	return join(agentDir, "plans", `${sessionId}.md`);
+	return join(sessionStoreDir(sessionId, agentDir), "plan.md");
 }
 
 export class SessionPlanStore {
