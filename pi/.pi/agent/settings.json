@@ -11,8 +11,7 @@
   "packages": [
     "npm:@vanillagreen/pi-claude-bridge",
     "npm:pi-subagents",
-    "npm:pi-markdown-preview",
-    "git:github.com/ae2rs/pi-hermes-memory@b669bc8c391e18e30dff8931093b442bc50a96e6"
+    "npm:pi-markdown-preview"
   ],
   "lastChangelogVersion": "0.85.0",
   "modelThinkingLevels": {
