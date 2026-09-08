@@ -11,6 +11,7 @@
       "skills": [
         "skills/merge-deploy-monorepo-pr",
         "skills/watch-api-rollouts",
+        "skills/regenerate-sqlx-cache",
         "linear/skills/linear"
       ]
     }
