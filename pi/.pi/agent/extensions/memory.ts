@@ -73,12 +73,10 @@ export default function (pi: ExtensionAPI) {
 		],
 		parameters: Type.Object({
 			content: Type.String({ description: "The memory itself — one focused fact" }),
-			type: Type.Optional(
-				StringEnum(MEMORY_TYPES, {
-					description:
-						"preference: how the user wants things done · fact: objective knowledge about a project/environment/tool · decision: a choice and its rationale · failure: what didn't work. Defaults to 'fact'.",
-				}),
-			),
+			type: StringEnum(MEMORY_TYPES, {
+				description:
+					"preference: how the user wants things done · fact: objective knowledge about a project/environment/tool · decision: a choice and its rationale · failure: what didn't work.",
+			}),
 			tags: Type.Optional(Type.Array(Type.String(), { description: "Lowercase keywords for filtering" })),
 			scope: Type.Optional(
 				Type.String({ description: "'global' (default) or the current project scope name" }),
