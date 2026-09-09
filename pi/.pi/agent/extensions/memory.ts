@@ -13,7 +13,8 @@ import { StringEnum } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { MemoryStore, type MemoryEntry, type SearchFilter } from "./memory/store.ts";
 
-const DB_PATH = process.env.PI_MEMORY_DB ?? join(homedir(), ".pi", "agent", "memory", "memories.db");
+const DB_PATH =
+	process.env.PI_MEMORY_DB ?? join(homedir(), ".pi", "agent", "memory", "memories.db");
 
 /**
  * Four deliberately broad, non-overlapping kinds of knowledge. Anything finer
@@ -29,7 +30,10 @@ function resolveScope(cwd: string): string {
 			timeout: 3000,
 			stdio: ["ignore", "pipe", "ignore"],
 		}).trim();
-		const name = url.replace(/\.git$/, "").split(/[/:]/).pop();
+		const name = url
+			.replace(/\.git$/, "")
+			.split(/[/:]/)
+			.pop();
 		if (name) return name;
 	} catch {
 		// not a repo or no origin — fall through
@@ -97,9 +101,13 @@ export default function (pi: ExtensionAPI) {
 				description:
 					"preference: how the user wants things done · fact: objective knowledge about a project/environment/tool · decision: a choice and its rationale · failure: what didn't work.",
 			}),
-			tags: Type.Optional(Type.Array(Type.String(), { description: "Specific lowercase keywords for filtering" })),
+			tags: Type.Optional(
+				Type.Array(Type.String(), { description: "Specific lowercase keywords for filtering" }),
+			),
 			relatedIds: Type.Optional(
-				Type.Array(Type.String(), { description: "IDs of existing related memories; creates undirected links" }),
+				Type.Array(Type.String(), {
+					description: "IDs of existing related memories; creates undirected links",
+				}),
 			),
 			scope: Type.Optional(
 				Type.String({ description: "'global' (default) or the current project scope name" }),
@@ -121,12 +129,17 @@ export default function (pi: ExtensionAPI) {
 			"Before exploring a substantive task, search memory_search for relevant prior context; retrieve only the promising matches.",
 		],
 		parameters: Type.Object({
-			query: Type.Optional(Type.String({ description: "Free-text search over memory titles and content" })),
+			query: Type.Optional(
+				Type.String({ description: "Free-text search over memory titles and content" }),
+			),
 			type: Type.Optional(StringEnum(MEMORY_TYPES, { description: "Filter by type" })),
-			tags: Type.Optional(Type.Array(Type.String(), { description: "Entries must have ALL of these tags" })),
+			tags: Type.Optional(
+				Type.Array(Type.String(), { description: "Entries must have ALL of these tags" }),
+			),
 			scope: Type.Optional(
 				Type.String({
-					description: "'all' searches every scope; a project name searches global + that project. Defaults to global + current project.",
+					description:
+						"'all' searches every scope; a project name searches global + that project. Defaults to global + current project.",
 				}),
 			),
 			limit: Type.Optional(Type.Number({ description: "Max results (default 10, max 100)" })),
@@ -137,21 +150,28 @@ export default function (pi: ExtensionAPI) {
 			if (results.length === 0) {
 				return { content: [{ type: "text", text: "No memories matched." }] };
 			}
-			return { content: [{ type: "text", text: results.map((entry) => formatEntry(entry)).join("\n\n") }] };
+			return {
+				content: [{ type: "text", text: results.map((entry) => formatEntry(entry)).join("\n\n") }],
+			};
 		},
 	});
 
 	pi.registerTool({
 		name: "memory_get",
 		label: "Memory Get",
-		description: "Get a memory's full content and its related-memory IDs by id (ids come from memory_search).",
+		description:
+			"Get a memory's full content and its related-memory IDs by id (ids come from memory_search).",
 		promptSnippet: "get a memory's full content by id",
 		parameters: Type.Object({
 			id: Type.String({ description: "Memory id from memory_search" }),
 		}),
 		async execute(_id, params) {
 			const entry = store.get(params.id);
-			if (!entry) return { content: [{ type: "text", text: `No memory with id '${params.id}'.` }], isError: true };
+			if (!entry)
+				return {
+					content: [{ type: "text", text: `No memory with id '${params.id}'.` }],
+					isError: true,
+				};
 			return { content: [{ type: "text", text: formatEntry(entry, true) }] };
 		},
 	});
@@ -159,12 +179,15 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "memory_tags",
 		label: "Memory Tags",
-		description: "List every memory tag and how many memories use it. Use this to discover the store's vocabulary before searching or saving.",
+		description:
+			"List every memory tag and how many memories use it. Use this to discover the store's vocabulary before searching or saving.",
 		promptSnippet: "list memory tags",
 		parameters: Type.Object({}),
 		async execute() {
 			const tags = store.tagCounts();
-			const text = tags.length ? tags.map(({ tag, count }) => `${tag} (${count})`).join("\n") : "No tags yet.";
+			const text = tags.length
+				? tags.map(({ tag, count }) => `${tag} (${count})`).join("\n")
+				: "No tags yet.";
 			return { content: [{ type: "text", text }] };
 		},
 	});
@@ -182,13 +205,16 @@ export default function (pi: ExtensionAPI) {
 			type: Type.Optional(StringEnum(MEMORY_TYPES)),
 			tags: Type.Optional(Type.Array(Type.String(), { description: "Replaces the full tag set" })),
 			relatedIds: Type.Optional(
-				Type.Array(Type.String(), { description: "Replaces the full set of undirected links to existing memories" }),
+				Type.Array(Type.String(), {
+					description: "Replaces the full set of undirected links to existing memories",
+				}),
 			),
 		}),
 		async execute(_id, params) {
 			const { id, ...patch } = params;
 			const entry = store.update(id, patch);
-			if (!entry) return { content: [{ type: "text", text: `No memory with id '${id}'.` }], isError: true };
+			if (!entry)
+				return { content: [{ type: "text", text: `No memory with id '${id}'.` }], isError: true };
 			return { content: [{ type: "text", text: `Updated ${formatEntry(entry)}` }] };
 		},
 	});
@@ -203,7 +229,10 @@ export default function (pi: ExtensionAPI) {
 		}),
 		async execute(_id, params) {
 			if (!store.delete(params.id)) {
-				return { content: [{ type: "text", text: `No memory with id '${params.id}'.` }], isError: true };
+				return {
+					content: [{ type: "text", text: `No memory with id '${params.id}'.` }],
+					isError: true,
+				};
 			}
 			return { content: [{ type: "text", text: `Deleted memory '${params.id}'.` }] };
 		},

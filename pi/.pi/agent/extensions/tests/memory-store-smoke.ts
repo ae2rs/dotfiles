@@ -40,8 +40,14 @@ assert.deepEqual(store.tagCounts(), [
 ]);
 
 // Full-text search ranks content and title matches.
-assert.deepEqual(store.search({ query: "pnpm" }).map((entry) => entry.id), [a.id]);
-assert.deepEqual(store.search({ query: "branch" }).map((entry) => entry.id), [b.id]);
+assert.deepEqual(
+	store.search({ query: "pnpm" }).map((entry) => entry.id),
+	[a.id],
+);
+assert.deepEqual(
+	store.search({ query: "branch" }).map((entry) => entry.id),
+	[b.id],
+);
 
 // Scope filter: "dotfiles" sees global + dotfiles, not other projects.
 assert.equal(store.search({ scope: "dotfiles" }).length, 3);
@@ -71,7 +77,10 @@ assert.deepEqual(store.get(b.id)?.relatedIds, []);
 assert.equal(store.search({ query: "never npm" }).length, 0, "old content gone from FTS");
 assert.equal(store.search({ query: "Always use" }).length, 1);
 assert.equal(store.search({ tags: ["monorepo"] }).length, 0, "old tags replaced");
-assert.deepEqual(store.tagCounts(), [{ tag: "git", count: 1 }, { tag: "pkg", count: 1 }]);
+assert.deepEqual(store.tagCounts(), [
+	{ tag: "git", count: 1 },
+	{ tag: "pkg", count: 1 },
+]);
 assert.ok(updated!.updated >= a.updated);
 
 assert.throws(() => store.save({ title: "Broken link", content: "x", relatedIds: ["missing"] }));
@@ -108,13 +117,18 @@ legacy.exec(`
 	);
 	CREATE VIRTUAL TABLE memories_fts USING fts5(id UNINDEXED, content);
 `);
-legacy.prepare("INSERT INTO memories VALUES (?, ?, ?, ?, ?, ?)").run("legacy", "Legacy memory content", "fact", "global", "now", "now");
+legacy
+	.prepare("INSERT INTO memories VALUES (?, ?, ?, ?, ?, ?)")
+	.run("legacy", "Legacy memory content", "fact", "global", "now", "now");
 legacy.prepare("INSERT INTO memories_fts VALUES (?, ?)").run("legacy", "Legacy memory content");
 legacy.close();
 
 const migrated = new MemoryStore(databasePath);
 assert.equal(migrated.get("legacy")?.title, "Legacy memory content");
-assert.deepEqual(migrated.search({ query: "legacy" }).map((entry) => entry.id), ["legacy"]);
+assert.deepEqual(
+	migrated.search({ query: "legacy" }).map((entry) => entry.id),
+	["legacy"],
+);
 migrated.close();
 rmSync(directory, { recursive: true, force: true });
 
