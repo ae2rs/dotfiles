@@ -22,6 +22,30 @@ local palette = {
 config.font_size = 16
 config.line_height = 1
 config.font = wezterm.font("JetBrains Mono")
+-- wezterm#8097 widened the automatic bold/dim weight offsets; keep the
+-- pre-nightly JetBrains Mono appearance instead of ExtraBold and Thin.
+config.font_rules = {
+	{
+		intensity = "Bold",
+		italic = true,
+		font = wezterm.font("JetBrains Mono", { weight = "DemiBold", style = "Italic" }),
+	},
+	{
+		intensity = "Bold",
+		italic = false,
+		font = wezterm.font("JetBrains Mono", { weight = "DemiBold" }),
+	},
+	{
+		intensity = "Half",
+		italic = true,
+		font = wezterm.font("JetBrains Mono", { weight = "ExtraLight", style = "Italic" }),
+	},
+	{
+		intensity = "Half",
+		italic = false,
+		font = wezterm.font("JetBrains Mono", { weight = "ExtraLight" }),
+	},
+}
 config.color_scheme = color_scheme
 config.audible_bell = "Disabled"
 config.window_close_confirmation = "NeverPrompt"
@@ -53,10 +77,6 @@ local map = function(key, mods, action)
 			table.insert(shortcuts, { key = key, mods = mod, action = action })
 		end
 	end
-end
-
-local function basename(path)
-	return path and path:match("([^/\\]+)$") or path
 end
 
 wezterm.GLOBAL.enable_tab_bar = true
@@ -189,30 +209,11 @@ map("f", "LEADER", act.EmitEvent("switch-font"))
 -- debug
 map("l", "SHIFT|CTRL", act.ShowDebugOverlay)
 -- terminal control
--- Shift+Enter sends the Kitty-style \e\r so TUIs insert a newline instead of
--- submitting. That byte pair is also legacy Alt+Enter, so the keyboard protocol
--- has to be on for apps to tell them apart -- without it Pi reads Shift+Enter as
--- Alt+Enter and queues a follow-up message instead of breaking the line.
--- Progressive enhancement, so only apps that negotiate it are affected.
+-- Needs the nightly build (see Brewfile): stable 20240203 encodes <Esc>
+-- key-down as a raw \e despite the disambiguate flag, so Neovim reads that
+-- byte as the prefix of the key-up event that follows and swallows the press,
+-- making Insert mode inescapable -- wezterm#7787.
 config.enable_kitty_keyboard = true
--- Neovim's kitty-keyboard negotiation breaks bare Esc in this setup; disable it
--- only while the foreground process is vim/nvim so other TUIs keep the richer
--- keyboard protocol (e.g. Pi's Shift+Enter handling).
-wezterm.on("update-right-status", function(window, pane)
-	local proc = basename(pane:get_foreground_process_name() or "")
-	local overrides = window:get_config_overrides() or {}
-	local want_kitty_keyboard = proc ~= "nvim" and proc ~= "vim"
-	local current = overrides.enable_kitty_keyboard
-	if current == nil then
-		current = config.enable_kitty_keyboard
-	end
-	if current == want_kitty_keyboard then
-		return
-	end
-	overrides.enable_kitty_keyboard = want_kitty_keyboard
-	window:set_config_overrides(overrides)
-end)
-map("Enter", "SHIFT", wezterm.action({ SendString = "\x1b\r" }))
 
 map(
 	"r",

@@ -98,7 +98,9 @@ cask "qutebrowser"
 cask "stats"
 cask "sublime-text"
 cask "swiftformat-for-xcode"
-cask "wezterm"
+# nightly: the last stable (20240203) breaks <Esc> in Neovim under the kitty
+# keyboard protocol, which .wezterm.lua enables -- wezterm#7787
+cask "wezterm@nightly"
 go "github.com/lasorda/protobuf-language-server"
 cargo "atuin"
 cargo "bacon"
