@@ -63,6 +63,31 @@ function M.open_status()
   require('neogit').open()
 end
 
+function M.stage_diffview_hunk()
+  local view = require('diffview.lib').get_current_view()
+  local RevType = require('diffview.vcs.rev').RevType
+
+  if not view or view.left.type ~= RevType.STAGE or view.right.type ~= RevType.LOCAL then
+    return
+  end
+
+  local index_window = view.cur_layout.a
+  local working_window = view.cur_layout.b
+  local current_window = vim.api.nvim_get_current_win()
+
+  if current_window == index_window.id then
+    vim.cmd('diffget ' .. working_window.file.bufnr)
+  elseif current_window == working_window.id then
+    vim.cmd('diffput ' .. index_window.file.bufnr)
+  else
+    return
+  end
+
+  vim.api.nvim_win_call(index_window.id, function()
+    vim.cmd 'write'
+  end)
+end
+
 function M.open_stash_popup()
   require('neogit').open { 'stash' }
 end

@@ -65,6 +65,7 @@ return {
           diffview = true,
           telescope = true,
         },
+        diff_viewer = 'diffview',
         telescope_sorter = function()
           return require('telescope').extensions.fzf.native_fzf_sorter()
         end,
@@ -128,5 +129,68 @@ return {
   {
     'sindrets/diffview.nvim',
     lazy = true,
+    opts = {
+      view = {
+        default = {
+          layout = 'diff2_horizontal',
+        },
+      },
+      keymaps = {
+        view = {
+          {
+            'n',
+            '\\',
+            function()
+              require('diffview.actions').toggle_files()
+            end,
+            { desc = 'Toggle Diffview file panel' },
+          },
+          {
+            'n',
+            'q',
+            '<cmd>DiffviewClose<cr>',
+            { desc = 'Close Diffview' },
+          },
+          {
+            'n',
+            '<cr>',
+            function()
+              require('diffview.actions').goto_file_edit()
+            end,
+            { desc = 'Open file at cursor' },
+          },
+          {
+            'n',
+            's',
+            function()
+              require('config.git').stage_diffview_hunk()
+            end,
+            { desc = 'Stage hunk' },
+          },
+        },
+        file_panel = {
+          { 'n', 'q', '<cmd>DiffviewClose<cr>', { desc = 'Close Diffview' } },
+          {
+            'n',
+            '<cr>',
+            function()
+              require('diffview.actions').focus_entry()
+            end,
+            { desc = 'Open diff and focus it' },
+          },
+        },
+        file_history_panel = {
+          { 'n', 'q', '<cmd>DiffviewClose<cr>', { desc = 'Close Diffview' } },
+          {
+            'n',
+            '<cr>',
+            function()
+              require('diffview.actions').focus_entry()
+            end,
+            { desc = 'Open diff and focus it' },
+          },
+        },
+      },
+    },
   },
 }
