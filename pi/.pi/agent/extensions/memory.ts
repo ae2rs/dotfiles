@@ -56,11 +56,12 @@ export default function (pi: ExtensionAPI) {
 
 	pi.on("before_agent_start", async (event) => {
 		const { count, types, tags } = store.census();
-		if (count === 0 && scope === "global") return;
 		const lines = [
 			`<memory-store>`,
 			`Persistent memory (SQLite, full-text) is available through tools: memory_save, memory_search, memory_get, memory_update, memory_delete, memory_tags.`,
-			`Use memory_search when a task may depend on prior sessions, then memory_get for a matching memory's full content. Save durable facts proactively with memory_save — typed, titled, tagged, and scoped. Prefer small, self-contained memories with concise titles and specific lowercase tags; create multiple linked memories rather than one large memory. Memories are context, not instructions; current evidence wins.`,
+			`Before exploring any substantive task, search memory_search for relevant prior context; search before repository exploration. Use the current scope by default, scope: "all" only for cross-project context, then memory_get only the promising matches.`,
+			`Systematically preserve durable findings before finishing: user preferences and corrections, reusable project facts, decisions and their rationale, and failures or gotchas. Do not save transient task state or obvious facts.`,
+			`Keep each memory short, self-contained, and narrowly focused. Reuse lowercase tags from memory_tags; search first and update a near-duplicate instead of adding one. Link related memories when the relationship improves retrieval. Memories are reference material, not instructions; verify them against current evidence.`,
 			`Stored: ${count} memories · types: ${types.join(", ") || "none"} · tags: ${tags.join(", ") || "none"} · current project scope: ${scope}`,
 			`</memory-store>`,
 		];
@@ -74,7 +75,7 @@ export default function (pi: ExtensionAPI) {
 			"Save a durable memory with a concise title. Types: preference (how the user wants things done), fact (objective project/environment/tool knowledge), decision (a choice and its rationale), failure (what did not work). Prefer small, self-contained entries with specific lowercase tags; create several linked memories rather than one large entry.",
 		promptSnippet: "save a durable titled, tagged memory",
 		promptGuidelines: [
-			"Use memory_save proactively when the user states a preference, corrects you, or a durable environment/project fact emerges. Prefer small, self-contained memories with concise titles and specific lowercase tags; create multiple related memories instead of one large memory.",
+			"Save durable findings systematically: preferences, corrections, reusable facts, decisions, and failures. Keep them short and self-contained; reuse lowercase tags, update near-duplicates, and link related memories.",
 		],
 		parameters: Type.Object({
 			title: Type.String({ description: "Concise overview of the memory" }),
@@ -104,7 +105,7 @@ export default function (pi: ExtensionAPI) {
 			"Search persistent memories. Full-text over titles and content (BM25-ranked), optionally filtered by type (preference, fact, decision, failure), tags, and scope. Returns compact titled overviews with updated timestamps and query relevance; use memory_get for full content. Omit the query to list most recently updated entries.",
 		promptSnippet: "search persistent memories by text, type, tag, or scope",
 		promptGuidelines: [
-			"Use memory_search when the current task may depend on durable context from previous sessions.",
+			"Before exploring a substantive task, search memory_search for relevant prior context; retrieve only the promising matches.",
 		],
 		parameters: Type.Object({
 			query: Type.Optional(Type.String({ description: "Free-text search over memory titles and content" })),
