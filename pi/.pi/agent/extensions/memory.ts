@@ -2,8 +2,8 @@
  * Unbounded, scoped memory: SQLite (node:sqlite, FTS5) store with typed,
  * tagged, titled entries with links to related memories. Tools: memory_save /
  * memory_search / memory_get / memory_update / memory_delete, and memory_tags. A
- * small census block is appended to the system prompt so the agent knows the
- * store exists and which type/tag vocabulary is in use.
+ * small census block is appended to the last user message so the agent knows
+ * the store exists and which type/tag vocabulary is in use.
  */
 import { execFileSync } from "node:child_process";
 import { homedir } from "node:os";
@@ -54,7 +54,15 @@ export default function (pi: ExtensionAPI) {
 		scope = resolveScope(ctx.cwd);
 	});
 
-	pi.on("before_agent_start", async (event) => {
+	/**
+	 * Injected on `context` rather than `before_agent_start`: pi-claude-bridge
+	 * rebuilds the child's system prompt from a fixed whitelist and silently
+	 * discards systemPrompt hooks, so a prompt append would never reach the
+	 * default provider. `context` runs for every provider and is not persisted.
+	 */
+	pi.on("context", async (event) => {
+		const target = event.messages.findLast((message) => message.role === "user");
+		if (target?.role !== "user") return;
 		const { count, types, tags } = store.census();
 		const lines = [
 			`<memory-store>`,
@@ -65,7 +73,12 @@ export default function (pi: ExtensionAPI) {
 			`Stored: ${count} memories · types: ${types.join(", ") || "none"} · tags: ${tags.join(", ") || "none"} · current project scope: ${scope}`,
 			`</memory-store>`,
 		];
-		return { systemPrompt: event.systemPrompt + "\n\n" + lines.join("\n") };
+		const census = { type: "text" as const, text: lines.join("\n") };
+		target.content =
+			typeof target.content === "string"
+				? [{ type: "text", text: target.content }, census]
+				: [...target.content, census];
+		return { messages: event.messages };
 	});
 
 	pi.registerTool({
