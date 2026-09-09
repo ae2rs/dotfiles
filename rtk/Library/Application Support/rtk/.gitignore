@@ -1,3 +1,4 @@
 # RTK runtime state
 .hook_warn_last
 *.db
+*.db-*
