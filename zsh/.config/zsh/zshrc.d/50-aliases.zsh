@@ -250,18 +250,20 @@ alias lspmux_restart='launchctl kickstart -k gui/$(id -u)/org.codeberg.p2502.lsp
 alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools /var/tmp/_bazel_lucas && sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) -exec rm -rf {} +'
 
 nuke_disk() {
-    echo "🧨 Nuking disk caches...\n"
+    echo "Nuking disk caches...\n"
 
-    # ── Bazel ──────────────────────────────────────────────────────────────────
-    echo "🏗️   Bazel..."
-    sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs \
+    # ── Bazel (one sudo invocation for both the rm and the find) ───────────────
+    echo "Bazel..."
+    sudo sh -c '
+      rm -rf "$@"
+      find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) \
+        -exec rm -rf {} + 2>/dev/null
+    ' sh bazel-bin bazel-monorepo bazel-out bazel-testlogs \
       /private/var/tmp/_bazel_rust_tools /var/tmp/_bazel_lucas \
       ~/Library/Caches/bazel ~/Library/Caches/go-build
-    sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) \
-      -exec rm -rf {} + 2>/dev/null
 
     # ── Rust target/ dirs (only next to a Cargo.toml, never blind) ─────────────
-    echo "🦀  Rust target/ dirs..."
+    echo "Rust target/ dirs..."
     find ~/perso ~/work -maxdepth 6 -name "Cargo.toml" -not -path "*/target/*" 2>/dev/null \
       | while read f; do
           dir=$(dirname "$f")
@@ -272,20 +274,20 @@ nuke_disk() {
         done
 
     # ── Cargo registry cache (keeps src/ for IDE lookups) ──────────────────────
-    echo "📦  Cargo registry cache..."
+    echo "Cargo registry cache..."
     rm -rf ~/.cargo/registry/cache
 
     # ── Node / Bun / uv ────────────────────────────────────────────────────────
-    echo "🟢  npm / Bun / uv caches..."
+    echo "npm / Bun / uv caches..."
     npm cache clean --force 2>/dev/null
     rm -rf ~/.npm ~/.bun/install/cache ~/.cache/uv
 
     # ── Xcode ──────────────────────────────────────────────────────────────────
-    echo "🍎  Xcode DerivedData + unavailable simulators..."
+    echo "Xcode DerivedData + unavailable simulators..."
     rm -rf ~/Library/Developer/Xcode/DerivedData
     xcrun simctl delete unavailable 2>/dev/null
 
-    echo "\n✅  Done! Run 'df -h /' to verify."
+    echo "\nDone! Run 'df -h /' to verify."
   }
 
 # --- Notes ---
