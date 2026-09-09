@@ -1,0 +1,9 @@
+# RTK keeps full output only for failed or truncated commands. Keep its local cache bounded.
+[tee]
+enabled = true
+mode = "failures"
+max_files = 20
+max_file_size = 1048576
+
+[telemetry]
+enabled = false

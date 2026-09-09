@@ -2,6 +2,7 @@
 nvim/.config/nvim/lazy-lock.json
 uv/.config/uv/uv-receipt.json
 gh/.config/gh/*.yml
+pi/.pi/agent/extensions/rtk.ts
 
 # sops-encrypted; formatting would corrupt the MAC.
 zsh/.config/zsh/secrets/*.yaml
