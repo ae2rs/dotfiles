@@ -13,9 +13,13 @@
     "npm:pi-subagents",
     "npm:pi-markdown-preview"
   ],
-  "lastChangelogVersion": "0.85.0",
+  "lastChangelogVersion": "0.85.1",
   "modelThinkingLevels": {
     "pi-claude/claude-opus-5": "high"
   },
-  "enabledModels": ["pi-claude/claude-opus-5", "openai-codex/gpt-5.6-terra", "kimi-coding/k3"]
+  "enabledModels": [
+    "pi-claude/claude-opus-5",
+    "openai-codex/gpt-5.6-terra",
+    "kimi-coding/k3"
+  ]
 }
