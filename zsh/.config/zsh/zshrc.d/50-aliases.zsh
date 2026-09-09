@@ -7,6 +7,7 @@
 alias l='eza -la'
 alias ll='eza -alh'
 alias ls='eza -a'
+alias grep='rg'
 
 # --- Git & Docker tools ---
 alias lz='lazygit'
