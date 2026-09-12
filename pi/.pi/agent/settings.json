@@ -13,5 +13,10 @@
   "modelThinkingLevels": {
     "pi-claude/claude-opus-5": "high"
   },
-  "enabledModels": ["pi-claude/claude-opus-5", "openai-codex/gpt-5.6-terra", "kimi-coding/k3"]
+  "enabledModels": [
+    "pi-claude/claude-opus-5",
+    "openai-codex/gpt-5.6-terra",
+    "kimi-coding/k3",
+    "llama-cpp/early-router-flash"
+  ]
 }
