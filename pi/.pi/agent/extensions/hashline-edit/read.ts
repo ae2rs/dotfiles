@@ -12,6 +12,8 @@ import { createReadToolDefinition, type ReadToolDetails } from "@earendil-works/
 import type { AgentToolResult, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import type { Filesystem } from "@oh-my-pi/hashline";
 import type { TSchema } from "typebox";
+import { summariesEnabled } from "./mode.ts";
+import { canSummarize, recoveryHint, summarize, type Summary } from "./summarize.ts";
 import type { EditSessionState } from "./state.ts";
 
 /**
@@ -41,6 +43,25 @@ function countDisplayedLines(body: string[], file: string[], firstLine: number):
 	return count;
 }
 
+/**
+ * Kept rows interleaved with `…` wherever a body was dropped, so the gap is
+ * visible rather than showing as a jump in line numbers.
+ */
+function renderSummary(summary: Summary): { line: number; text: string }[] {
+	const elidedAfter = new Set(summary.elided.map((span) => span.start - 1));
+	const rows: { line: number; text: string }[] = [];
+	for (const row of summary.kept) {
+		rows.push({ line: row.line, text: `${row.line}:${row.text}` });
+		if (elidedAfter.has(row.line)) rows.push({ line: row.line, text: "…" });
+	}
+	return rows;
+}
+
+function elisionNotice(summary: Summary): string {
+	const hidden = summary.elided.reduce((total, span) => total + span.end - span.start + 1, 0);
+	return `[${hidden} lines elided across ${summary.elided.length} bodies. Elided lines cannot be edited until read — re-read the range you need, e.g. ${recoveryHint(summary.elided)}]`;
+}
+
 export function createAnchoredReadTool(
 	cwd: string,
 	fs: Filesystem,
@@ -53,14 +74,14 @@ export function createAnchoredReadTool(
 		description: `${builtin.description}\n\nText files come back as a \`[path#TAG]\` header followed by \`N:line\` rows. Copy that header verbatim into \`edit\`; never invent a tag. Only the lines shown here can be edited — re-read a range before anchoring into it.`,
 		async execute(toolCallId, params, signal, onUpdate, ctx: ExtensionContext) {
 			const result = await builtin.execute(toolCallId, params, signal, onUpdate, ctx);
-			return anchorResult(result, params as { path: string; offset?: number }, fs, state);
+			return anchorResult(result, params as { path: string; offset?: number; limit?: number }, fs, state);
 		},
 	};
 }
 
 async function anchorResult(
 	result: AgentToolResult<ReadToolDetails | undefined>,
-	params: { path: string; offset?: number },
+	params: { path: string; offset?: number; limit?: number },
 	fs: Filesystem,
 	state: EditSessionState,
 ): Promise<AgentToolResult<ReadToolDetails | undefined>> {
@@ -77,19 +98,35 @@ async function anchorResult(
 		return result;
 	}
 
+	const file = addressableLines(fullText);
 	const firstLine = params.offset ?? 1;
 	const body = block.text.split("\n");
-	const displayed = countDisplayedLines(body, addressableLines(fullText), firstLine);
+	const displayed = countDisplayedLines(body, file, firstLine);
 	// Nothing matched: the file changed under the read, or the built-in returned
 	// an advisory instead of content. Minting a tag here would claim to have
 	// shown content that was never displayed, so leave the result unanchored.
 	if (displayed === 0) return result;
 
-	const seen = Array.from({ length: displayed }, (_, index) => firstLine + index);
-	const numbered = seen.map((line, index) => `${line}:${body[index]}`);
-	const trailing = body.slice(displayed);
+	// Only a complete, untruncated read is summarized. Displaying every
+	// addressable line proves nothing was truncated, and an explicit offset or
+	// limit means the caller already chose the slice they wanted.
+	const whole = firstLine === 1 && params.limit === undefined && displayed === file.length;
+	const summary =
+		whole && summariesEnabled() && canSummarize(params.path, fullText, file.length)
+			? summarize(params.path, fullText, file)
+			: null;
+
+	const rows = summary
+		? renderSummary(summary)
+		: Array.from({ length: displayed }, (_, index) => ({
+				line: firstLine + index,
+				text: `${firstLine + index}:${body[index]}`,
+			}));
+
+	const seen = summary ? summary.kept.map((row) => row.line) : rows.map((row) => row.line);
+	const trailing = summary ? ["", elisionNotice(summary)] : body.slice(displayed);
 	const tag = state.snapshots.record(fs.canonicalPath(params.path), fullText, seen);
 
-	const anchored = [`[${params.path}#${tag}]`, ...numbered, ...trailing].join("\n");
+	const anchored = [`[${params.path}#${tag}]`, ...rows.map((row) => row.text), ...trailing].join("\n");
 	return { ...result, content: [{ type: "text", text: anchored }] };
 }
