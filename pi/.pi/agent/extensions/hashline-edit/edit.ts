@@ -18,6 +18,7 @@ import {
 import { Patch, Patcher, type Filesystem, type PatchSectionResult } from "@oh-my-pi/hashline";
 import { Type, type Static } from "typebox";
 import { resolveBlock } from "./block-resolver.ts";
+import { promptVariant } from "./mode.ts";
 import type { EditSessionState } from "./state.ts";
 
 /**
@@ -26,10 +27,11 @@ import type { EditSessionState } from "./state.ts";
  * `promptGuidelines` never reach a `pi-claude` child, so this has to ride in
  * the tool description.
  */
-const HASHLINE_PROMPT = readFileSync(
-	join(import.meta.dirname, "node_modules", "@oh-my-pi", "hashline", "src", "prompt.md"),
-	"utf8",
-);
+const PROMPT_PATH =
+	promptVariant() === "compact"
+		? join(import.meta.dirname, "hashline-compact.md")
+		: join(import.meta.dirname, "node_modules", "@oh-my-pi", "hashline", "src", "prompt.md");
+const HASHLINE_PROMPT = readFileSync(PROMPT_PATH, "utf8");
 
 const editSchema = Type.Object({
 	input: Type.String({

@@ -12,6 +12,15 @@ export function resolveEditMode(env: NodeJS.ProcessEnv = process.env): EditMode 
 }
 
 /**
+ * Which prompt variant `edit` ships as its description. The full upstream
+ * prompt is the default; `PI_EDIT_PROMPT=compact` swaps in the ~60% smaller
+ * variant so the two can be compared without uninstalling anything.
+ */
+export function promptVariant(env: NodeJS.ProcessEnv = process.env): "full" | "compact" {
+	return env.PI_EDIT_PROMPT?.trim().toLowerCase() === "compact" ? "compact" : "full";
+}
+
+/**
  * Whether a whole-file read of a long source file is summarized down to its
  * declarations. Separate from the edit mode because it is the part most likely
  * to hide something the model needed: `PI_READ_SUMMARY=off` turns it off
