@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+# Run Pi on Bun instead of Node.
+#
+# Pi's own bin is a `#!/usr/bin/env node` shim, but the oh-my-pi packages backing
+# the hashline edit tool are Bun-only: pi-natives reads `import.meta.dir` and
+# declares `engines.bun`, and hashline computes its snapshot tags with `Bun.hash`.
+# dist/bun/cli.js is Pi's Bun entry point — it loads the sandbox and runtime setup
+# that the Node bundle skips.
+set -e
+
+PI_PACKAGE="${PI_CODING_AGENT_PACKAGE_ROOT:-$HOME/.bun/install/global/node_modules/@earendil-works/pi-coding-agent}"
+PI_CLI="$PI_PACKAGE/dist/bun/cli.js"
+
+if [ ! -f "$PI_CLI" ]; then
+	echo "pi: Bun entry point not found at $PI_CLI" >&2
+	echo "pi: set PI_CODING_AGENT_PACKAGE_ROOT, or reinstall with 'bun install -g @earendil-works/pi-coding-agent'" >&2
+	exit 1
+fi
+
+BUN="${BUN_INSTALL:-$HOME/.bun}/bin/bun"
+[ -x "$BUN" ] || BUN=bun
+
+exec "$BUN" "$PI_CLI" "$@"

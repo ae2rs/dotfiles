@@ -23,6 +23,7 @@ import {
 	writeStats,
 	type DiffStats,
 } from "./collapse-tools/format.ts";
+import { createAnchoredRead, createGroupedGrep, createHashlineEdit, resolveEditMode } from "./hashline-edit/tools.ts";
 
 const CALL_COMPONENT = Symbol("collapsed-tool-call");
 const RESULT_COMPONENT = Symbol("collapsed-tool-result");
@@ -299,11 +300,20 @@ function registerCollapsedTool<TParams extends TSchema, TDetails, TState>(
 }
 
 export default function (pi: ExtensionAPI): void {
-	registerCollapsedTool(pi, createReadToolDefinition, "aggregate");
+	// read/edit come in two flavours: the hashline anchored contract, or Pi's
+	// built-ins via PI_EDIT_MODE=replace. Registered here rather than from the
+	// hashline-edit directory because Pi allows only one registrar per tool name.
+	if (resolveEditMode() === "hashline") {
+		registerCollapsedTool(pi, createAnchoredRead, "aggregate");
+		registerCollapsedTool(pi, createHashlineEdit, "edit");
+		registerCollapsedTool(pi, createGroupedGrep, "aggregate");
+	} else {
+		registerCollapsedTool(pi, createReadToolDefinition, "aggregate");
+		registerCollapsedTool(pi, createEditToolDefinition, "edit");
+		registerCollapsedTool(pi, createGrepToolDefinition, "aggregate");
+	}
 	registerCollapsedTool(pi, createBashToolDefinition, "bash");
-	registerCollapsedTool(pi, createEditToolDefinition, "edit");
 	registerCollapsedTool(pi, createWriteToolDefinition, "edit");
-	registerCollapsedTool(pi, createGrepToolDefinition, "aggregate");
 	registerCollapsedTool(pi, createFindToolDefinition, "aggregate");
 	registerCollapsedTool(pi, createLsToolDefinition, "aggregate");
 
