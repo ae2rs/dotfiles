@@ -12,6 +12,7 @@
  * an edit issued from another.
  */
 import { createAnchoredReadTool } from "./read.ts";
+import { createGroupedGrepTool } from "./grep.ts";
 import { createHashlineEditTool } from "./edit.ts";
 import { SessionFilesystem } from "./session-fs.ts";
 import { EditSessionState } from "./state.ts";
@@ -24,6 +25,10 @@ export function createAnchoredRead(cwd: string) {
 
 export function createHashlineEdit(cwd: string) {
 	return createHashlineEditTool(new SessionFilesystem(cwd), state);
+}
+
+export function createGroupedGrep(cwd: string) {
+	return createGroupedGrepTool(cwd, new SessionFilesystem(cwd), state);
 }
 
 export { resolveEditMode } from "./mode.ts";

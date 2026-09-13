@@ -7,8 +7,28 @@
  * so the snapshot a `read` recorded still resolves when `edit` names the same
  * file from a different working directory.
  */
+import { realpathSync } from "node:fs";
 import * as pathModule from "node:path";
 import { NodeFilesystem, type WriteResult } from "@oh-my-pi/hashline";
+
+/**
+ * Absolute path with symlinks resolved, so one file has exactly one snapshot
+ * key no matter which route named it — `/tmp` vs `/private/tmp` on macOS, or a
+ * linked worktree. Falls back through the parent directory for paths that do
+ * not exist yet, which is the normal case for a move destination.
+ */
+function canonicalize(path: string): string {
+	try {
+		return realpathSync(path);
+	} catch {
+		const parent = pathModule.dirname(path);
+		try {
+			return pathModule.join(realpathSync(parent), pathModule.basename(path));
+		} catch {
+			return path;
+		}
+	}
+}
 
 export class SessionFilesystem extends NodeFilesystem {
 	readonly #cwd: string;
@@ -23,7 +43,7 @@ export class SessionFilesystem extends NodeFilesystem {
 	}
 
 	override canonicalPath(path: string): string {
-		return this.#abs(path);
+		return canonicalize(this.#abs(path));
 	}
 
 	override readText(path: string): Promise<string> {
