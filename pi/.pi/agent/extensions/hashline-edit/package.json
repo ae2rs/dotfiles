@@ -1,0 +1,8 @@
+{
+  "name": "pi-hashline-edit",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@oh-my-pi/hashline": "18.1.5"
+  }
+}

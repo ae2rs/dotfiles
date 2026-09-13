@@ -48,6 +48,12 @@ pi/.pi/agent/*.log
 pi/.pi/agent/missions/
 pi/.pi/agent/run-history.jsonl
 
+# Extension dependencies. Pi cannot reach ~/.pi/agent/npm from a global
+# extension, so extensions that need libraries carry their own node_modules.
+# Reinstall with `bun install` in the extension directory.
+pi/.pi/agent/extensions/*/node_modules/
+pi/.pi/agent/extensions/*/bun.lock
+
 # Pi long-term memory (pi-hermes-memory). Kept out of git on purpose: it
 # accumulates work context the agent wrote, not config worth versioning.
 pi/.pi/agent/pi-hermes-memory/
