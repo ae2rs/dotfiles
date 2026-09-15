@@ -745,6 +745,11 @@ export default function hooks(pi: ExtensionAPI) {
 				ctx.ui.notify("No detached jobs or hook runs yet", "info");
 				return;
 			}
+			// A widget-protocol client (rho) renders the picker and pager itself.
+			if (ctx.mode === "rpc") {
+				await browseViaWidgets(ctx);
+				return;
+			}
 			if (ctx.mode !== "tui") {
 				ctx.ui.notify(
 					`Jobs: ${runningJobs().length} running, ${jobs.size} total. Hook runs: ${recentRuns.length}.`,
@@ -763,6 +768,33 @@ export default function hooks(pi: ExtensionAPI) {
 			}
 		},
 	});
+
+	/**
+	 * Browse jobs and hook runs through the widget protocol.
+	 *
+	 * The picker is a plain select dialog, which already round-trips over rpc,
+	 * and the output goes to the client's "pager" widget. Closing the pager
+	 * returns to the list, matching the in-TUI flow.
+	 */
+	async function browseViaWidgets(ctx: ExtensionContext): Promise<void> {
+		for (;;) {
+			const current = entries();
+			if (current.length === 0) return;
+
+			const labels = current.map(label);
+			const choice = await ctx.ui.select("Hooks", labels);
+			if (choice === undefined) return;
+			const entry = current[labels.indexOf(choice)];
+			if (!entry) return;
+
+			const segments = "job" in entry ? entry.job.segments : runSegments(entry.run);
+			const session = ctx.ui.showWidget("pager", {
+				lines: toLines(segments).map((line) => line.text),
+				footer: "esc or q to close",
+			}, { title: label(entry) });
+			await session.result;
+		}
+	}
 
 	/** Job and hook-run picker. Resolves with the chosen entry, or undefined on Esc. */
 	function browse(
