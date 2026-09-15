@@ -50,7 +50,13 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { Key, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
+import {
+	Key,
+	matchesKey,
+	truncateToWidth,
+	visibleWidth,
+	wrapTextWithAnsi,
+} from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import {
 	clampScroll,
@@ -388,6 +394,37 @@ function runSegments(run: HookRun): OutputSegment[] {
 		{ err: false, text: run.stdout ? run.stdout.replace(/\n*$/, "\n") : "(no stdout)\n" },
 		{ err: true, text: run.stderr ? run.stderr.replace(/\n*$/, "\n") : "" },
 	];
+}
+
+// ── Log box ─────────────────────────────────────────────────────────
+
+// Framing the pager marks where a job's output starts and ends, so a short log
+// reads as one block rather than as more rows of the list behind it.
+
+type Paint = (text: string) => string;
+
+/** `╭─ caption ─────╮`, with the caption already coloured by the caller. */
+function boxBorder(
+	width: number,
+	left: string,
+	right: string,
+	caption: string,
+	dim: Paint,
+): string {
+	if (width < 3) return dim(left);
+	const inner = width - 2;
+	// Below six cells there is no room for a caption plus its spaces and rules.
+	const inlay = inner >= 6 ? ` ${truncateToWidth(caption, inner - 4, "…")} ` : "";
+	const fill = "─".repeat(Math.max(0, inner - 1 - visibleWidth(inlay)));
+	return `${dim(`${left}─`)}${inlay}${dim(`${fill}${right}`)}`;
+}
+
+/** `│ text │`, clipped and padded so the row occupies exactly `width` cells. */
+function boxRow(width: number, text: string, dim: Paint): string {
+	const inner = width - 4;
+	if (inner < 1) return truncateToWidth(text, Math.max(0, width), "…");
+	const fit = truncateToWidth(text, inner, "…");
+	return `${dim("│")} ${fit}${" ".repeat(inner - visibleWidth(fit))} ${dim("│")}`;
 }
 
 // ── Extension ───────────────────────────────────────────────────────
@@ -813,6 +850,7 @@ export default function hooks(pi: ExtensionAPI) {
 			let viewport = 0;
 			let lineCount = 0;
 			let cache: { key: string; lines: OutputLine[] } | undefined;
+			const dim = (text: string) => theme.fg("dim", text);
 
 			// pi-tui wraps by terminal cells, so wide glyphs in the output cannot
 			// push a rendered row past the terminal width.
@@ -840,9 +878,10 @@ export default function hooks(pi: ExtensionAPI) {
 					cache = undefined;
 				},
 				render(width: number) {
-					const fit = (text: string) => truncateToWidth(text, width, "…");
-					viewport = Math.max(5, tui.terminal.rows - 8);
-					const lines = linesFor(width);
+					// Two border columns plus a space of padding on each side.
+					const inner = Math.max(1, width - 4);
+					viewport = Math.max(5, tui.terminal.rows - 9);
+					const lines = linesFor(inner);
 					scroll = following
 						? maxScroll(lines.length, viewport)
 						: clampScroll(scroll, lines.length, viewport);
@@ -851,15 +890,15 @@ export default function hooks(pi: ExtensionAPI) {
 						lines.length === 0
 							? "no output yet"
 							: `lines ${scroll + 1}-${scroll + shown.length} of ${lines.length}`;
+					// One blank row keeps an empty box from collapsing into two rules.
+					const body = shown.length > 0 ? shown : [{ text: "", err: false }];
 					return [
-						theme.bold(fit(label(entry))),
-						...shown.map((line) => (line.err ? theme.fg("error", line.text) : line.text)),
-						theme.fg(
-							"dim",
-							fit(
-								`${position}${following ? " · following" : ""}   ↑/↓ PgUp/PgDn g/G scroll   Esc close`,
-							),
+						boxBorder(width, "╭", "╮", theme.bold(label(entry)), dim),
+						...body.map((line) =>
+							boxRow(width, line.err ? theme.fg("error", line.text) : line.text, dim),
 						),
+						boxBorder(width, "╰", "╯", dim(position + (following ? " · following" : "")), dim),
+						dim(truncateToWidth("↑/↓ PgUp/PgDn g/G scroll   Esc close", width, "…")),
 					];
 				},
 				handleInput(data: string) {
