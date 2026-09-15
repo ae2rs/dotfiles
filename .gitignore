@@ -48,6 +48,18 @@ pi/.pi/agent/*.log
 pi/.pi/agent/missions/
 pi/.pi/agent/run-history.jsonl
 
+# rho (the Rust client for the pi-rho fork). Its agent dir is deliberately
+# separate from Pi's: rho is not at parity, so the two must not share
+# extensions. Config is versioned; runtime state and credentials are not.
+rho/.rho/agent/sessions/
+rho/.rho/agent/plans/
+rho/.rho/agent/npm/
+rho/.rho/agent/auth.json
+rho/.rho/agent/models-store.json
+rho/.rho/agent/trust.json
+rho/.rho/agent/*.log
+rho/.rho/agent/run-history.jsonl
+
 # Extension dependencies. Pi cannot reach ~/.pi/agent/npm from a global
 # extension, so extensions that need libraries carry their own node_modules.
 # Reinstall with `bun install` in the extension directory.
