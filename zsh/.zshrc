@@ -22,3 +22,6 @@ export PATH="/Users/lucas/.abacusai/bin:$PATH"
 
 # kimi-code
 export PATH="/Users/lucas/.kimi-code/bin:$PATH"
+
+# sentry
+fpath=("/Users/lucas/.local/share/zsh/site-functions" $fpath)
