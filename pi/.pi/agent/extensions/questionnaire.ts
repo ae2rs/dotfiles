@@ -86,6 +86,43 @@ function errorResult(
 	};
 }
 
+/** One answer as the client-rendered widget reports it. */
+interface WidgetAnswer {
+	id: string;
+	value: string;
+	label: string;
+	wasCustom: boolean;
+}
+
+/**
+ * Ask through the widget protocol: the client renders "questionnaire" natively
+ * and resolves with the answers. Used when a widget-protocol front-end (rho) is
+ * driving the agent, where ctx.ui.custom() has no terminal to draw on.
+ */
+async function askViaWidget(
+	ctx: { ui: { showWidget<T>(widget: string, data?: unknown, options?: { title?: string }): { result: Promise<T | undefined> } } },
+	questions: Question[],
+): Promise<QuestionnaireResult> {
+	const session = ctx.ui.showWidget<{ cancelled?: boolean; answers?: WidgetAnswer[] }>(
+		"questionnaire",
+		{ questions },
+		{ title: questions.length > 1 ? "Questionnaire" : questions[0].prompt },
+	);
+	const value = await session.result;
+	// A client that cannot render the widget resolves undefined; treat as cancel.
+	if (!value) return { questions, answers: [], cancelled: true };
+
+	const answers: Answer[] = (value.answers ?? []).map((answer) => {
+		const question = questions.find((q) => q.id === answer.id);
+		const index = question?.options.findIndex((o) => o.value === answer.value);
+		return {
+			...answer,
+			index: index !== undefined && index >= 0 ? index : undefined,
+		};
+	});
+	return { questions, answers, cancelled: value.cancelled === true };
+}
+
 export default function questionnaire(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "questionnaire",
@@ -97,7 +134,8 @@ export default function questionnaire(pi: ExtensionAPI) {
 		executionMode: "sequential",
 
 		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-			if (ctx.mode !== "tui") {
+			// "rpc" means a widget-protocol client (rho) renders the questionnaire.
+			if (ctx.mode !== "tui" && ctx.mode !== "rpc") {
 				return errorResult("Error: UI not available (running in non-interactive mode)");
 			}
 			if (params.questions.length === 0) {
@@ -114,7 +152,10 @@ export default function questionnaire(pi: ExtensionAPI) {
 			const isMulti = questions.length > 1;
 			const totalTabs = questions.length + 1; // questions + Submit
 
-			const result = await ctx.ui.custom<QuestionnaireResult>((tui, theme, _kb, done) => {
+			const result =
+				ctx.mode === "rpc"
+					? await askViaWidget(ctx, questions)
+					: await ctx.ui.custom<QuestionnaireResult>((tui, theme, _kb, done) => {
 				// State
 				let currentTab = 0;
 				let optionIndex = 0;
@@ -406,7 +447,7 @@ export default function questionnaire(pi: ExtensionAPI) {
 					},
 					handleInput,
 				};
-			});
+					});
 
 			if (result.cancelled) {
 				return {

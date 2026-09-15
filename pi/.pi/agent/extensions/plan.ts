@@ -252,28 +252,39 @@ export default function planExtension(pi: ExtensionAPI) {
 	}
 
 	async function open(ctx: ExtensionContext): Promise<void> {
-		if (ctx.mode !== "tui") {
+		if (ctx.mode !== "tui" && ctx.mode !== "rpc") {
 			ctx.ui.notify("/plan open is only available in interactive mode.", "warning");
 			return;
 		}
 		const planStore = currentStore(ctx);
 		await planStore.write(await planStore.read());
 		let error: Error | undefined;
-		await ctx.ui.custom<void>((tui, _theme, _keybindings, done) => {
-			void (async () => {
-				tui.stop();
-				try {
-					await openInEditor(await editorFor(ctx), planStore.file);
-				} catch (caught: unknown) {
-					error = caught instanceof Error ? caught : new Error(String(caught));
-				} finally {
-					tui.start();
-					tui.requestRender(true);
-					done();
-				}
-			})();
-			return new Container();
-		});
+
+		if (ctx.mode === "rpc") {
+			// The agent has no terminal here, so the client runs the editor and
+			// resolves once the user closes it.
+			const session = ctx.ui.showWidget<{ opened?: boolean }>("external_editor", {
+				path: planStore.file,
+			});
+			const result = await session.result;
+			if (!result?.opened) error = new Error("the client could not open an editor");
+		} else {
+			await ctx.ui.custom<void>((tui, _theme, _keybindings, done) => {
+				void (async () => {
+					tui.stop();
+					try {
+						await openInEditor(await editorFor(ctx), planStore.file);
+					} catch (caught: unknown) {
+						error = caught instanceof Error ? caught : new Error(String(caught));
+					} finally {
+						tui.start();
+						tui.requestRender(true);
+						done();
+					}
+				})();
+				return new Container();
+			});
+		}
 		ctx.ui.notify(
 			error ? `Could not open plan: ${error.message}` : "Plan closed.",
 			error ? "error" : "info",
