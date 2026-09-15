@@ -11,7 +11,7 @@ mock.module("@earendil-works/pi-tui", () => ({
 
 const { installFooter } = await import("./footer.ts");
 
-function renderFooter(width: number): string[] {
+function renderFooter(width: number, statuses: Map<string, string> = new Map()): string[] {
 	let factory:
 		| ((
 				tui: { requestRender(): void },
@@ -47,7 +47,7 @@ function renderFooter(width: number): string[] {
 		{ requestRender() {} },
 		{ fg: (_color: string, text: string) => text },
 		{
-			getExtensionStatuses: () => new Map(),
+			getExtensionStatuses: () => statuses,
 			getGitBranch: () => "main",
 			onBranchChange: () => () => {},
 		},
@@ -73,5 +73,36 @@ describe("Codex monthly footer rendering", () => {
 		const lines = renderFooter(width);
 		expect(lines).toHaveLength(2);
 		expect(lines.every((line) => line.length <= width)).toBe(true);
+	});
+});
+
+describe("hooks status placement", () => {
+	const statuses = new Map([
+		["hooks", "󰘯 2 hooks, 1 detached"],
+		["other-ext", "unrelated"],
+	]);
+
+	test("sits on line 1 after the model and thinking level", () => {
+		const [line1] = renderFooter(140, statuses);
+		expect(line1).toContain("gpt-5.6-terra");
+		expect(line1).toContain("󰘯 2 hooks, 1 detached");
+		expect(line1.indexOf("high")).toBeGreaterThan(line1.indexOf("gpt-5.6-terra"));
+		expect(line1.indexOf("󰘯")).toBeGreaterThan(line1.indexOf("high"));
+	});
+
+	test("is separated from its neighbour by a dot", () => {
+		const [line1] = renderFooter(140, statuses);
+		expect(line1).toContain("· 󰘯 2 hooks, 1 detached");
+	});
+
+	test("is not repeated on line 2, which keeps other extension statuses", () => {
+		const [, line2] = renderFooter(140, statuses);
+		expect(line2).not.toContain("hooks");
+		expect(line2).toContain("unrelated");
+	});
+
+	test("leaves line 1 unchanged when no hook is running", () => {
+		const [line1] = renderFooter(140, new Map([["other-ext", "unrelated"]]));
+		expect(line1).toBe(renderFooter(140)[0]);
 	});
 });

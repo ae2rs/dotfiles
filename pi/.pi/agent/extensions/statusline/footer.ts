@@ -35,8 +35,16 @@ export interface FooterHandle {
 	dispose(): void;
 }
 
-/** Status keys superseded by native footer elements; hidden from line 2. */
-const FILTERED_STATUS_KEYS = new Set(["plan-mode", "claude-usage", "kimi-usage"]);
+/** Status keys shown on line 1 beside the model, in the order given. */
+const LINE1_STATUS_KEYS = ["hooks"];
+
+/** Keys superseded by native footer elements or promoted to line 1; hidden from line 2. */
+const FILTERED_STATUS_KEYS = new Set([
+	"plan-mode",
+	"claude-usage",
+	"kimi-usage",
+	...LINE1_STATUS_KEYS,
+]);
 
 const TICK_INTERVAL_MS = 60 * 1000;
 
@@ -97,13 +105,23 @@ export function installFooter(
 		}
 	};
 
-	function buildLine1Left(theme: Theme, withThinking: boolean): string {
+	function buildLine1Left(
+		theme: Theme,
+		footerData: ReadonlyFooterDataProvider,
+		withThinking: boolean,
+	): string {
 		const modelId = ctx.model?.id ?? "no-model";
+		const dot = ` ${theme.fg("dim", "·")} `;
 		let left = ` ${theme.fg("accent", ICONS.model)} ${theme.fg("accent", modelId)}`;
 		if (withThinking) {
 			const level = pi.getThinkingLevel();
 			const color = THINKING_COLORS[level] ?? "thinkingText";
-			left += ` ${theme.fg("dim", "·")} ${theme.fg(color, `${ICONS.thinking} ${level}`)}`;
+			left += `${dot}${theme.fg(color, `${ICONS.thinking} ${level}`)}`;
+		}
+		const statuses = footerData.getExtensionStatuses();
+		for (const key of LINE1_STATUS_KEYS) {
+			const text = sanitizeStatus(statuses.get(key) ?? "");
+			if (text) left += `${dot}${theme.fg("accent", text)}`;
 		}
 		return left;
 	}
@@ -143,14 +161,18 @@ export function installFooter(
 		return segments.join("   ");
 	}
 
-	function renderLine1(theme: Theme, width: number): string {
+	function renderLine1(
+		theme: Theme,
+		footerData: ReadonlyFooterDataProvider,
+		width: number,
+	): string {
 		// Drop sections in order: thinking level, then reset time.
 		for (const [withThinking, withReset] of [
 			[true, true],
 			[true, false],
 			[false, false],
 		] as const) {
-			const left = buildLine1Left(theme, withThinking);
+			const left = buildLine1Left(theme, footerData, withThinking);
 			const right = buildLine1Right(theme, withReset);
 			const gap = width - visibleWidth(left) - visibleWidth(right);
 			if (gap >= 1) {
@@ -158,7 +180,7 @@ export function installFooter(
 			}
 		}
 		return truncateToWidth(
-			`${buildLine1Left(theme, false)} ${buildLine1Right(theme, false)}`,
+			`${buildLine1Left(theme, footerData, false)} ${buildLine1Right(theme, false)}`,
 			width,
 		);
 	}
@@ -223,7 +245,10 @@ export function installFooter(
 		const unsubBranch = footerData.onBranchChange(requestRender);
 		return {
 			render(width: number): string[] {
-				return [renderLine1(theme, width), renderLine2(theme, footerData, width)];
+				return [
+					renderLine1(theme, footerData, width),
+					renderLine2(theme, footerData, width),
+				];
 			},
 			invalidate() {
 				// No cached lines — every render reads live state.

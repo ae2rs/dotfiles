@@ -94,6 +94,9 @@ const OUTPUT_CAP_BYTES = 256 * 1024;
 const WAKE_OUTPUT_CHARS = 30_000;
 const MAX_RECENT_RUNS = 20;
 
+// nf-md-webhook (U+F062F), present in the installed Symbols Nerd Font.
+const HOOKS_ICON = "󰘯";
+
 let lastConfigError: string | undefined;
 
 function loadConfig(ctx?: ExtensionContext): HooksConfig {
@@ -170,7 +173,7 @@ interface HookRunResult {
 	durationMs: number;
 }
 
-function runHookCommand(
+function spawnHookCommand(
 	entry: HookEntry,
 	payload: unknown,
 	signal: AbortSignal | undefined,
@@ -448,9 +451,35 @@ export default function hooks(pi: ExtensionAPI) {
 		}
 	}
 
+	// Hook commands block the turn they fire on, so the count is the honest
+	// answer to "what is Pi waiting for?"; detached jobs run alongside it.
+	let activeHooks = 0;
+
 	function updateStatus(): void {
-		const n = runningJobs().length;
-		currentUi()?.setStatus("hooks", n > 0 ? `⏳ ${n} detached` : undefined);
+		const detached = runningJobs().length;
+		const parts: string[] = [];
+		if (activeHooks > 0) parts.push(`${activeHooks} hook${activeHooks === 1 ? "" : "s"}`);
+		if (detached > 0) parts.push(`${detached} detached`);
+		// The statusline extension promotes this key to footer line 1 and colours
+		// it there, so the text carries only its own glyph.
+		const text = parts.length > 0 ? `${HOOKS_ICON} ${parts.join(", ")}` : undefined;
+		currentUi()?.setStatus("hooks", text);
+	}
+
+	/** Run a hook command, counting it in the status line while it is in flight. */
+	async function runHookCommand(
+		entry: HookEntry,
+		payload: unknown,
+		signal: AbortSignal | undefined,
+	): Promise<HookRunResult> {
+		activeHooks++;
+		updateStatus();
+		try {
+			return await spawnHookCommand(entry, payload, signal);
+		} finally {
+			activeHooks--;
+			updateStatus();
+		}
 	}
 
 	function startJob(command: string): Job {
@@ -532,6 +561,7 @@ export default function hooks(pi: ExtensionAPI) {
 
 	pi.on("session_start", async (_event, ctx) => {
 		uiCtx = ctx;
+		updateStatus(); // Jobs outlive the session that started them.
 		await runPassiveHooks("session_start", ctx);
 	});
 
