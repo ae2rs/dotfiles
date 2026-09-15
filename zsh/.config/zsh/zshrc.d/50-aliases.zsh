@@ -206,7 +206,7 @@ for line in sys.stdin:
         exit ${pipestatus[1]}
     )
 }
-alias rfmt='/Users/lucas/work/monorepo/tools/rustfmt $(git ls-files | grep -E "\.rs\$")'
+alias rfmt='/Users/lucas/work/monorepo/tools/rustfmt $(git ls-files "*.rs")'
 alias protofmt='find . -regex ".*\.proto" | xargs clang-format --style Google --assume-filename .proto -i'
 alias bazelfmt='buildifier -r .'
 alias webfmt="pnpm -r --filter='!sugar' lint --fix"
