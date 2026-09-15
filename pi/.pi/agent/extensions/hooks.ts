@@ -26,7 +26,7 @@
  * Part 2: run_detached tool + /hooks command. run_detached spawns a command in
  * its own process group and returns immediately; when it exits, the agent is
  * woken with the exit code and tail of the output. /hooks lists detached jobs
- * and recent hook runs, and can view their output (less) or cancel jobs.
+ * and recent hook runs, and pages through their output or cancels jobs.
  *
  * Notes:
  * - Esc cancels a running sync hook (commands get ctx.signal); each hook also
@@ -35,20 +35,14 @@
  * - A wake-up queued while the agent is busy cannot be retracted; cancellation
  *   only works while the job is still running.
  * - Output inspection (/hooks view) is TUI-only and never enters model context.
+ *   It pages the captured buffer in-process, so it follows a running job live
+ *   and never hands the terminal to a child program.
  * - SECURITY: hooks.json commands run with full user privileges on every
  *   matching event. Treat hooks.json like a shell rc file.
  */
 
-import { type ChildProcess, spawn, spawnSync } from "node:child_process";
-import {
-	appendFileSync,
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
+import { type ChildProcess, spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
@@ -56,8 +50,15 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
-import { Key, matchesKey } from "@earendil-works/pi-tui";
+import { Key, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
+import {
+	clampScroll,
+	maxScroll,
+	type OutputLine,
+	type OutputSegment,
+	toLines,
+} from "./hooks/pager.ts";
 
 // ── Config ──────────────────────────────────────────────────────────
 
@@ -267,11 +268,6 @@ function recordRun(
 
 // ── Detached jobs ───────────────────────────────────────────────────
 
-interface OutputSegment {
-	err: boolean;
-	text: string;
-}
-
 interface Job {
 	id: number;
 	command: string;
@@ -283,20 +279,39 @@ interface Job {
 	cancelled: boolean;
 	segments: OutputSegment[];
 	size: number;
-	logFile: string;
 }
 
 const jobs = new Map<number, Job>();
 let nextJobId = 1;
 
-const logDir = join(tmpdir(), `pi-hooks-${process.pid}`);
-let logDirReady = false;
+// Anything watching /hooks re-renders on change; `generation` lets the pager
+// keep its wrapped lines until the underlying output actually moves.
+const changeListeners = new Set<() => void>();
+let generation = 0;
 
-function ensureLogDir(): void {
-	if (!logDirReady) {
-		mkdirSync(logDir, { recursive: true });
-		logDirReady = true;
-	}
+function notifyChange(): void {
+	generation++;
+	for (const listener of changeListeners) listener();
+}
+
+// A component whose session is replaced is never disposed by the host, so its
+// teardown is registered here and also run on shutdown.
+const viewerTeardowns = new Set<() => void>();
+
+/**
+ * Re-render a /hooks view when output or job state moves, and once a second so
+ * elapsed times advance. Returns the teardown, which is safe to call twice.
+ */
+function liveRefresh(refresh: () => void): () => void {
+	changeListeners.add(refresh);
+	const ticker = setInterval(refresh, 1000).unref();
+	const teardown = () => {
+		changeListeners.delete(refresh);
+		clearInterval(ticker);
+		viewerTeardowns.delete(teardown);
+	};
+	viewerTeardowns.add(teardown);
+	return teardown;
 }
 
 function appendChunk(job: Job, err: boolean, text: string): void {
@@ -306,12 +321,7 @@ function appendChunk(job: Job, err: boolean, text: string): void {
 		const dropped = job.segments.shift();
 		if (dropped) job.size -= dropped.text.length;
 	}
-	// Tee to the per-job log file (stderr in red) for the /hooks pager view.
-	try {
-		appendFileSync(job.logFile, err ? `\x1b[31m${text}\x1b[0m` : text);
-	} catch {
-		// Log file is best-effort; the in-memory buffer is authoritative.
-	}
+	notifyChange();
 }
 
 function combinedOutput(job: Job, maxChars: number): string {
@@ -339,24 +349,74 @@ function killJobTree(job: Job): void {
 	}, 2000).unref();
 }
 
+// ── /hooks entries ──────────────────────────────────────────────────
+
+type Entry = { job: Job } | { run: HookRun };
+
+function entries(): Entry[] {
+	return [
+		...[...jobs.values()].sort((a, b) => a.id - b.id).map((job) => ({ job })),
+		...recentRuns
+			.slice(-10)
+			.reverse()
+			.map((run) => ({ run })),
+	];
+}
+
+function label(entry: Entry): string {
+	if ("job" in entry) {
+		const { job } = entry;
+		const state =
+			job.endedAt !== undefined
+				? job.cancelled
+					? "✕ cancelled"
+					: `✓ exit ${job.exitCode ?? job.exitSignal}`
+				: job.cancelled
+					? "✕ cancelling"
+					: `⏳ ${elapsedSeconds(job.startedAt)}s`;
+		return `job #${job.id}  ${state}  ${job.command}`;
+	}
+	const { run } = entry;
+	const status = run.timedOut ? "timeout" : `exit ${run.code ?? "?"}`;
+	return `hook run #${run.id}  ${run.event}${run.blocked ? " [blocked]" : ""} → ${status}  ${run.command}`;
+}
+
+/** A finished hook run has no live buffer, so its report is built on demand. */
+function runSegments(run: HookRun): OutputSegment[] {
+	return [
+		{ err: false, text: `matcher: ${run.matcher || "*"}  duration: ${run.durationMs}ms\n\n` },
+		{ err: false, text: run.stdout ? run.stdout.replace(/\n*$/, "\n") : "(no stdout)\n" },
+		{ err: true, text: run.stderr ? run.stderr.replace(/\n*$/, "\n") : "" },
+	];
+}
+
 // ── Extension ───────────────────────────────────────────────────────
 
 export default function hooks(pi: ExtensionAPI) {
 	let uiCtx: ExtensionContext | undefined;
-	const jobChangeListeners = new Set<() => void>();
 
-	function notifyJobChange(): void {
-		for (const listener of jobChangeListeners) listener();
+	/**
+	 * The UI of the session this instance belongs to, or undefined once that
+	 * session is gone. Every property of a replaced ctx throws, and detached
+	 * jobs call back from child-process events, where a throw would escape as an
+	 * uncaughtException and take Pi down. session_shutdown normally clears the
+	 * ctx first; the catch is the backstop for any path that does not.
+	 */
+	function currentUi(): ExtensionContext["ui"] | undefined {
+		try {
+			return uiCtx?.hasUI ? uiCtx.ui : undefined;
+		} catch {
+			uiCtx = undefined;
+			return undefined;
+		}
 	}
 
 	function updateStatus(): void {
-		if (!uiCtx?.hasUI) return;
 		const n = runningJobs().length;
-		uiCtx.ui.setStatus("hooks", n > 0 ? `⏳ ${n} detached` : undefined);
+		currentUi()?.setStatus("hooks", n > 0 ? `⏳ ${n} detached` : undefined);
 	}
 
 	function startJob(command: string): Job {
-		ensureLogDir();
 		const id = nextJobId++;
 		const proc = spawn("sh", ["-c", command], {
 			detached: true,
@@ -370,7 +430,6 @@ export default function hooks(pi: ExtensionAPI) {
 			cancelled: false,
 			segments: [],
 			size: 0,
-			logFile: join(logDir, `job-${id}.log`),
 		};
 		jobs.set(id, job);
 
@@ -384,17 +443,17 @@ export default function hooks(pi: ExtensionAPI) {
 			updateStatus();
 			if (job.cancelled) {
 				jobs.delete(id);
-				notifyJobChange();
-				if (uiCtx?.hasUI) uiCtx.ui.notify(`Detached job #${id} cancelled`, "info");
+				notifyChange();
+				currentUi()?.notify(`Detached job #${id} cancelled`, "info");
 				return;
 			}
-			notifyJobChange();
+			notifyChange();
 			wake(job);
 		});
 		proc.unref();
 
 		updateStatus();
-		notifyJobChange();
+		notifyChange();
 		return job;
 	}
 
@@ -418,12 +477,10 @@ export default function hooks(pi: ExtensionAPI) {
 				{ triggerTurn: true },
 			);
 		} catch (err) {
-			if (uiCtx?.hasUI) {
-				uiCtx.ui.notify(
-					`Detached job #${job.id} finished (${status}) but wake-up failed: ${err}`,
-					"warning",
-				);
-			}
+			currentUi()?.notify(
+				`Detached job #${job.id} finished (${status}) but wake-up failed: ${err}`,
+				"warning",
+			);
 		}
 	}
 
@@ -617,13 +674,6 @@ export default function hooks(pi: ExtensionAPI) {
 				return;
 			}
 
-			const entries = (): Array<{ job: Job } | { run: HookRun }> => [
-				...[...jobs.values()].sort((a, b) => a.id - b.id).map((job) => ({ job })),
-				...recentRuns
-					.slice(-10)
-					.reverse()
-					.map((run) => ({ run })),
-			];
 			if (entries().length === 0) {
 				ctx.ui.notify("No detached jobs or hook runs yet", "info");
 				return;
@@ -636,108 +686,101 @@ export default function hooks(pi: ExtensionAPI) {
 				return;
 			}
 
-			let unsubscribe: (() => void) | undefined;
-			const choice = await ctx.ui.custom<number | null>((tui, theme, _kb, done) => {
-				let selected = 0;
-				let notice = "";
-				let cancellingJobId: number | undefined;
-				const refresh = () => tui.requestRender();
-				const currentEntries = () => {
-					const value = entries();
-					selected = Math.min(selected, Math.max(0, value.length - 1));
-					return value;
-				};
-				const onJobChange = () => {
-					if (cancellingJobId !== undefined && !jobs.has(cancellingJobId)) {
-						cancellingJobId = undefined;
-						notice = "";
-					}
-					refresh();
-				};
-				jobChangeListeners.add(onJobChange);
-				unsubscribe = () => jobChangeListeners.delete(onJobChange);
-				const label = (entry: { job: Job } | { run: HookRun }) => {
-					if ("job" in entry) {
-						const { job } = entry;
-						const state =
-							job.endedAt !== undefined
-								? job.cancelled
-									? "✕ cancelled"
-									: `✓ exit ${job.exitCode ?? job.exitSignal}`
-								: job.cancelled
-									? "✕ cancelling"
-									: `⏳ ${elapsedSeconds(job.startedAt)}s`;
-						return `job #${job.id}  ${state}  ${job.command}`;
-					}
-					const { run } = entry;
-					const status = run.timedOut ? "timeout" : `exit ${run.code ?? "?"}`;
-					return `hook run #${run.id}  ${run.event}${run.blocked ? " [blocked]" : ""} → ${status}  ${run.command}`;
-				};
-
-				return {
-					render(width: number) {
-						const max = Math.max(20, width - 2);
-						const visibleEntries = currentEntries();
-						return [
-							theme.bold("Hooks"),
-							theme.fg("dim", "↑/↓ select   Enter view output   x cancel selected job   Esc close"),
-							...(notice ? [theme.fg("warning", notice)] : []),
-							...(visibleEntries.length === 0
-								? [theme.fg("dim", "No detached jobs or hook runs.")]
-								: visibleEntries.map((entry, index) => {
-										const prefix = index === selected ? theme.fg("accent", "› ") : "  ";
-										return prefix + truncate(label(entry), max);
-									})),
-						];
-					},
-					invalidate() {},
-					handleInput(data: string) {
-						if (matchesKey(data, Key.escape)) {
-							done(null);
-							return;
-						}
-						const visibleEntries = currentEntries();
-						if (matchesKey(data, Key.up) && visibleEntries.length > 0) {
-							selected = (selected - 1 + visibleEntries.length) % visibleEntries.length;
-							refresh();
-							return;
-						}
-						if (matchesKey(data, Key.down) && visibleEntries.length > 0) {
-							selected = (selected + 1) % visibleEntries.length;
-							refresh();
-							return;
-						}
-						if (matchesKey(data, Key.enter) && visibleEntries.length > 0) {
-							done(selected);
-							return;
-						}
-						if (data === "x") {
-							const entry = visibleEntries[selected];
-							if (
-								!entry ||
-								!("job" in entry) ||
-								entry.job.endedAt !== undefined ||
-								entry.job.cancelled
-							) {
-								notice = "Only a running job can be cancelled.";
-							} else {
-								cancelJob(entry.job);
-								cancellingJobId = entry.job.id;
-								notice = `Cancelling detached job #${entry.job.id}…`;
-							}
-							refresh();
-						}
-					},
-				};
-			});
-			unsubscribe?.();
-			if (choice === null) return;
-			const entry = entries()[choice];
-			if (!entry) return;
-			if ("job" in entry) await viewFile(ctx, entry.job.logFile, entry.job.endedAt === undefined);
-			else await viewRun(ctx, entry.run);
+			// Closing the pager returns to the list, so it is never a dead end.
+			let selected = 0;
+			for (;;) {
+				const chosen = await browse(ctx, selected);
+				if (!chosen) return;
+				selected = chosen.index;
+				await viewOutput(ctx, chosen.entry);
+			}
 		},
 	});
+
+	/** Job and hook-run picker. Resolves with the chosen entry, or undefined on Esc. */
+	function browse(
+		ctx: ExtensionContext,
+		initial: number,
+	): Promise<{ entry: Entry; index: number } | undefined> {
+		return ctx.ui.custom<{ entry: Entry; index: number } | undefined>((tui, theme, _kb, done) => {
+			let selected = initial;
+			let notice = "";
+			let cancellingJobId: number | undefined;
+			const refresh = () => tui.requestRender();
+			const currentEntries = () => {
+				const value = entries();
+				selected = Math.min(selected, Math.max(0, value.length - 1));
+				return value;
+			};
+			const onChange = () => {
+				if (cancellingJobId !== undefined && !jobs.has(cancellingJobId)) {
+					cancellingJobId = undefined;
+					notice = "";
+				}
+				refresh();
+			};
+			const teardown = liveRefresh(onChange);
+
+			return {
+				dispose: teardown,
+				render(width: number) {
+					// Every line must fit the terminal in cells, not characters: job
+					// labels carry double-width glyphs and arbitrary command text.
+					const fit = (text: string, max = width) => truncateToWidth(text, max, "…");
+					const visibleEntries = currentEntries();
+					return [
+						theme.bold("Hooks"),
+						theme.fg(
+							"dim",
+							fit("↑/↓ select   Enter view output   x cancel selected job   Esc close"),
+						),
+						...(notice ? [theme.fg("warning", fit(notice))] : []),
+						...(visibleEntries.length === 0
+							? [theme.fg("dim", fit("No detached jobs or hook runs."))]
+							: visibleEntries.map((entry, index) => {
+									const prefix = index === selected ? theme.fg("accent", "› ") : "  ";
+									return prefix + fit(label(entry), Math.max(1, width - 2));
+								})),
+					];
+				},
+				invalidate() {},
+				handleInput(data: string) {
+					if (matchesKey(data, Key.escape)) {
+						done(undefined);
+						return;
+					}
+					const visibleEntries = currentEntries();
+					const entry = visibleEntries[selected];
+					if (matchesKey(data, Key.up) && visibleEntries.length > 0) {
+						selected = (selected - 1 + visibleEntries.length) % visibleEntries.length;
+						refresh();
+						return;
+					}
+					if (matchesKey(data, Key.down) && visibleEntries.length > 0) {
+						selected = (selected + 1) % visibleEntries.length;
+						refresh();
+						return;
+					}
+					if (matchesKey(data, Key.enter) && entry) {
+						done({ entry, index: selected });
+						return;
+					}
+					if (matchesKey(data, "x")) {
+						if (!entry || !("job" in entry) || entry.job.endedAt !== undefined) {
+							notice = "Only a running job can be cancelled.";
+						} else if (entry.job.cancelled) {
+							notice = `Detached job #${entry.job.id} is already being cancelled.`;
+						} else {
+							cancelJob(entry.job);
+							cancellingJobId = entry.job.id;
+							notice = `Cancelling detached job #${entry.job.id}…`;
+						}
+						refresh();
+					}
+				},
+			};
+		});
+	}
 
 	function handleCancel(ctx: ExtensionContext, target: string | undefined): void {
 		const running = runningJobs();
@@ -760,58 +803,92 @@ export default function hooks(pi: ExtensionAPI) {
 		ctx.ui.notify(`Cancelling detached job #${id}…`, "info");
 	}
 
-	/** Open a file in less, taking over the terminal. `follow` uses less +F for live tail. */
-	async function viewFile(ctx: ExtensionContext, file: string, follow: boolean): Promise<void> {
-		if (ctx.mode !== "tui") {
-			ctx.ui.notify("Output viewing requires interactive TUI mode", "warning");
-			return;
-		}
-		if (!existsSync(file)) {
-			ctx.ui.notify("No output yet", "info");
-			return;
-		}
-		await ctx.ui.custom((tui, _theme, _kb, done) => {
-			tui.stop();
-			process.stdout.write("\x1b[2J\x1b[H");
-			const args = follow ? ["-R", "+F", file] : ["-R", file];
-			spawnSync("less", args, { stdio: "inherit" });
-			tui.start();
-			tui.requestRender(true);
-			done(null);
-			return { render: () => [], invalidate: () => {} };
-		});
-	}
+	/** Scrollable pager over an entry's captured output; follows a running job live. */
+	async function viewOutput(ctx: ExtensionContext, entry: Entry): Promise<void> {
+		const source = "job" in entry ? () => entry.job.segments : () => runSegments(entry.run);
+		await ctx.ui.custom<null>((tui, theme, _kb, done) => {
+			let scroll = 0;
+			let following = true;
+			// Both are only known once rendered; input before the first frame is a no-op.
+			let viewport = 0;
+			let lineCount = 0;
+			let cache: { key: string; lines: OutputLine[] } | undefined;
 
-	function viewRun(ctx: ExtensionContext, run: HookRun): Promise<void> {
-		ensureLogDir();
-		const file = join(logDir, `run-${run.id}.log`);
-		const header =
-			`hook run #${run.id} — ${run.event} (matcher: ${run.matcher || "*"})\n` +
-			`command: ${run.command}\n` +
-			`exit: ${run.code ?? "?"}${run.timedOut ? " (timeout)" : ""}  duration: ${run.durationMs}ms` +
-			`${run.blocked ? "  BLOCKED the tool call" : ""}\n` +
-			"── stdout ──────────────────────────────────────────\n";
-		const body = `${run.stdout || "(empty)"}\n── stderr ──────────────────────────────────────────\n${run.stderr || "(empty)"}\n`;
-		try {
-			writeFileSync(file, header + body);
-		} catch (err) {
-			ctx.ui.notify(`Could not write run log: ${err}`, "error");
-			return Promise.resolve();
-		}
-		return viewFile(ctx, file, false);
+			// pi-tui wraps by terminal cells, so wide glyphs in the output cannot
+			// push a rendered row past the terminal width.
+			const linesFor = (width: number): OutputLine[] => {
+				const key = `${width}:${generation}`;
+				if (cache?.key !== key) {
+					const lines = toLines(source()).flatMap((line) =>
+						wrapTextWithAnsi(line.text, width).map((text) => ({ text, err: line.err })),
+					);
+					cache = { key, lines };
+				}
+				lineCount = cache.lines.length;
+				return cache.lines;
+			};
+			const scrollTo = (target: number) => {
+				scroll = clampScroll(target, lineCount, viewport);
+				following = scroll === maxScroll(lineCount, viewport);
+				tui.requestRender();
+			};
+			const teardown = liveRefresh(() => tui.requestRender());
+
+			return {
+				dispose: teardown,
+				invalidate() {
+					cache = undefined;
+				},
+				render(width: number) {
+					const fit = (text: string) => truncateToWidth(text, width, "…");
+					viewport = Math.max(5, tui.terminal.rows - 8);
+					const lines = linesFor(width);
+					scroll = following
+						? maxScroll(lines.length, viewport)
+						: clampScroll(scroll, lines.length, viewport);
+					const shown = lines.slice(scroll, scroll + viewport);
+					const position =
+						lines.length === 0
+							? "no output yet"
+							: `lines ${scroll + 1}-${scroll + shown.length} of ${lines.length}`;
+					return [
+						theme.bold(fit(label(entry))),
+						...shown.map((line) => (line.err ? theme.fg("error", line.text) : line.text)),
+						theme.fg(
+							"dim",
+							fit(
+								`${position}${following ? " · following" : ""}   ↑/↓ PgUp/PgDn g/G scroll   Esc close`,
+							),
+						),
+					];
+				},
+				handleInput(data: string) {
+					if (matchesKey(data, Key.escape) || matchesKey(data, "q")) done(null);
+					else if (matchesKey(data, Key.up) || matchesKey(data, "k")) scrollTo(scroll - 1);
+					else if (matchesKey(data, Key.down) || matchesKey(data, "j")) scrollTo(scroll + 1);
+					else if (matchesKey(data, Key.pageUp) || matchesKey(data, Key.ctrl("b")))
+						scrollTo(scroll - viewport);
+					else if (matchesKey(data, Key.pageDown) || matchesKey(data, Key.ctrl("f")))
+						scrollTo(scroll + viewport);
+					else if (matchesKey(data, Key.home) || matchesKey(data, "g")) scrollTo(0);
+					else if (matchesKey(data, Key.end) || matchesKey(data, Key.shift("g")))
+						scrollTo(lineCount);
+				},
+			};
+		});
 	}
 
 	// ── Shutdown cleanup ─────────────────────────────────────────────
 
+	// Fires on quit and on every session replacement, reload included. The ctx
+	// is invalidated right after this returns, while detached children are still
+	// exiting, so the UI handle has to be dropped before their close events land.
 	pi.on("session_shutdown", async () => {
+		uiCtx = undefined;
+		for (const teardown of [...viewerTeardowns]) teardown();
 		for (const job of runningJobs()) {
 			job.cancelled = true; // Never wake during shutdown.
 			killJobTree(job);
-		}
-		try {
-			rmSync(logDir, { recursive: true, force: true });
-		} catch {
-			// Best effort.
 		}
 	});
 }
