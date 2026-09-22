@@ -1,16 +1,16 @@
 {
-  "defaultProvider": "pi-claude",
+  "defaultProvider": "rho-claude",
   "defaultModel": "claude-opus-5",
   "defaultThinkingLevel": "high",
   "theme": "tokyo-night",
   "quietStartup": true,
   "defaultProjectTrust": "ask",
-  "packages": ["npm:@vanillagreen/pi-claude-bridge"],
+  "packages": [],
   "modelThinkingLevels": {
-    "pi-claude/claude-opus-5": "high"
+    "rho-claude/claude-opus-5": "high"
   },
   "enabledModels": [
-    "pi-claude/claude-opus-5",
+    "rho-claude/claude-opus-5",
     "openai-codex/gpt-5.6-sol",
     "kimi-coding/k3",
     "llama-cpp/early-router-flash"
