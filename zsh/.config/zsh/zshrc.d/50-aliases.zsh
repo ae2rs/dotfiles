@@ -100,6 +100,9 @@ pi() {
 alias p="pi"
 alias pr='p --resume'
 
+alias r='rho'
+alias rr='rho --resume'
+
 # --- Work-specific ---
 # Clippy, scoped. Fires the same bazel invocation as tools/clippy.py (so it shares
 # the action cache with the editor's clippy), but lets us aim it at less than the
