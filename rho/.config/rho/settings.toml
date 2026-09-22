@@ -3,3 +3,6 @@ level = "debug"
 
 [claude]
 enabled = true
+
+[tui]
+# wheel_scroll_rows = 1
