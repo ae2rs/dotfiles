@@ -61,6 +61,7 @@ rho/.rho/agent/*.log
 rho/.rho/agent/run-history.jsonl
 rho/.rho/agent/memory/
 
+rho/.config/rho/logs/
 # Extension dependencies. Pi cannot reach ~/.pi/agent/npm from a global
 # extension, so extensions that need libraries carry their own node_modules.
 # Reinstall with `bun install` in the extension directory.
