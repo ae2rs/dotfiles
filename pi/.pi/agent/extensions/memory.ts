@@ -128,18 +128,18 @@ export default function (pi: ExtensionAPI) {
 		name: "memory_search",
 		label: "Memory Search",
 		description:
-			"Search persistent memories. Full-text over titles and content (BM25-ranked), optionally filtered by type (preference, fact, decision, failure), tags, and scope. Returns compact titled overviews with updated timestamps and query relevance; use memory_get for full content. Omit the query to list most recently updated entries.",
+			"Search persistent memories. Keyword search over titles and content: a memory matching any query term is a candidate, ranked by relevance (BM25), so extra words broaden the search rather than narrow it. Optionally filtered by type (preference, fact, decision, failure), tags, and scope. Returns compact titled overviews with updated timestamps and query relevance; use memory_get for full content. Omit the query to list most recently updated entries.",
 		promptSnippet: "search persistent memories by text, type, tag, or scope",
 		promptGuidelines: [
 			"Before exploring a substantive task, search memory_search for relevant prior context; retrieve only the promising matches.",
 		],
 		parameters: Type.Object({
 			query: Type.Optional(
-				Type.String({ description: "Free-text search over memory titles and content" }),
+				Type.String({ description: "Keywords to rank memory titles and content against" }),
 			),
 			type: Type.Optional(StringEnum(MEMORY_TYPES, { description: "Filter by type" })),
 			tags: Type.Optional(
-				Type.Array(Type.String(), { description: "Entries must have ALL of these tags" }),
+				Type.Array(Type.String(), { description: "Entries must carry at least one of these tags" }),
 			),
 			scope: Type.Optional(
 				Type.String({
@@ -153,7 +153,14 @@ export default function (pi: ExtensionAPI) {
 			const filter: SearchFilter = { ...params, scope: params.scope ?? scope };
 			const results = store.search(filter);
 			if (results.length === 0) {
-				return { content: [{ type: "text", text: "No memories matched." }] };
+				return {
+					content: [
+						{
+							type: "text",
+							text: "No memories matched. Try fewer or different keywords, or drop the query and filter by tag.",
+						},
+					],
+				};
 			}
 			return {
 				content: [{ type: "text", text: results.map((entry) => formatEntry(entry)).join("\n\n") }],

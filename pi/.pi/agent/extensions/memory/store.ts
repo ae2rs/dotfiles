@@ -95,21 +95,32 @@ function normalizeTitle(title: string | undefined, content: string): string {
 	return title?.trim() || titleFromContent(content);
 }
 
+/**
+ * Tags are single keywords, but models sometimes pass a whole comma-separated
+ * list as one string; splitting keeps those entries filterable.
+ */
 function normalizeTags(tags?: string[]): string[] {
-	return [...new Set((tags ?? []).map((tag) => tag.trim().toLowerCase()).filter(Boolean))];
+	const split = (tags ?? []).flatMap((tag) => tag.split(","));
+	return [...new Set(split.map((tag) => tag.trim().toLowerCase()).filter(Boolean))];
 }
 
 function normalizeIds(ids?: string[]): string[] {
 	return [...new Set((ids ?? []).map((id) => id.trim()).filter(Boolean))];
 }
 
-/** Escape free text into a safe FTS5 MATCH expression: ANDed quoted tokens. */
+/**
+ * Escape free text into a safe FTS5 MATCH expression: quoted tokens joined
+ * disjunctively, so a memory matching only some of the terms is still found and
+ * bm25 ranks the ones matching more, rarer terms first. Quoting keeps a token
+ * with punctuation (`pi-rho`, `foo::bar`) an adjacency phrase and makes any
+ * FTS5 metacharacter in the text inert.
+ */
 function toFtsQuery(text: string): string {
 	return text
 		.split(/\s+/)
 		.filter(Boolean)
 		.map((token) => `"${token.replace(/"/g, '""')}"`)
-		.join(" ");
+		.join(" OR ");
 }
 
 export class MemoryStore {
@@ -261,9 +272,13 @@ export class MemoryStore {
 			where.push("m.scope IN ('global', ?)");
 			params.push(filter.scope);
 		}
-		for (const tag of normalizeTags(filter.tags)) {
-			where.push("EXISTS (SELECT 1 FROM memory_tags t WHERE t.memory_id = m.id AND t.tag = ?)");
-			params.push(tag);
+		const tags = normalizeTags(filter.tags);
+		if (tags.length) {
+			const placeholders = tags.map(() => "?").join(", ");
+			where.push(
+				`EXISTS (SELECT 1 FROM memory_tags t WHERE t.memory_id = m.id AND t.tag IN (${placeholders}))`,
+			);
+			params.push(...tags);
 		}
 
 		const hasQuery = Boolean(filter.query?.trim());

@@ -49,15 +49,28 @@ assert.deepEqual(
 	[b.id],
 );
 
+// Query terms are disjunctive: a memory carrying some of them still matches,
+// and the one carrying more of them ranks first.
+assert.deepEqual(
+	store.search({ query: "branch prefix monorepo" }).map((entry) => entry.id),
+	[b.id, a.id],
+);
+
 // Scope filter: "dotfiles" sees global + dotfiles, not other projects.
 assert.equal(store.search({ scope: "dotfiles" }).length, 3);
 const otherScoped = store.search({ scope: "monorepo" });
 assert.equal(otherScoped.length, 2, "global + a/c only — b is scoped to dotfiles");
 assert.equal(store.search({ scope: "all" }).length, 3);
 
-// Tag filter requires ALL tags.
+// Tag filter keeps entries carrying any of the tags.
 assert.equal(store.search({ tags: ["monorepo", "package-manager"] }).length, 1);
-assert.equal(store.search({ tags: ["monorepo", "git"] }).length, 0);
+assert.equal(store.search({ tags: ["monorepo", "git"] }).length, 2, "no entry carries both");
+
+// A comma-separated tag string is stored as separate tags.
+const commaTagged = store.save({ title: "Comma tags", content: "x", tags: ["ci,release"] });
+assert.deepEqual(commaTagged.tags, ["ci", "release"]);
+assert.equal(store.search({ tags: ["release"] }).length, 1);
+assert.equal(store.delete(commaTagged.id), true);
 
 // Type filter + FTS query combined.
 assert.equal(store.search({ query: "prefix", type: "convention" }).length, 1);
@@ -74,7 +87,7 @@ assert.equal(updated?.type, "convention");
 assert.equal(updated?.title, "Always use pnpm");
 assert.deepEqual(updated?.tags, ["pkg"]);
 assert.deepEqual(store.get(b.id)?.relatedIds, []);
-assert.equal(store.search({ query: "never npm" }).length, 0, "old content gone from FTS");
+assert.equal(store.search({ query: "never" }).length, 0, "old content gone from FTS");
 assert.equal(store.search({ query: "Always use" }).length, 1);
 assert.equal(store.search({ tags: ["monorepo"] }).length, 0, "old tags replaced");
 assert.deepEqual(store.tagCounts(), [
@@ -88,7 +101,7 @@ assert.equal(store.update("nope", { content: "x" }), undefined);
 
 // Delete removes from every index and all linked records.
 assert.equal(store.delete(c.id), true);
-assert.equal(store.search({ query: "edit tool" }).length, 0);
+assert.equal(store.search({ query: "arrays" }).length, 0);
 assert.equal(store.census().count, 2);
 assert.equal(store.delete(c.id), false);
 
