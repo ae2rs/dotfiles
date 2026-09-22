@@ -1,7 +1,7 @@
 {
   "base": {
     "instructions": ["AGENTS.md"],
-    "appendSystemPrompt": ["APPEND_SYSTEM.md"]
+    "appendSystemPrompt": ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
   },
   "default": {
     "skills": ["../../../agents/.agents/skills/find-skills", "skills/learn-codebase"]
