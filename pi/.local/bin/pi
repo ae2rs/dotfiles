@@ -20,4 +20,13 @@ fi
 BUN="${BUN_INSTALL:-$HOME/.bun}/bin/bun"
 [ -x "$BUN" ] || BUN=bun
 
+# Load extensions through jiti's own loader instead of Bun's native TS import.
+# Natively, Bun resolves an extension's bare `@earendil-works/*` imports from the
+# extension's own directory; ~/.pi/agent has no node_modules, so Bun auto-installs
+# the package from npm on every start. That round trip intermittently fails
+# ("Unexpected while resolving package") and, when it succeeds, hands extensions a
+# different Pi version than the one running. jiti honours the aliases Pi passes it,
+# which point at this install.
+export JITI_TRY_NATIVE=0
+
 exec "$BUN" "$PI_CLI" "$@"
