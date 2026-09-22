@@ -6,6 +6,10 @@ Use this for behavioural preferences that should apply everywhere. Instructions
 about a specific project belong in that project's AGENTS.md instead.
 -->
 
+## Clarifications
+
+- When requirements are ambiguous or a decision is the user's to make, ask with the `questionnaire` tool instead of proceeding on unstated assumptions or leaving open questions in the plan.
+
 ## Code quality
 
 - Prefer the smallest correct design. Optimize for code that is easy to read, reason about, test, and change; avoid cleverness, speculative generality, configuration, and abstraction.
