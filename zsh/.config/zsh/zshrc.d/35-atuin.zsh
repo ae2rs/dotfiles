@@ -119,3 +119,30 @@ bindkey -M emacs '^[[A' atuin-inline-up
 bindkey -M emacs '^[OA' atuin-inline-up
 bindkey -M emacs '^[[B' atuin-inline-down
 bindkey -M emacs '^[OB' atuin-inline-down
+
+# --- Paste: drop the indentation a snippet was copied with ---
+# `atuin history start` silently discards any command whose first character is
+# a space -- the ignorespace convention, hardcoded, with no setting to turn it
+# off -- and HIST_IGNORE_SPACE (05-history.zsh) does the same to $HISTFILE. A
+# command copied out of an indented code block therefore runs perfectly well
+# and then leaves no trace in either history.
+#
+# Trimming only when the line is still empty keeps that suppression available
+# deliberately: type one space, then paste, and the command stays unrecorded.
+# A paste into a line already being edited goes to the builtin widget
+# untouched -- leading blanks are meaningful mid-command, and its handling of
+# an active region is not worth reimplementing.
+atuin-trim-paste() {
+    if [[ -n $BUFFER ]]; then
+        zle .bracketed-paste
+        return
+    fi
+    # Given a variable name, the builtin widget assigns the pasted text to it
+    # rather than inserting it, which is the only way to see it before it
+    # lands on the line.
+    setopt localoptions extendedglob
+    local pasted
+    zle .bracketed-paste pasted
+    LBUFFER=${pasted##[[:space:]]##}
+}
+zle -N bracketed-paste atuin-trim-paste
