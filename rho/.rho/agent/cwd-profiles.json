@@ -24,6 +24,11 @@
         "$ rho \"regenerate the sqlx cache after the migration\"",
         "$ rho \"why does the backend release workflow push an image on every PR\"",
         "$ rho \"add a redis-backed store test for the invite repository\""
+      ],
+      "alwaysAsk": [
+        { "match": "\\bgit\\s+merge\\b", "reason": "merges into the checked-out branch" },
+        { "match": "\\bgit\\s+push\\b.*\\b(main|master)\\b", "reason": "pushes to main" },
+        { "match": "\\bgh\\s+pr\\s+merge\\b", "reason": "merges a pull request into main" }
       ]
     },
     "rho": {
