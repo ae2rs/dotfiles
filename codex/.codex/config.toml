@@ -101,10 +101,13 @@ fast_default_opt_out = true
 [plugins."github@openai-curated"]
 enabled = true
 
+[tui]
+screen_reader_detection_done = true
+
 [tui.model_availability_nux]
 "gpt-5.5" = 4
 "gpt-5.6-sol" = 4
-gpt-6-astra = 1
+gpt-6-astra = 2
 
 # [mcp_servers.context7.env]
 # CONTEXT7_API_KEY = "CONTEXT7_API_KEY"
