@@ -1,7 +1,8 @@
 {
   "base": {
     "instructions": ["AGENTS.md"],
-    "appendSystemPrompt": ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
+    "appendSystemPrompt": ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"],
+    "suggest": ["Requests name the file, crate or command they touch."]
   },
   "default": {
     "skills": ["../../../agents/.agents/skills/find-skills", "skills/learn-codebase"]
@@ -15,6 +16,34 @@
         "skills/regenerate-sqlx-cache",
         "skills/learn-codebase",
         "linear/skills/linear"
+      ],
+      "suggest": [
+        "A Bazel monorepo: Rust under rs/ (engine, mobile, platform, proto, geodata), a TypeScript web app under web/, iosapp/ and android/.",
+        "Backend services live under rs/engine/api/back/.",
+        "$ rho \"run clippy on the bump crate\"",
+        "$ rho \"regenerate the sqlx cache after the migration\"",
+        "$ rho \"why does the backend release workflow push an image on every PR\"",
+        "$ rho \"add a redis-backed store test for the invite repository\""
+      ]
+    },
+    "rho": {
+      "skills": ["../../../agents/.agents/skills/find-skills", "skills/learn-codebase"],
+      "suggest": [
+        "rho is a terminal coding agent written in Rust, with a ratatui front end.",
+        "Crates under crates/: rho-tui for the terminal, plus rho-agent, rho-provider, rho-model, rho-session, rho-extensions, rho-copilot.",
+        "The terminal has a prompt editor, a transcript, a footer, a session tree, a model picker and a completion menu.",
+        "$ rho \"make the footer show the git branch next to the model\"",
+        "$ rho \"add a test for the markdown renderer at 40 columns\"",
+        "$ rho \"why does the completion menu close when I type a slash\"",
+        "$ rho \"the session tree should indent only actual forks\""
+      ]
+    },
+    "dotfiles": {
+      "skills": ["../../../agents/.agents/skills/find-skills", "skills/learn-codebase"],
+      "suggest": [
+        "Personal dotfiles, stowed into place: neovim configuration in Lua, zsh, and agent configuration under pi/ and rho/.",
+        "$ rho \"add a which-key group for the diffview mappings\"",
+        "$ rho \"make lualine show the current macro register\""
       ]
     }
   },
@@ -28,6 +57,14 @@
     {
       "origin": "wesprint-io/monorepo",
       "profile": "monorepo"
+    },
+    {
+      "origin": "ae2rs/rho",
+      "profile": "rho"
+    },
+    {
+      "origin": "ae2rs/dotfiles",
+      "profile": "dotfiles"
     }
   ]
 }
