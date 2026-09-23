@@ -58,6 +58,7 @@ rho/.rho/agent/auth.json
 rho/.rho/agent/models-store.json
 rho/.rho/agent/trust.json
 rho/.rho/agent/*.log
+rho/.rho/agent/*.lock
 rho/.rho/agent/run-history.jsonl
 rho/.rho/agent/memory/
 
