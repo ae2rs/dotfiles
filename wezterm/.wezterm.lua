@@ -154,6 +154,20 @@ local openUrl = act.QuickSelectArgs({
 	end),
 })
 
+-- QuitApplication never prompts on its own, so gate Cmd-q behind a picker
+local confirmQuit = act.InputSelector({
+	title = "Quit WezTerm?",
+	choices = {
+		{ label = "Cancel" },
+		{ label = "Quit" },
+	},
+	action = wezterm.action_callback(function(window, pane, _, label)
+		if label == "Quit" then
+			window:perform_action(act.QuitApplication, pane)
+		end
+	end),
+})
+
 -- use 'Backslash' to split horizontally
 map("v", "LEADER", act.SplitHorizontal({ domain = "CurrentPaneDomain" }))
 -- and 'Minus' to split vertically
@@ -225,7 +239,7 @@ map(
 )
 
 -- Keep original macOS-style navigation keys
-map("q", "CMD", wezterm.action.QuitApplication)
+map("q", "CMD", confirmQuit)
 map("LeftArrow", "CMD", act.SendString("\x1bOH"))
 map("RightArrow", "CMD", act.SendString("\x1bOF"))
 map("LeftArrow", "OPT", act.SendString("\x1bb"))
