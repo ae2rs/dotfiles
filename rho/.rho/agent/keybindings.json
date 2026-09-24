@@ -1,4 +1,4 @@
 {
-  "app.model.cycleForward": ["ctrl+p", "shift+tab"],
+  "app.model.cycleForward": ["shift+tab"],
   "app.session.rename": "ctrl+shift+r"
 }
