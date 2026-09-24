@@ -14,6 +14,9 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 fpath=("$BUN_INSTALL" $fpath)
 
+# Default Python virtualenv
+export PATH="$HOME/.venvs/default/bin:$PATH"
+
 # Local bin last so it outranks the package-manager shims in ~/.bun/bin.
 # `pi` relies on this: ~/.local/bin/pi runs Pi on Bun, shadowing bun's Node shim.
 export PATH="$HOME/.local/bin:$PATH"
