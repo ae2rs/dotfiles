@@ -8,7 +8,11 @@
   "branchSummary": {
     "skipPrompt": true
   },
-  "packages": ["npm:@vanillagreen/pi-claude-bridge", "npm:pi-subagents", "npm:pi-markdown-preview"],
+  "packages": [
+    "npm:@vanillagreen/pi-claude-bridge",
+    "npm:pi-subagents",
+    "npm:pi-markdown-preview"
+  ],
   "lastChangelogVersion": "0.85.1",
   "modelThinkingLevels": {
     "pi-claude/claude-opus-5": "high"
@@ -18,5 +22,6 @@
     "openai-codex/gpt-5.6-sol",
     "kimi-coding/k3",
     "llama-cpp/early-router-flash"
-  ]
+  ],
+  "hideThinkingBlock": false
 }
