@@ -2,20 +2,20 @@
 if [[ -n "${ZSH_SECRETS_LOADED:-}" ]]; then
   return
 fi
-ZSH_SECRETS_LOADED=1
 
 # Set age key location for sops
 export SOPS_AGE_KEY_FILE="$HOME/.config/age/keys.txt"
 
-# Load all encrypted secrets YAML files in ~/.config/zsh/secrets
-if command -v sops >/dev/null; then
-  _secrets_dir="$HOME/.config/zsh/secrets"
-  if [[ -d "$_secrets_dir" ]]; then
-    for _file in "$_secrets_dir"/*.yaml; do
-      [[ -e "$_file" ]] || continue
-      set -a
-      eval "$(sops -d --output-type dotenv "$_file" 2>/dev/null)"
-      set +a
-    done
-  fi
+# .zshenv runs before .zprofile puts Homebrew on PATH, so fall back to its
+# absolute path. The guard is set only once sops is found, so a later pass
+# from .zshrc can still load the secrets.
+_sops=${commands[sops]:-/opt/homebrew/bin/sops}
+if [[ -x $_sops ]]; then
+  ZSH_SECRETS_LOADED=1
+  for _file in "$HOME/.config/zsh/secrets"/*.yaml(N); do
+    set -a
+    eval "$("$_sops" -d --output-type dotenv "$_file" 2>/dev/null)"
+    set +a
+  done
 fi
+unset _sops _file
