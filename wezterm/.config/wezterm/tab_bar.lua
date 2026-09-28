@@ -148,7 +148,7 @@ local function net_usage()
 			elseif bytes >= 1024 then
 				return string.format("%.0fK", bytes / 1024)
 			else
-				return string.format("%dB", math.max(0, bytes))
+				return string.format("%dB", math.max(0, math.floor(bytes)))
 			end
 		end
 
