@@ -20,3 +20,8 @@ bindkey -M emacs '^[[1;9D' backward-word
 bindkey -M emacs '^[[1;9C' forward-word
 bindkey -M emacs '^[^?'    backward-kill-word
 bindkey -M emacs '^[[3;3~' kill-word
+
+# Ctrl+Z is the tty's suspend character, not a ZLE binding: unset it so it no
+# longer sends SIGTSTP to foreground jobs. TUIs in raw mode read the key
+# themselves and may still choose to suspend on it.
+[[ -t 0 ]] && stty susp undef
