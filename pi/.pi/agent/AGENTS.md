@@ -9,7 +9,8 @@ than one project — project-specific rules belong in that project's `AGENTS.md`
   `nvim: forward option+backspace from :terminal to zsh`. The area is the config surface or
   package being touched, not a path.
 - One logical change per commit. Never fold unrelated or pre-existing edits into a commit.
-- Branch off `main` for anything non-trivial; merge and delete the branch when done.
+- Branch off `main` for anything non-trivial, unless the session already runs in a linked worktree
+  on its own branch; merge and delete the branch when done.
 - Do not amend or rebase existing commits without asking.
 
 ## Working style
