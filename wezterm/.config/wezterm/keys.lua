@@ -136,7 +136,7 @@ map("M", "LEADER", popTab) -- whole tab
 map("z", { "LEADER", "SUPER" }, act.TogglePaneZoomState)
 map("Z", { "LEADER", "SUPER" }, toggleTabBar)
 -- copy & paste
-map("c", "LEADER", act.ActivateCopyMode)
+map("c", "LEADER", require("rho").copy_mode)
 map("c", { "SHIFT|CTRL", "SUPER" }, act.CopyTo("Clipboard"))
 map("v", { "SHIFT|CTRL", "SUPER" }, act.PasteFrom("Clipboard"))
 map("f", { "SHIFT|CTRL", "SUPER" }, act.Search("CurrentSelectionOrEmptyString"))
