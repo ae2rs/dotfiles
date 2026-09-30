@@ -83,3 +83,6 @@ pi/.pi/agent/.pi-hermes-locks.sqlite*
 
 # Agents (machine-local, app-provided)
 agents/.agents/skills/cua-driver
+
+# WezTerm: rho.lua is installed and refreshed by rho's installer
+wezterm/.config/wezterm/rho.lua

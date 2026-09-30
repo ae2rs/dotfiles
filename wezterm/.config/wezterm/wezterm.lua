@@ -3,12 +3,12 @@ local config = wezterm.config_builder()
 
 -- tab_bar goes first: the tabline plugin resets the window padding that
 -- appearance sets.
-for _, module in ipairs({ "tab_bar", "appearance", "keys", "focus", "rho" }) do
+for _, module in ipairs({ "tab_bar", "appearance", "keys" }) do
 	require(module).apply_to_config(config)
 end
 
--- Room for a whole rho transcript printed with ctrl+s, which copy mode then
--- reaches from its first row. The default of 3500 cuts long sessions short.
-config.scrollback_lines = 100000
+-- rho's module, installed by its installer: click-to-focus for notifications,
+-- copy mode over the whole transcript. After keys, which it adds to.
+require("rho").apply_to_config(config)
 
 return config
