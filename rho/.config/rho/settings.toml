@@ -6,3 +6,25 @@ enabled = true
 
 [tui]
 # wheel_scroll_rows = 1
+
+# Integrations that act on their own; scripts/install.sh asks about any missing here.
+[rtk]
+enabled = true
+
+[web]
+research = true
+
+[jev]
+enabled = false
+
+[copilot]
+enabled = false
+
+[notifications]
+clickable = true
+
+[linear]
+repos = ["wesprint-io/monorepo", "wesprint-io/infrastructure"]
+
+[setup]
+wezterm = true
