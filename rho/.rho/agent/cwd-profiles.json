@@ -2,14 +2,6 @@
   "base": {
     "instructions": ["AGENTS.md"],
     "appendSystemPrompt": ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"],
-    "skills": [
-      "../../../agents/.agents/skills/find-skills",
-      "skills/learn-codebase",
-      "skills/grill-me",
-      "skills/deepen-architecture",
-      "skills/design-interface",
-      "skills/request-review"
-    ],
     "suggest": ["Requests name the file, crate or command they touch."]
   },
   "profiles": {
