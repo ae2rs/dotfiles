@@ -9,9 +9,24 @@ compatibility: Requires the `linear` CLI (v2.x) authenticated to the `amoco` wor
 Linear is work-only tooling. Everything here goes through the `linear` CLI, which is
 already authenticated (`linear auth whoami` → lucasdc@amo.co, workspace `amoco`).
 
-This skill is loaded only inside the work repos and their worktrees — the `linear`
-extension gates it on the cwd's git remote (`wesprint-io/monorepo` or
-`wesprint-io/infrastructure`), so you will not see it elsewhere.
+Only the work profiles in `cwd-profiles.json` declare this skill (`monorepo` and
+`infrastructure`), so you will not see it elsewhere.
+
+## Requests
+
+When invoked as `/skill:linear <request>`, act on the request, following the
+conventions below:
+
+- **Ticket IDs** (e.g. `CBE-3052`): `linear issue view` each and give a concise
+  summary; include sub-issues when relevant.
+- **Create:** draft the title(s) with the naming convention (read the parent's title
+  first for sub-issues), show the plan, and create them with `--team CBE -a self`
+  (plus `--parent` for sub-issues) after the user confirms.
+- **Update or comment:** make the change with the CLI and re-view to confirm.
+- **Nothing asked:** run `linear issue mine`, summarise the open issues, and ask what
+  to do.
+
+Echo back the resulting issue IDs and URLs.
 
 ## Conventions
 

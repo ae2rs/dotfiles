@@ -11,7 +11,7 @@
         "skills/merge-deploy-monorepo-pr",
         "skills/watch-api-rollouts",
         "skills/regenerate-sqlx-cache",
-        "linear/skills/linear"
+        "skills/linear"
       ],
       "suggest": [
         "A Bazel monorepo: Rust under rs/ (engine, mobile, platform, proto, geodata), a TypeScript web app under web/, iosapp/ and android/.",
@@ -26,6 +26,9 @@
         { "match": "\\bgit\\s+push\\b.*\\b(main|master)\\b", "reason": "pushes to main" },
         { "match": "\\bgh\\s+pr\\s+merge\\b", "reason": "merges a pull request into main" }
       ]
+    },
+    "infrastructure": {
+      "skills": ["skills/linear"]
     },
     "rho": {
       "suggest": [
@@ -56,6 +59,10 @@
     {
       "origin": "wesprint-io/monorepo",
       "profile": "monorepo"
+    },
+    {
+      "origin": "wesprint-io/infrastructure",
+      "profile": "infrastructure"
     },
     {
       "origin": "ae2rs/rho",
