@@ -23,8 +23,116 @@ enabled = false
 [notifications]
 clickable = true
 
-[linear]
-repos = ["wesprint-io/monorepo", "wesprint-io/infrastructure"]
-
 [setup]
 wezterm = true
+
+[model]
+default = "rho-claude/claude-opus-5-5"
+enabled = [
+  "rho-claude/claude-opus-5-5",
+  "openai-codex/gpt-5.6-sol",
+  "kimi-coding/k3",
+  "llama-cpp/early-router-flash",
+]
+thinking = "high"
+
+[model.thinking_levels]
+"rho-claude/claude-opus-5-5" = "high"
+
+[providers.llama-cpp]
+api = "openai-completions"
+api_key = "none"
+base_url = "http://192.168.1.165:9999/v1"
+
+[[providers.llama-cpp.models]]
+context_window = 131072
+id = "early-router-flash"
+max_tokens = 32768
+name = "Qwen3.8 Flash Next (llama.cpp, UD-Q3_K_XL)"
+reasoning = true
+
+[providers.llama-cpp.models.thinking_level_map]
+high = "high"
+low = "low"
+medium = "medium"
+off = "none"
+xhigh = "xhigh"
+
+[keybindings]
+"app.model.cycleForward" = ["shift+tab"]
+"app.session.rename" = "ctrl+shift+r"
+
+[profiles.base]
+append_system_prompt = ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
+instructions = ["AGENTS.md"]
+suggest = ["Requests name the file, crate or command they touch."]
+
+[profiles.dotfiles]
+suggest = [
+  "Personal dotfiles, stowed into place: neovim configuration in Lua, zsh, and agent configuration under pi/ and rho/.",
+  '$ rho "add a which-key group for the diffview mappings"',
+  '$ rho "make lualine show the current macro register"',
+]
+
+[profiles.infrastructure]
+skills = ["skills/linear"]
+
+[profiles.monorepo]
+instructions = ["profiles/monorepo.md"]
+skills = [
+  "skills/merge-deploy-monorepo-pr",
+  "skills/watch-api-rollouts",
+  "skills/regenerate-sqlx-cache",
+  "skills/linear",
+]
+suggest = [
+  "A Bazel monorepo: Rust under rs/ (engine, mobile, platform, proto, geodata), a TypeScript web app under web/, iosapp/ and android/.",
+  "Backend services live under rs/engine/api/back/.",
+  '$ rho "run clippy on the bump crate"',
+  '$ rho "regenerate the sqlx cache after the migration"',
+  '$ rho "why does the backend release workflow push an image on every PR"',
+  '$ rho "add a redis-backed store test for the invite repository"',
+]
+
+# [[profiles.monorepo.always_ask]]
+# match = '\bgit\s+merge\b'
+# reason = "merges into the checked-out branch"
+#
+# [[profiles.monorepo.always_ask]]
+# match = '\bgit\s+push\b.*\b(main|master)\b'
+# reason = "pushes to main"
+
+[[profiles.monorepo.always_ask]]
+match = '\bgh\s+pr\s+merge\b'
+reason = "merges a pull request into main"
+
+[profiles.rho]
+suggest = [
+  "rho is a terminal coding agent written in Rust, with a ratatui front end.",
+  "Crates under crates/: rho-tui for the terminal, plus rho-agent, rho-provider, rho-model, rho-session, rho-extensions, rho-copilot.",
+  "The terminal has a prompt editor, a transcript, a footer, a session tree, a model picker and a completion menu.",
+  '$ rho "make the footer show the git branch next to the model"',
+  '$ rho "add a test for the markdown renderer at 40 columns"',
+  '$ rho "why does the completion menu close when I type a slash"',
+  '$ rho "the session tree should indent only actual forks"',
+]
+
+[[profiles.rules]]
+directory = "/Users/lucas/work/monorepo"
+profile = "monorepo"
+
+[[profiles.rules]]
+origin = "wesprint-io/monorepo"
+profile = "monorepo"
+
+[[profiles.rules]]
+origin = "wesprint-io/infrastructure"
+profile = "infrastructure"
+
+[[profiles.rules]]
+origin = "ae2rs/rho"
+profile = "rho"
+
+[[profiles.rules]]
+origin = "ae2rs/dotfiles"
+profile = "dotfiles"
