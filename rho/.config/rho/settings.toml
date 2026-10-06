@@ -97,10 +97,10 @@ suggest = [
 # [[profiles.monorepo.always_ask]]
 # match = '\bgit\s+merge\b'
 # reason = "merges into the checked-out branch"
-#
-# [[profiles.monorepo.always_ask]]
-# match = '\bgit\s+push\b.*\b(main|master)\b'
-# reason = "pushes to main"
+
+[[profiles.monorepo.always_ask]]
+match = '\bgit\s+push\b.*\b(main|master)\b'
+reason = "pushes to main"
 
 [[profiles.monorepo.always_ask]]
 match = '\bgh\s+pr\s+merge\b'
