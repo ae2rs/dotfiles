@@ -249,7 +249,7 @@ pglocal() {
       exit "$fail"'
 }
 alias devclean='docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && docker volume ls -q | xargs -r docker volume rm'
-alias xcode='(cd /Users/lucas/work/monorepo/ && bazel run //iosapp/Apps/Location:xcodeproj && xed iosapp/Apps/Location/Location.xcodeproj)'
+alias xcode='(cd /Users/lucas/work/monorepo/ && bazel run //iosapp/Apps:xcodeproj && xed iosapp/Apps/Apps.xcodeproj)'
 alias lspmux_restart='launchctl kickstart -k gui/$(id -u)/org.codeberg.p2502.lspmux'
 alias nuke_bazel='sudo rm -rf bazel-bin bazel-monorepo bazel-out bazel-testlogs /private/var/tmp/_bazel_rust_tools /var/tmp/_bazel_lucas && sudo find /private/var/tmp -maxdepth 1 \( -name "_bazel_*" -o -name "*_output_base" \) -exec rm -rf {} +'
 
