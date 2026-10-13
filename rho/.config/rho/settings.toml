@@ -66,6 +66,7 @@ xhigh = "xhigh"
 [profiles.base]
 append_system_prompt = ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
 instructions = ["AGENTS.md"]
+skills = ["skills/design-ui"]
 suggest = ["Requests name the file, crate or command they touch."]
 
 [profiles.dotfiles]
