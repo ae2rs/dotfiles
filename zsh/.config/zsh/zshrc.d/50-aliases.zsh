@@ -217,7 +217,12 @@ alias allfmt='rfmt && protofmt && bazelfmt'
 alias allunused='./tools/unused_imports.py && ./tools/proto_unused_imports.py'
 alias allowners='bazel run //tools/owners -- generate && bazel run //tools/owners -- format'
 alias devlocal='(cd /Users/lucas/work/monorepo/rs/engine/dev-local/ && docker compose up -d) && bazel run //rs/engine/dev-local'
-alias devkill="kill -9 $(ps aux | pgrep -fl dev-local/process-compose.yml | awk 'NR==1 {print $1}')"
+devkill() {
+    local pid
+    pid=$(pgrep -f dev-local/process-compose.yml | head -n 1)
+    [[ -n $pid ]] || { print -u2 "devkill: dev-local is not running"; return 1 }
+    kill -9 $pid
+}
 
 pglocal() {
     local PGDIR="/Users/lucas/work/monorepo/rs/engine/dev-local/postgres"
