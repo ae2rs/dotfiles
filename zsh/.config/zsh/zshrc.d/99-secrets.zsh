@@ -1,4 +1,6 @@
-# Avoid double-loading when sourced from multiple entry points
+# Load once per process tree: the guard is exported along with the secrets, so
+# child shells inherit both and skip the decrypt. It also stops the second pass
+# from the zshrc.d loop in .zshrc.
 if [[ -n "${ZSH_SECRETS_LOADED:-}" ]]; then
   return
 fi
@@ -11,11 +13,9 @@ export SOPS_AGE_KEY_FILE="$HOME/.config/age/keys.txt"
 # from .zshrc can still load the secrets.
 _sops=${commands[sops]:-/opt/homebrew/bin/sops}
 if [[ -x $_sops ]]; then
+  set -a
   ZSH_SECRETS_LOADED=1
-  for _file in "$HOME/.config/zsh/secrets"/*.yaml(N); do
-    set -a
-    eval "$("$_sops" -d --output-type dotenv "$_file" 2>/dev/null)"
-    set +a
-  done
+  eval "$("$_sops" -d --output-type dotenv "$HOME/.config/zsh/secrets/env.yaml" 2>/dev/null)"
+  set +a
 fi
-unset _sops _file
+unset _sops
