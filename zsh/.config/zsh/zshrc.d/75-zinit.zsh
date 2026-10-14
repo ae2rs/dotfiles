@@ -18,6 +18,36 @@ _zcompdump_refresh() {
   } ${ZDOTDIR:-$HOME}/.zcompdump(N.mh+24)
 }
 
+# Completions that tools print themselves, kept in zinit's completions dir
+# (already on fpath). Each is regenerated in the background only when it is
+# missing or older than its binary, so an ordinary tab spawns nothing. Each is
+# also registered directly, as `compinit -C` only sees new fpath files once the
+# dump is rebuilt. kubectl's comes with its Homebrew formula.
+_tool_completions() {
+  unfunction _tool_completions
+  local dir=$ZSH_CACHE_DIR/completions cmd file
+  local -A gen=(
+    docker 'docker completion zsh'
+    rustup 'rustup completions zsh'
+    uv     'uv generate-shell-completion zsh'
+    uvx    'uvx --generate-shell-completion zsh'
+  )
+  # Defers to the default toolchain's own _cargo at completion time. Not plain
+  # `rustc`, which inside a project with an uninstalled pinned toolchain would
+  # make rustup install it.
+  [[ -f $dir/_cargo ]] || print -r -- '#compdef cargo' \
+    'source "$(rustup run ${${(z)$(rustup default)}[1]} rustc --print sysroot)"/share/zsh/site-functions/_cargo' \
+    >| $dir/_cargo
+  for cmd in cargo ${(k)gen}; do
+    (( $+commands[$cmd] )) || continue
+    file=$dir/_$cmd
+    if [[ -n $gen[$cmd] ]] && [[ ! -s $file || $commands[$cmd] -nt $file ]]; then
+      { eval $gen[$cmd] >| $file.$$ && mv -f $file.$$ $file || rm -f $file.$$ } </dev/null 2>/dev/null &!
+    fi
+    (( $+_comps[$cmd] )) || { autoload -Uz _$cmd; compdef _$cmd $cmd }
+  done
+}
+
 # --- Eager: OMZ libs/plugins that set up env (PATH/fpath/vars) used by
 # later config. Must run before the prompt is drawn.
 zinit snippet OMZL::git.zsh
@@ -33,13 +63,9 @@ zinit snippet OMZP::brew
 zinit wait lucid for \
     OMZP::git \
     OMZP::bazel \
-    OMZP::docker \
     OMZP::docker-compose \
     OMZP::eza \
-    OMZP::kubectl \
-    OMZP::rust \
-    OMZP::ssh \
-    OMZP::uv
+    OMZP::ssh
 
 # --- Turbo: community plugins.
 # zsh-syntax-highlighting must load last; `atinit'zicompinit; zicdreplay'`
@@ -50,7 +76,7 @@ zinit wait lucid for \
 # (e.g. in a zshrc.d file) gets clobbered. This makes tab-completion offer
 # dotfiles without typing the leading dot, without affecting globbing.
 zinit wait lucid light-mode for \
-    atinit'zicompinit; zicdreplay; _comp_options+=(globdots); _zcompdump_refresh' \
+    atinit'zicompinit; zicdreplay; _comp_options+=(globdots); _tool_completions; _zcompdump_refresh' \
         zdharma-continuum/fast-syntax-highlighting \
     atload'_zsh_autosuggest_start' \
         zsh-users/zsh-autosuggestions \
