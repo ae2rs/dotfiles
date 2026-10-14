@@ -2,9 +2,8 @@
 export PATH="/opt/homebrew/opt/unzip/bin:$PATH"
 
 # Go
-if command -v go >/dev/null 2>&1; then
-    export PATH="$PATH:$(go env GOPATH)/bin"
-fi
+# Go's own default for GOPATH, without spawning `go env` on every shell.
+export PATH="$PATH:${GOPATH:-$HOME/go}/bin"
 
 # Java
 export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
