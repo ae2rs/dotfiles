@@ -3,6 +3,21 @@
 ZINIT_HOME="${HOME}/.local/share/zinit/zinit.git"
 source "${ZINIT_HOME}/zinit.zsh"
 
+# zicompinit runs `compinit -C`: it trusts the dump as is, with no compaudit and
+# no rebuild whenever the count of completion files in fpath differs from the
+# dump's, which cost a tab 0.5-1.5s each time it flip-flopped. Instead, a dump
+# older than a day is rebuilt by a detached `zsh -f` once fpath is final, and
+# the next tab loads it. `rm ~/.zcompdump` rebuilds it in the next tab itself.
+ZINIT[COMPINIT_OPTS]=-C
+_zcompdump_refresh() {
+  unfunction _zcompdump_refresh
+  () {
+    (( $# )) || return 0
+    zsh -fc 'autoload -Uz compinit; fpath=("${@:2}")
+      compinit -C -d $1.$$ && mv -f $1.$$ $1' zsh $1 $fpath </dev/null >/dev/null 2>&1 &!
+  } ${ZDOTDIR:-$HOME}/.zcompdump(N.mh+24)
+}
+
 # --- Eager: OMZ libs/plugins that set up env (PATH/fpath/vars) used by
 # later config. Must run before the prompt is drawn.
 zinit snippet OMZL::git.zsh
@@ -35,7 +50,7 @@ zinit wait lucid for \
 # (e.g. in a zshrc.d file) gets clobbered. This makes tab-completion offer
 # dotfiles without typing the leading dot, without affecting globbing.
 zinit wait lucid light-mode for \
-    atinit'zicompinit; zicdreplay; _comp_options+=(globdots)' \
+    atinit'zicompinit; zicdreplay; _comp_options+=(globdots); _zcompdump_refresh' \
         zdharma-continuum/fast-syntax-highlighting \
     atload'_zsh_autosuggest_start' \
         zsh-users/zsh-autosuggestions \
