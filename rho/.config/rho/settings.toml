@@ -109,6 +109,9 @@ reason = "pushes to main"
 match = '\bgh\s+pr\s+merge\b'
 reason = "merges a pull request into main"
 
+[profiles.neo]
+instructions = ["profiles/neo.md"]
+
 [profiles.rho]
 suggest = [
   "rho is a terminal coding agent written in Rust, with a ratatui front end.",
@@ -131,6 +134,10 @@ profile = "monorepo"
 [[profiles.rules]]
 origin = "wesprint-io/infrastructure"
 profile = "infrastructure"
+
+[[profiles.rules]]
+origin = "ae2rs/neo"
+profile = "neo"
 
 [[profiles.rules]]
 origin = "ae2rs/rho"
