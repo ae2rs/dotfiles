@@ -6,7 +6,7 @@ A red gate should mean a real bug, and a green one should come fast. Run the nar
 
 - Rust: `just test rs -p <crate>` or `just test rs -E 'test(<name>)'`. Never run bare `cargo nextest`: `just test rs` starts the database, the asset store and SABnzbd, and without them whole groups of tests fail for no real reason. For a quick lint, use `cd rs && cargo clippy -p <crate> --all-targets`.
 - Web: `cd web && bun run check` (svelte-check), and `just test web` for Vitest.
-- One Playwright spec: `just test mock e2e/mock/<spec>.ts` or `just test e2e e2e/<spec>.ts`. These build what they need and pick free ports.
+- One Playwright spec: `just test mock e2e/mock/<spec>.ts` or `just test e2e e2e/<spec>.ts`; for `play.spec.ts` or `media.spec.ts`, `just test playback e2e/<spec>.ts`. These build what they need and pick free ports.
 - After an API change: `just gen`, then commit the regenerated client with the change.
 
 ## Before committing
@@ -16,6 +16,7 @@ A red gate should mean a real bug, and a green one should come fast. Run the nar
 ## Before merging
 
 - `just check`, once, in the foreground. It runs format and shellcheck, then the Rust and web gates side by side (logs in `.local/check/<lane>.log`; a failed lane prints the end of its log), then both Playwright suites. Each step's time is listed at the end. A no-change run takes about 45 s.
+- The playback tests (the Rust `streaming::matrix` and the e2e playback specs in every browser) are the heaviest. `just check` and `just check changed` run them only when a playback path changed (`is_playback` in `script/check`). After a playback-relevant change outside that list, such as a dependency bump or hls.js, run `just check playback`.
 
 ## Never
 
