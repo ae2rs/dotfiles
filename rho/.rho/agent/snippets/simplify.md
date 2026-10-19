@@ -1,9 +1,9 @@
 ---
-description: Simplify recent changes without altering behaviour
-argument-hint: "[path]"
+description: simplify recent changes without altering behaviour
 ---
 
-Simplify ${1:-the code changed in the working copy}, preserving behaviour exactly.
+Simplify the code changed in the working copy, or what I name below, preserving
+behaviour exactly.
 
 Look for: duplicated logic that an existing helper already covers, indirection that
 earns nothing, names that fight the surrounding code, and comments restating what the

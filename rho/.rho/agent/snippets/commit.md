@@ -1,5 +1,5 @@
 ---
-description: Commit the working copy as one or more clean commits
+description: commit the working copy as clean commits
 ---
 
 Commit the current changes.
