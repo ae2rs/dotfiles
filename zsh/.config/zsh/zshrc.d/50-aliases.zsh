@@ -103,6 +103,8 @@ alias pr='p --resume'
 
 alias r='rho'
 alias rr='rho --resume'
+alias rl='rho --local'
+alias rrl='rho --local --resume'
 
 # --- Work-specific ---
 # Clippy, scoped. Fires the same bazel invocation as tools/clippy.py (so it shares
