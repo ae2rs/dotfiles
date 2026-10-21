@@ -1,0 +1,8 @@
+# Sourced from ~/.zshenv on the Namespace devbox; boot.sh adds the line.
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$HOME/.local/bin:$BUN_INSTALL/bin:$HOME/.cargo/bin:$PATH"
+# devbox exec has it, SSH sessions do not; rho's server reads it to keep the
+# devbox up while a turn runs.
+if [ -d /var/run/devbox/tasks ]; then
+  export NAMESPACE_DEVBOX_TASKS_DIR="${NAMESPACE_DEVBOX_TASKS_DIR:-/var/run/devbox/tasks}"
+fi
