@@ -15,6 +15,11 @@ research = true
 [jev]
 enabled = false
 
+# Serves the laptop on the Namespace devbox, through the tunnel rho opens
+# (client.toml [server] devbox); loopback only, so nothing else reaches it.
+[server]
+listen = "127.0.0.1:7878"
+
 [setup]
 wezterm = true
 
