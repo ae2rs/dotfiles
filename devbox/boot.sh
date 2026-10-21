@@ -14,7 +14,7 @@ link() {
   if [ -e "$place" ] || [ -L "$place" ]; then mv "$place" "$place.image"; fi
   ln -s "$target" "$place"
 }
-for name in perso work dotfiles .cargo .rustup .bun .local/bin .local/state/rho .config/gh; do
+for name in perso work dotfiles .cargo .rustup .bun .local/bin .local/share/claude .local/state/rho .config/gh; do
   link "$name"
 done
 
