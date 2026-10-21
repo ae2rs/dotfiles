@@ -18,10 +18,6 @@ for name in perso work dotfiles .cargo .rustup .bun .local/bin .local/share/clau
   link "$name"
 done
 
-# The laptop's home names the same place here, so a path typed there, such
-# as `rho -C ~/perso/rho` expanded by its shell, works on this machine.
-[ -e /Users/lucas ] || sudo -n ln -s "$P" /Users/lucas
-
 git config --global include.path "$P/.gitconfig"
 hook=". $P/dotfiles/devbox/zshenv"
 grep -qxF "$hook" "$HOME/.zshenv" 2>/dev/null || printf '%s\n' "$hook" >>"$HOME/.zshenv"
