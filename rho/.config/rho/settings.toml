@@ -20,6 +20,12 @@ enabled = false
 [server]
 listen = "127.0.0.1:7878"
 
+# Offered when a session on this server picks its directory: the checkouts in
+# these, and where `owner/repo` typed there is cloned.
+[projects]
+roots = ["~/perso", "~/work"]
+clone_into = { wesprint-io = "~/work" }
+
 [setup]
 wezterm = true
 
