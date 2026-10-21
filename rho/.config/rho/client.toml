@@ -10,3 +10,9 @@ clickable = true
 [keybindings]
 "app.model.cycleForward" = ["shift+tab"]
 "app.session.rename" = "ctrl+shift+r"
+
+# The server is on the Namespace devbox; rho starts it and tunnels to it.
+# On the devbox itself this is ignored. The token is RHO_SERVER_TOKEN, from
+# the sops secrets. `rho --local` uses this machine's server instead.
+[server]
+devbox = "workspace"
