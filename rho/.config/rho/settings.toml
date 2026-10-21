@@ -76,6 +76,7 @@ skills = [
   "skills/regenerate-sqlx-cache",
   "skills/linear",
   "skills/rerun-codex-review",
+  "skills/prepare-review",
 ]
 suggest = [
   "A Bazel monorepo: Rust under rs/ (engine, mobile, platform, proto, geodata), a TypeScript web app under web/, iosapp/ and android/.",
