@@ -1,0 +1,12 @@
+
+[tui]
+
+[copilot]
+enabled = false
+
+[notifications]
+clickable = true
+
+[keybindings]
+"app.model.cycleForward" = ["shift+tab"]
+"app.session.rename" = "ctrl+shift+r"

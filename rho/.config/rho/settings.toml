@@ -3,8 +3,6 @@ level = "debug"
 
 [claude]
 enabled = true
-
-[tui]
 # wheel_scroll_rows = 1
 
 # Integrations that act on their own; scripts/install.sh asks about any missing here.
@@ -16,12 +14,6 @@ research = true
 
 [jev]
 enabled = false
-
-[copilot]
-enabled = false
-
-[notifications]
-clickable = true
 
 [setup]
 wezterm = true
@@ -58,10 +50,6 @@ low = "low"
 medium = "medium"
 off = "none"
 xhigh = "xhigh"
-
-[keybindings]
-"app.model.cycleForward" = ["shift+tab"]
-"app.session.rename" = "ctrl+shift+r"
 
 [profiles.base]
 append_system_prompt = ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
