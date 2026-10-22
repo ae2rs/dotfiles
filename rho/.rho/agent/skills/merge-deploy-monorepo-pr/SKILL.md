@@ -43,7 +43,7 @@ If no unique current PR can be established, stop and ask the user.
 Wait for checks on the pinned PR number with the bundled guard, which also pins the head SHA and re-verifies mergeability:
 
 ```bash
-/Users/lucas/.pi/agent/skills/merge-deploy-monorepo-pr/scripts/wait-pr-ci.sh \
+/Users/lucas/.rho/agent/skills/merge-deploy-monorepo-pr/scripts/wait-pr-ci.sh \
   wesprint-io/monorepo "$pr" "$pinned_head_sha"
 ```
 
@@ -102,7 +102,7 @@ Take the hash from the Metadata output and require all visible Metadata image li
 Use the bundled watcher for this exact-run and Metadata parsing logic:
 
 ```bash
-/Users/lucas/.pi/agent/skills/merge-deploy-monorepo-pr/scripts/watch-backend-release.sh \
+/Users/lucas/.rho/agent/skills/merge-deploy-monorepo-pr/scripts/watch-backend-release.sh \
   "$monorepo_merge_sha" "$backend_image_name"
 ```
 
@@ -168,7 +168,7 @@ For each bumped service, use the infrastructure source to derive the exact image
 Start the read-only multi-target monitor before the Pulumi update reaches Kubernetes so initial generations, images, pod UIDs, and restart counts are captured. Repeat `--target` for every service:
 
 ```bash
-PYTHONUNBUFFERED=1 /Users/lucas/.pi/agent/skills/watch-api-rollouts/scripts/watch-api-rollouts.py \
+PYTHONUNBUFFERED=1 /Users/lucas/.rho/agent/skills/watch-api-rollouts/scripts/watch-api-rollouts.py \
   --expected-context gke_applications-5h1pm3n7_us-central1-b_us1b-applications \
   --target 'frontend/deployment/main-api:main-api=us-central1-docker.pkg.dev/registry-5h1pm3n7/backend/main:<hash>' \
   --require-change \
@@ -186,7 +186,7 @@ The monitor intentionally remains active for five minutes after Kubernetes says 
 In parallel with the Kubernetes monitor, watch only the infrastructure `Pulumi` push run whose `head_sha` equals the infrastructure merge SHA:
 
 ```bash
-/Users/lucas/.pi/agent/skills/merge-deploy-monorepo-pr/scripts/watch-infrastructure-deploy.sh \
+/Users/lucas/.rho/agent/skills/merge-deploy-monorepo-pr/scripts/watch-infrastructure-deploy.sh \
   "$infrastructure_merge_sha"
 ```
 
