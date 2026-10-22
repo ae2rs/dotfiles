@@ -1,7 +1,7 @@
 ---
 name: linear
 description: Read and write Linear tickets for the amoco workspace using the `linear` CLI. Covers viewing one or more issues, creating issues and sub-issues, and updating or commenting on them, following the Core/Backend (CBE) team conventions. Work-only — applies solely to the wesprint-io/monorepo and wesprint-io/infrastructure repos and their worktrees.
-compatibility: Requires the `linear` CLI (v2.x) authenticated to the `amoco` workspace (`linear auth whoami` should print lucasdc@amo.co). No Pi MCP is involved — all access is through the CLI.
+compatibility: Requires the `linear` CLI (v2.x) authenticated to the `amoco` workspace (`linear auth whoami` should print lucasdc@amo.co). No MCP is involved — all access is through the CLI.
 ---
 
 # Linear tickets (amoco workspace)

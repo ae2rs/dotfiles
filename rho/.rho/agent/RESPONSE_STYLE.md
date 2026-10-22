@@ -1,9 +1,9 @@
 <!--
-Appended to rho's system prompt after APPEND_SYSTEM.md, via appendSystemPrompt in
-cwd-profiles.json. rho-only: stock Pi does not load it.
+Appended to rho's system prompt after APPEND_SYSTEM.md, by the base profile in
+~/.config/rho/settings.toml.
 
 This file governs how answers are shaped, not what work is correct. Rules about code,
-commits, or a specific project belong in APPEND_SYSTEM.md or an AGENTS.md.
+commits, or a specific project belong in APPEND_SYSTEM.md or a profile.
 -->
 
 ## Response shape
