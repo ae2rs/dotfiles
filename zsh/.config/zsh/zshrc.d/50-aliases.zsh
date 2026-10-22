@@ -84,23 +84,6 @@ alias uv='noglob uv'
 alias c="claude"
 alias cr='c --resume'
 
-# --- Pi ---
-pi() {
-    case "$1" in
-        install|remove|uninstall|update|list|config)
-            command pi "$@"
-            ;;
-        *)
-            local agent_dir=${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}
-            CLAUDE_BRIDGE_ISOLATED=1 command pi --no-context-files --no-skills \
-                --append-system-prompt "$agent_dir/APPEND_SYSTEM.md" "$@"
-            ;;
-    esac
-}
-
-alias p="pi"
-alias pr='p --resume'
-
 alias r='rho'
 alias rr='rho --resume'
 

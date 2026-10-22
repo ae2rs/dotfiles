@@ -60,7 +60,7 @@ suggest = ["Requests name the file, crate or command they touch."]
 
 [profiles.dotfiles]
 suggest = [
-  "Personal dotfiles, stowed into place: neovim configuration in Lua, zsh, and agent configuration under pi/ and rho/.",
+  "Personal dotfiles, stowed into place: neovim configuration in Lua, zsh, and agent configuration under rho/.",
   '$ rho "add a which-key group for the diffview mappings"',
   '$ rho "make lualine show the current macro register"',
 ]
