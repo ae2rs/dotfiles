@@ -71,8 +71,7 @@ skills = ["skills/linear"]
 [profiles.monorepo]
 instructions = ["profiles/monorepo.md"]
 skills = [
-  "skills/merge-deploy-monorepo-pr",
-  "skills/watch-api-rollouts",
+  "skills/deploy-monorepo",
   "skills/regenerate-sqlx-cache",
   "skills/linear",
   "skills/rerun-codex-review",

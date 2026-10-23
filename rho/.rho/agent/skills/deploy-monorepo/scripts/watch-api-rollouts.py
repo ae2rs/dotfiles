@@ -60,9 +60,16 @@ def run(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     return result
 
 
+# Every kubectl call pins --context, so the user's current context is neither read nor changed.
+CONTEXT = ""
+
+
+def kubectl(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return run("kubectl", "--context", CONTEXT, *args, check=check)
+
+
 def kubectl_json(*args: str) -> dict[str, Any]:
-    result = run("kubectl", *args, "-o", "json")
-    return json.loads(result.stdout)
+    return json.loads(kubectl(*args, "-o", "json").stdout)
 
 
 def parse_target(value: str) -> Target:
@@ -127,16 +134,19 @@ def active_pod_statuses(target: Target, item: dict[str, Any]) -> list[dict[str, 
     for pod in pods:
         if pod.get("metadata", {}).get("deletionTimestamp") is not None:
             continue
+        if pod.get("status", {}).get("phase") in {"Succeeded", "Failed"}:
+            continue
         matches = [
             status
             for status in pod.get("status", {}).get("containerStatuses", [])
             if status.get("name") == target.container
         ]
-        if len(matches) != 1:
+        if len(matches) > 1:
             raise MonitorError(
                 f"{pod['metadata']['name']} has {len(matches)} statuses for {target.container}"
             )
-        status = matches[0]
+        # A just-scheduled pod has no container statuses yet: it reads as starting.
+        status = matches[0] if matches else {}
         state = status.get("state", {})
         waiting_reason = state.get("waiting", {}).get("reason")
         statuses.append(
@@ -226,16 +236,8 @@ def validate_pods(target: Target, item: dict[str, Any]) -> list[dict[str, Any]]:
 
 def diagnostics(target: Target) -> None:
     print(f"\n--- diagnostics for {target.display} ---", file=sys.stderr)
-    item_result = run(
-        "kubectl",
-        "get",
-        target.kind,
-        target.name,
-        "-n",
-        target.namespace,
-        "-o",
-        "json",
-        check=False,
+    item_result = kubectl(
+        "get", target.kind, target.name, "-n", target.namespace, "-o", "json", check=False
     )
     if item_result.returncode != 0:
         print(item_result.stderr, file=sys.stderr)
@@ -243,10 +245,10 @@ def diagnostics(target: Target) -> None:
     item = json.loads(item_result.stdout)
     selector = selector_for(item)
     for command in (
-        ("kubectl", "describe", target.kind, target.name, "-n", target.namespace),
-        ("kubectl", "get", "pods", "-n", target.namespace, "-l", selector, "-o", "wide"),
+        ("describe", target.kind, target.name, "-n", target.namespace),
+        ("get", "pods", "-n", target.namespace, "-l", selector, "-o", "wide"),
     ):
-        result = run(*command, check=False)
+        result = kubectl(*command, check=False)
         print(result.stdout[-12000:], file=sys.stderr)
         if result.stderr:
             print(result.stderr[-4000:], file=sys.stderr)
@@ -259,7 +261,6 @@ def diagnostics(target: Target) -> None:
         if pod["restarts"] > 0 or pod["waiting"] or not pod["ready"]:
             for previous in (False, True):
                 command = [
-                    "kubectl",
                     "logs",
                     "-n",
                     target.namespace,
@@ -270,19 +271,15 @@ def diagnostics(target: Target) -> None:
                 ]
                 if previous:
                     command.append("--previous")
-                result = run(*command, check=False)
+                result = kubectl(*command, check=False)
                 label = "previous" if previous else "current"
                 print(f"--- {pod['name']} {label} logs ---", file=sys.stderr)
                 print((result.stdout or result.stderr)[-12000:], file=sys.stderr)
 
 
 def monitor(args: argparse.Namespace) -> int:
-    context = run("kubectl", "config", "current-context").stdout.strip()
-    print(f"Kubernetes context: {context}")
-    if args.expected_context and context != args.expected_context:
-        raise MonitorError(
-            f"current context {context!r} does not match expected {args.expected_context!r}"
-        )
+    run("kubectl", "config", "get-contexts", CONTEXT)
+    print(f"Kubernetes context: {CONTEXT} (pinned with --context)")
 
     targets: list[Target] = args.target
     states = {target: initial_state(target) for target in targets}
@@ -369,15 +366,8 @@ def monitor(args: argparse.Namespace) -> int:
 
     # Confirm Kubernetes' native rollout predicate after our pod-by-pod polling.
     for target in targets:
-        result = run(
-            "kubectl",
-            "rollout",
-            "status",
-            target.ref,
-            "-n",
-            target.namespace,
-            "--timeout=30s",
-            check=False,
+        result = kubectl(
+            "rollout", "status", target.ref, "-n", target.namespace, "--timeout=30s", check=False
         )
         if result.returncode != 0:
             raise MonitorError(result.stderr.strip() or f"rollout failed for {target.display}")
@@ -470,7 +460,11 @@ def main() -> int:
         required=True,
         help="repeatable: namespace/kind/name:container=image",
     )
-    parser.add_argument("--expected-context", help="fail rather than switching context")
+    parser.add_argument(
+        "--context",
+        required=True,
+        help="kubeconfig context passed to every kubectl call; the current context is ignored",
+    )
     parser.add_argument("--wait-timeout", type=int, default=900)
     parser.add_argument("--rollout-timeout", type=int, default=900)
     parser.add_argument("--stability-seconds", type=int, default=300)
@@ -491,6 +485,8 @@ def main() -> int:
     if args.stability_seconds < 0 or args.poll_seconds <= 0:
         parser.error("stability must be non-negative and poll interval positive")
 
+    global CONTEXT
+    CONTEXT = args.context
     try:
         return monitor(args)
     except KeyboardInterrupt:
