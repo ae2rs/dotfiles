@@ -238,22 +238,24 @@ pglocal() {
       exit "$fail"'
 }
 
-# Connect to a production Cloud SQL instance as postgres: pg <name>
+# Connect to a production Cloud SQL instance as postgres: pg <name> [psql args...]
 pg() {
     emulate -L zsh
     local infra=/Users/lucas/work/infrastructure
     local -a names=($infra/production/secrets/cloudsql/*-root-password(N:t:s/-root-password//))
-    if (( $# != 1 )) || (( ! ${names[(Ie)$1]} )); then
-        print -u2 "usage: pg <name>"
+    if (( $# < 1 )) || (( ! ${names[(Ie)$1]} )); then
+        print -u2 "usage: pg <name> [psql args...]"
         print -u2 "  names: ${(j: :)names}"
         return 1
     fi
+    local name=$1
+    shift
 
     local password
     password=$(cd $infra && go run cmd/tools/secret/main.go decrypt \
-        --input production/secrets/cloudsql/$1-root-password) || return 1
-    PGPASSWORD=$password psql --host=$1-cloud-sql.cloudsql --port=5432 \
-        --dbname=postgres --username=postgres
+        --input production/secrets/cloudsql/$name-root-password) || return 1
+    PGPASSWORD=$password psql --host=$name-cloud-sql.cloudsql --port=5432 \
+        --dbname=postgres --username=postgres "$@"
 }
 alias devclean='docker ps -q | xargs -r docker stop && docker ps -aq | xargs -r docker rm && docker volume ls -q | xargs -r docker volume rm'
 unalias xcode 2>/dev/null
