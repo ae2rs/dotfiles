@@ -1,6 +1,6 @@
 ---
 name: prepare-review
-description: Prepare one of your own wesprint-io/monorepo pull requests, or a whole stack, for review — rewrite its body as a short, scannable description, add a review order with a note per file on what it does and why it changed, and mark every file that needs no judgement (tests, mechanical edits, plumbing, copies of a repeated edit) as viewed on GitHub. Use when asked to prepare a PR for review, write its description and review order, or mark its boring files as viewed.
+description: Prepare one of your own wesprint-io/monorepo pull requests, or a whole stack, for review — write or update its body as a short, scannable description only where it is missing or stale, add a review order with a note per file on what it does and why it changed, and mark every file that needs no judgement (tests, mechanical edits, plumbing, copies of a repeated edit) as viewed on GitHub. Use when asked to prepare a PR for review, write its description and review order, or mark its boring files as viewed.
 ---
 
 # Prepare a PR for review
@@ -112,7 +112,10 @@ Viewed state belongs to the GitHub user running `gh`. It resets when a later pus
 
 ## 5. Write the body
 
-Replace the whole body. If an earlier run left a `## Review order`, rewrite it rather than carry it over.
+Decide first whether the body needs work. Compare the old body against the diff and the `VIEWED` list from section 4:
+- **No template body yet** (no `## Review order`, or a stub from PR creation): write it in full from the template below.
+- **Stale in places**: change only those parts and keep the rest word for word. Stale means it describes behaviour the diff no longer has, names files the PR no longer touches (or misses files it now touches), or its marked-viewed lists differ from the actual `VIEWED` paths.
+- **Still accurate**: leave it alone. Do not rewrite it to reword it or reorder it.
 
 Style:
 - Short sentences. Simple words. Tight bullets, no blank lines between them.
@@ -156,12 +159,13 @@ Stacked on #<n> (<what it does>).   ← only when stacked
 - **Docs:** `<path>`: <the contract it states, if any>.
 ```
 
-Write it with `gh pr edit $n --repo $r --body-file /tmp/pr-$n-body.md`, then read it back with `gh pr view $n --repo $r --json body -q .body` (`pr://` may serve a cached body).
+When it changed, write it with `gh pr edit $n --repo $r --body-file /tmp/pr-$n-body.md`, then read it back with `gh pr view $n --repo $r --json body -q .body` (`pr://` may serve a cached body).
 
 ## 6. Report
 
 In chat, per PR:
 - how many files were marked viewed out of the total, and any `FAIL` lines.
+- whether the body was written, updated (which sections and why), or left as it was.
 - files that were already viewed or dismissed before the run. You left them as they are.
 - files left unviewed despite looking mechanical, with the reason for each.
 
