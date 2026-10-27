@@ -3,6 +3,7 @@ level = "debug"
 
 [claude]
 enabled = true
+account = "max"
 # wheel_scroll_rows = 1
 
 # Integrations that act on their own; scripts/install.sh asks about any missing here.
