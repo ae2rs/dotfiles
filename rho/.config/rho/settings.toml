@@ -52,6 +52,12 @@ medium = "medium"
 off = "none"
 xhigh = "xhigh"
 
+[mcp.servers.slack]                  # app A0CBB675Z7T in amo-paris; see docs/mcp.md
+url = "https://mcp.slack.com/mcp"
+client_id = "4558880155776.12385211203265"
+client_secret_env = "SLACK_MCP_CLIENT_SECRET" # in zsh/secrets/env.yaml (sops)
+callback_port = 47823
+
 [profiles.base]
 append_system_prompt = ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
 instructions = ["AGENTS.md"]
