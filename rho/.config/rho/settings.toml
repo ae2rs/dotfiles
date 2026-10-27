@@ -142,3 +142,9 @@ profile = "rho"
 [[profiles.rules]]
 origin = "ae2rs/dotfiles"
 profile = "dotfiles"
+
+[telegram]
+enabled = true
+token_env = "TELEGRAM_BOT_TOKEN" # in zsh/secrets/env.yaml (sops)
+user = 5644554797
+chat = -1004350164937
