@@ -18,6 +18,7 @@ Two entry points:
 - **Never mutate the cluster.** No restart, scale, delete, patch, rollback or context switch unless the user asks for it separately.
 - Run commands non-interactively, with explicit repository and PR numbers. Never rely on a current-branch default.
 - Do not use stacked-PR tooling, merge a stack, or update other PRs.
+- **Never block on a long wait.** Start each wait or watch script with `bash` in the background, give the user one status line, and end the turn. Its exit notice resumes the deploy, and the user can talk to you meanwhile. Do not call `run` `wait` on it, and do not prefix it with `sleep`.
 
 ## Scripts
 
@@ -143,15 +144,11 @@ Work from `/Users/lucas/work/infrastructure`.
 3. Create a fresh branch under `ae2rs/`. Make sure it exists neither locally nor on the remote.
 4. In `versions.go`, replace only the chosen services' hashes with the Metadata hash.
 5. Run `gofmt` on the file and read the diff.
-6. Run the PR's Go checks:
+6. Run the smoke test. The PR's CI runs `go test ./...` and builds the Pulumi program, so do not repeat them here:
 
    ```bash
    go test ./pkg/spec/ -run TestLoadSmoke -count=1
-   go test ./... -count=1
-   go build -ldflags='-s -w' -o /tmp/infrastructure-pulumi-program ./cmd/runs/gke/production
    ```
-
-   Always pass `-o`: the default output name `production` collides with the `production/` directory. Report any check that fails for an environmental reason; do not hide it.
 7. Commit one change in the repository's imperative subject style.
 8. Push with upstream tracking and open a PR against `main`. Put in the body: monorepo PR URL, merge SHA, release run URL, image hash, services bumped.
 
@@ -164,7 +161,7 @@ Never include unrelated files or existing changes.
   wesprint-io/infrastructure "$infra_pr" "$infra_head_sha"
 ```
 
-The `gke-applications/gke-applications - Update (preview)` Pulumi check attaches after the Actions jobs finish. Confirm it is present and successful.
+The `gke-applications/gke-applications - Update (preview)` Pulumi check attaches while the `Pull-request` job runs. The script waits for it to settle; confirm it is present and successful in its output.
 
 Then stop and hand the PR to the user with:
 
