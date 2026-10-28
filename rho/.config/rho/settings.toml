@@ -61,7 +61,7 @@ callback_port = 47823
 [profiles.base]
 append_system_prompt = ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
 instructions = ["AGENTS.md"]
-skills = ["skills/design-ui"]
+skills = ["skills/adhd", "skills/design-ui"]
 snippets = ["snippets"]
 suggest = ["Requests name the file, crate or command they touch."]
 
