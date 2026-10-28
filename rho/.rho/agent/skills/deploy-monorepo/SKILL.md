@@ -193,16 +193,14 @@ Query known namespaces directly: this account may not list workloads cluster-wid
 
 ### 8.2 Start the monitor
 
-In a full deploy, start it before the Pulumi run reaches Kubernetes, so it captures the starting generations, images, pod UIDs and restart counts. Repeat `--target` per service:
+In a full deploy, start it before the Pulumi run reaches Kubernetes, so it captures the starting generations, images, pod UIDs and restart counts. Start it as its own `bash` call, without `&`: rho keeps it running in the background as a run. Note its `run://<id>`. Repeat `--target` per service:
 
 ```bash
 PYTHONUNBUFFERED=1 /Users/lucas/.rho/agent/skills/deploy-monorepo/scripts/watch-api-rollouts.py \
   --context gke_applications-5h1pm3n7_us-central1-b_us1b-applications \
   --target 'frontend/deployment/main-api:main-api=us-central1-docker.pkg.dev/registry-5h1pm3n7/backend/main:<hash>' \
   --require-change \
-  --stability-seconds 300 &
-kubernetes_monitor_pid=$!
-trap 'kill "$kubernetes_monitor_pid" 2>/dev/null || true' EXIT
+  --stability-seconds 300
 ```
 
 Target syntax: `namespace/kind/workload-name:container-name=exact-image`.
@@ -230,7 +228,7 @@ The stability phase prints its remaining time and finish time, so it does not lo
 
 ### 8.3 Watch the infrastructure run
 
-In parallel with the monitor:
+In parallel with the monitor, as a second `bash` call:
 
 ```bash
 /Users/lucas/.rho/agent/skills/deploy-monorepo/scripts/watch-infrastructure-deploy.sh \
@@ -241,14 +239,9 @@ It pins the `Pulumi` push run whose head is the merge SHA, using the Actions API
 
 If `Reject stale runs` rejects it, find the newer successful main run carrying the same version, check the hash is still on main, and watch that one instead. Never rerun or bypass a failed deployment without the user's approval.
 
-Then wait for the monitor to finish its window:
+Give the user one status line and end the turn. Each run's exit notice brings you back; read its output from `run://<id>`. The deployment is done when both have exited. A non-zero exit from either is a failed or interrupted deployment.
 
-```bash
-wait "$kubernetes_monitor_pid"
-trap - EXIT
-```
-
-Any non-zero exit is a failed or interrupted deployment.
+If the infrastructure run fails, stop the monitor with `run` `cancel` and report.
 
 ### 8.4 Judge restarts
 
