@@ -2,6 +2,7 @@
 name: adhd
 description: Rewrite your previous response so a reader with ADHD can act on it — next action first, numbered steps, state restated, tangents cut, wins visible. Use only when the user invokes it by name.
 license: MIT, adapted from https://github.com/ayghri/i-have-adhd
+disable-model-invocation: true
 ---
 
 # Rewrite the last response for ADHD
