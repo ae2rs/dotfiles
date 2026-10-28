@@ -21,12 +21,12 @@ for _ in $(seq 1 120); do
 done
 [[ "${count:-0}" -gt 0 ]]
 
-gh pr checks "$pr" --repo "$repo" --watch --interval 15
+gh pr checks "$pr" --repo "$repo" --watch --fail-fast --interval 5
 
 # Allow late external checks (notably Pulumi Cloud previews) to attach.
 previous_count=-1
 stable_polls=0
-for _ in $(seq 1 60); do
+for _ in $(seq 1 120); do
 	json=$(gh pr view "$pr" --repo "$repo" \
 		--json state,isDraft,baseRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup,url)
 	count=$(jq '.statusCheckRollup | length' <<<"$json")
@@ -47,9 +47,9 @@ for _ in $(seq 1 60); do
 	else
 		stable_polls=0
 	fi
-	[[ "$stable_polls" -ge 2 ]] && break
+	[[ "$stable_polls" -ge 1 ]] && break
 	previous_count=$count
-	sleep 10
+	sleep 5
 done
 
 jq -e --arg head "$expected_head" '

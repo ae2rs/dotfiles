@@ -25,7 +25,7 @@ for _ in $(seq 1 180); do
 done
 [[ -n "$run_id" ]]
 
-gh run watch "$run_id" --repo "$repo" --exit-status --interval 15
+gh run watch "$run_id" --repo "$repo" --exit-status --interval 5
 gh run view "$run_id" --repo "$repo" \
 	--json status,conclusion,url,headSha,event,headBranch,name,jobs >"$run_json"
 

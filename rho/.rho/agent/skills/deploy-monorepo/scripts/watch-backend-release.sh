@@ -53,12 +53,12 @@ while :; do
 			exit 1
 		fi
 		echo "Waiting for a Backend: release run containing $sha..." >&2
-		sleep 10
+		sleep 5
 		continue
 	fi
 	read -r run_id run_head <<<"$run"
 	echo "Watching run $run_id at $run_head" >&2
-	gh run watch "$run_id" --repo "$repo" --exit-status --interval 10 >&2 || true
+	gh run watch "$run_id" --repo "$repo" --exit-status --interval 5 >&2 || true
 	gh run view "$run_id" --repo "$repo" \
 		--json status,conclusion,url,headSha,event,headBranch,name,jobs >"$run_json"
 	[[ "$(jq -r .conclusion "$run_json")" == cancelled ]] || break
