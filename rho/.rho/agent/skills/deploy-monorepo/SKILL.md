@@ -161,7 +161,7 @@ Never include unrelated files or existing changes.
   wesprint-io/infrastructure "$infra_pr" "$infra_head_sha"
 ```
 
-The `gke-applications/gke-applications - Update (preview)` Pulumi check attaches while the `Pull-request` job runs. The script waits for it to settle; confirm it is present and successful in its output.
+For `wesprint-io/infrastructure`, the script also requires the `gke-applications/gke-applications - Update (preview)` Pulumi check. Pulumi Cloud can post it after every GitHub job has finished, so the script waits until it is present and finished, and fails if it never appears.
 
 Then stop and hand the PR to the user with:
 
