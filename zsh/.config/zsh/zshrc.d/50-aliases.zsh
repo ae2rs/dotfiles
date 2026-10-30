@@ -75,6 +75,7 @@ ghpd() {
 # --- Other tools ---
 alias spo='spotify_player'
 alias ghd='gh dash'
+alias ghi='(cd ~/work/infrastructure && gh dash)'
 alias dc='docker compose'
 alias ai='aichat'
 # Lets `uv add pkg[extra]` through without quoting.
