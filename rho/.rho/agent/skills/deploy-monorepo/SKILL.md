@@ -17,7 +17,7 @@ Two entry points:
 - **Never merge the infrastructure PR.** The user merges it. Do not enable auto-merge or deploy around it.
 - **Never mutate the cluster.** No restart, scale, delete, patch, rollback or context switch unless the user asks for it separately.
 - Run commands non-interactively, with explicit repository and PR numbers. Never rely on a current-branch default.
-- Do not use stacked-PR tooling, merge a stack, or update other PRs.
+- Do not use stacked-PR tooling, merge stack PRs beyond the ones the user chose, or update other PRs.
 - **Never block on a long wait.** Start each wait or watch script with `bash` in the background, give the user one status line, and end the turn. Its exit notice resumes the deploy, and the user can talk to you meanwhile. Do not call `run` `wait` on it, and do not prefix it with `sleep`.
 
 ## Scripts
@@ -62,24 +62,36 @@ The script exits non-zero unless all of these hold:
 
 If the head moved, pin the new SHA and wait again. If a check failed, report it and stop.
 
-## 3. Ask, then squash-merge only that PR
+## 3. Ask, then squash-merge the chosen PRs
 
 ### Check the stack
 
-The monorepo uses GitHub native PR stacks. For a stacked PR, `gh pr merge` and the synchronous merge endpoint are rejected. The async endpoint merges every PR in the stack up to and including the target. So first prove it merges nothing else:
+The monorepo uses GitHub native PR stacks. For a stacked PR, `gh pr merge` and the synchronous merge endpoint are rejected. The async endpoint merges every PR in the stack up to and including the target. So first map the stack:
 
 1. Query `GET /repos/wesprint-io/monorepo/stacks` with API version `2026-03-10`. Find the one stack holding the PR.
-2. Require every `pull_requests` entry before the target to be merged already. Entries after it are not merged.
-3. If a predecessor is still open, stop and ask the user.
+2. Require every `pull_requests` entry before the PR to be merged already. If a predecessor is still open, stop and ask the user.
+3. Note every open entry after the PR. These are the candidates for a stack merge.
 4. If the PR is not in a stack, plan an ordinary explicit squash merge.
 
 ### Ask
 
-Ask the user with the questionnaire tool before merging. Give the PR URL, head SHA, CI result, merge method, and for a stack the PRs before and after it. Merge only on an explicit yes.
+Ask the user with the questionnaire tool before merging. Give the PR URL, head SHA, CI result and merge method.
+
+For a stacked PR with open PRs after it, also ask the scope, even when the user already approved the merge:
+
+- only this PR;
+- the stack up to and including each later open PR, listed by number and title, the top one being the whole stack.
+
+Merge only on an explicit yes. The target is the top PR of the chosen scope.
+
+For a scope wider than one PR, before merging:
+
+- pin each PR's `headRefOid` and run section 2 for each of them. Stop on any failure, as for one PR;
+- choose services (section 5) from the changed files of every PR in the scope.
 
 ### Merge
 
-For a stacked PR:
+For a stacked PR, with `$pr` and `$pinned_head_sha` the target's:
 
 ```bash
 response=$(gh api --method PUT \
@@ -93,7 +105,7 @@ response=$(gh api --method PUT \
 
 Take the UUID from `.details.uuid`. Poll `GET /repos/wesprint-io/monorepo/pulls/$pr/merge-async/$uuid` until `status: merged`. Any failed, rejected or cancelled status is fatal.
 
-Then confirm the target is `MERGED` and every later stack PR is still open. Record `mergeCommit.oid` and `mergedAt`. Never infer the merge SHA from the old branch head.
+Then confirm every PR in the scope is `MERGED` and every PR after the target is still open. Record each one's `mergeCommit.oid` and `mergedAt`. Never infer a merge SHA from an old branch head. The rest of the deploy uses the target's merge SHA: it is the tip of the push, and it contains the others.
 
 ## 4. Wait for the backend release
 
