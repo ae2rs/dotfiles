@@ -25,6 +25,11 @@ about a specific project belong in its profile under profiles/ instead.
 - Handle recoverable failures explicitly and add useful context at boundaries. Do not use `unwrap` or `expect` for production inputs or external conditions.
 - Organize code into domain-scoped modules with narrow, coherent public interfaces. Reserve `lib.rs` for module declarations and re-exports, never implementation logic.
 - Use structured concurrency. Every Tokio task must have a clear owner that awaits, cancels, or supervises it; never spawn a task that can accumulate without lifecycle control.
+- Choose `Option`, `Result` or `panic!` by contract: `Option` when the cause is obvious, `Result` when the caller needs to tell failures apart, `panic!` only for a violated invariant, never for bad input.
+- Name accessors `foo`, `foo_mut`, `set_foo`, `take_foo`, `replace_foo` and `with_foo` (closure access); never prefix a getter with `get_`.
+- Name extension traits `<Type>Ext` and keep them with the owner of the extended type.
+- Call free functions from other modules through their module (`mem::take`, not `take`); import types and traits unqualified unless the name is ambiguous.
+- Pair an important `From` impl with a named constructor, and give options structs a `Default`.
 
 ## Resource boundary
 
