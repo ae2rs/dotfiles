@@ -3,3 +3,5 @@
 *.db
 *.db-*
 tee/
+# Trust is given per machine, with `rtk trust`.
+trusted_filters.json

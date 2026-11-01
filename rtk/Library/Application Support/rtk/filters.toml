@@ -1,0 +1,71 @@
+schema_version = 1
+
+# Replaces the built-in `just` filter, which keeps a recipe's first 50 lines:
+# a failing check loses its error, the end of the output. rho already shows a
+# command's end, so this only drops noise and leaves the length alone.
+[filters.just]
+description = "just: drop blank lines and Playwright web server request logs"
+match_command = "^just\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\[WebServer\\] \\S+\\s+(TRACE|DEBUG|INFO) ",
+]
+
+[[tests.just]]
+name = "keeps a failure at the end and drops request logs"
+input = """
+$ playwright test
+[WebServer] 2026-11-01T10:00:00.000Z  INFO request{method=GET uri=/api/1}: done
+[WebServer] 2026-11-01T10:00:00.000Z DEBUG request{method=GET uri=/api/2}: done
+
+[WebServer] 2026-11-01T10:00:00.000Z  WARN server: slow request
+  1 failed
+error: Recipe `check` failed on line 4 with exit code 1
+"""
+expected = """
+$ playwright test
+[WebServer] 2026-11-01T10:00:00.000Z  WARN server: slow request
+  1 failed
+error: Recipe `check` failed on line 4 with exit code 1"""
+
+# Bazel lists every output file of every target it built, thousands of lines
+# for an app, and redraws its progress line for every action.
+[filters.bazel]
+description = "bazel: drop output file listings and progress lines"
+match_command = "^bazel\\s+(build|test|run|coverage)\\b"
+strip_ansi = true
+strip_lines_matching = [
+  "^\\s*$",
+  "^\\s+bazel-(out|bin|testlogs)/",
+  "^(\\(\\d+:\\d+:\\d+\\) )?\\[[\\d,]+ / [\\d,]+\\] ",
+  "^(Loading|Analyzing|Computing main repo mapping|Fetching):",
+  "^INFO: (Invocation ID|Streaming build results|Current date|Reading rc options|Analyzed \\d+|Found \\d+|Build option|Running command line|Elapsed time|\\d+ processes)",
+]
+
+[[tests.bazel]]
+name = "keeps targets, errors and the summary"
+input = """
+INFO: Invocation ID: 1b2c
+Loading: 0 packages loaded
+INFO: Analyzed 3 targets (0 packages loaded, 0 targets configured).
+INFO: Found 3 targets...
+[1,204 / 1,210] Compiling Rust rlib //rs/a:a; 3s darwin-sandbox
+(10:00:01) [1,208 / 1,210] Linking //app:app; 1s local
+ERROR: /w/rs/a/BUILD.bazel:3:8: Compiling Rust rlib //rs/a:a failed
+error[E0425]: cannot find value `x` in this scope
+Target //app:app up-to-date:
+  bazel-out/ios_sim_arm64-dbg/bin/app/app.ipa
+  bazel-bin/app/app_objs/main.o
+INFO: Elapsed time: 12.3s, Critical Path: 9.1s
+INFO: 12 processes: 3 internal, 9 darwin-sandbox.
+INFO: Build completed successfully, 12 total actions
+//rs/a:test                                                     PASSED in 0.4s
+"""
+expected = """
+INFO: Found 3 targets...
+ERROR: /w/rs/a/BUILD.bazel:3:8: Compiling Rust rlib //rs/a:a failed
+error[E0425]: cannot find value `x` in this scope
+Target //app:app up-to-date:
+INFO: Build completed successfully, 12 total actions
+//rs/a:test                                                     PASSED in 0.4s"""
