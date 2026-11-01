@@ -256,7 +256,7 @@ This makes it easier to find things, and avoids mixing structure and contents.
 
 ### Don’t use glob imports
 
-> **Monorepo — Lint (CBE-3856).** Decided 2026-11-01: ban glob imports, first-party preludes included; third-party preludes (futures, chrono, restate_sdk, wasm_bindgen, rayon, rand) stay allowed. `wildcard_imports` is on but inert here: clippy lints only `--test` crate variants and the lint skips test crates, and it exempts every `prelude` path anyway, so enforcement is a marcel rule. Today: 4,093 first-party prelude globs (about 3,980 `error::prelude::*`, which hides `Context as _` and friends), 17 crates defining `pub mod prelude`, about 200 other globs.
+> **Monorepo — Lint (CBE-3856).** Decided 2026-11-01: ban glob imports, first-party preludes included; third-party preludes (futures, chrono, restate_sdk, wasm_bindgen, rayon, rand) stay allowed. `wildcard_imports` and `enum_glob_use` are on but were inert: clippy linted only each crate's `--test` build, and the lint skips the whole compilation when it is a test. CBE-3856 lints the plain build too (132 globs, 4 enum globs fixed). Clippy still exempts every `prelude` path and cannot allowlist only third-party ones, so first-party preludes go by deleting the 17 `pub mod prelude` modules; any leftover glob then fails to compile. About 3,980 `error::prelude::*` sites, which hide `Context as _` and friends.
 
 Don't use glob imports, except in the following situations where you may
 optionally do so at your own discretion:
