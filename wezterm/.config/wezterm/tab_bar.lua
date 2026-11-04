@@ -253,7 +253,7 @@ function M.apply_to_config(config)
 	tabline.apply_to_config(config)
 	config.enable_tab_bar = true
 	config.use_fancy_tab_bar = false
-	config.hide_tab_bar_if_only_one_tab = true
+	config.hide_tab_bar_if_only_one_tab = false
 	config.show_new_tab_button_in_tab_bar = false
 	config.tab_max_width = 32
 end
