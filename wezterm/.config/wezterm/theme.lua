@@ -20,5 +20,6 @@ return {
 		green = scheme.ansi[3],
 		yellow = scheme.ansi[4],
 		aqua = scheme.ansi[7],
+		red = scheme.ansi[2],
 	},
 }

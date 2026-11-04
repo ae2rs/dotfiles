@@ -171,6 +171,28 @@ local function net_usage()
 	return net_cache
 end
 
+local rho = require("rho")
+local rho_marks = {
+	working = { "●", palette.yellow },
+	question = { "?", palette.blue },
+	stopped = { "✕", palette.red },
+	unread = { "●", palette.green },
+}
+
+-- What rho in the tab is doing, one cell wide in every state so the title
+-- never shifts. The tab's own colour is set back after the mark.
+local function rho_activity(tab)
+	local mark = rho_marks[rho.activity(tab.active_pane)]
+	if not mark then
+		return " "
+	end
+	return wezterm.format({
+		{ Foreground = { Color = mark[2] } },
+		{ Text = mark[1] },
+		{ Foreground = { Color = tab.is_active and palette.yellow or palette.fg } },
+	})
+end
+
 tabline.setup({
 	options = {
 		icons_enabled = true,
@@ -204,10 +226,12 @@ tabline.setup({
 		tabline_b = { { "", cond = false } },
 		tabline_c = { { "", cond = false } },
 		tab_active = {
+			rho_activity,
 			"index",
 			{ "cwd", padding = { left = 0, right = 1 } },
 		},
 		tab_inactive = {
+			rho_activity,
 			"index",
 			{ "cwd", padding = { left = 0, right = 1 } },
 		},
