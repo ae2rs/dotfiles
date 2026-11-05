@@ -172,22 +172,28 @@ local function net_usage()
 end
 
 local rho = require("rho")
+-- The working star rapid-blinks (SGR 6), which WezTerm's renderer animates by
+-- itself: no Lua runs and the tab bar is not rebuilt. Animating the glyph
+-- from Lua would rebuild every tab's title on each frame instead.
 local rho_marks = {
-	working = { "●", palette.yellow },
+	working = { "\27[6m✦\27[25m", palette.blue },
 	question = { "?", palette.blue },
 	stopped = { "✕", palette.red },
-	unread = { "●", palette.green },
+	unread = { "●", palette.blue },
 }
 
 -- What rho in the tab is doing, one cell wide in every state so the title
 -- never shifts. The tab's own colour is set back after the mark.
 local function rho_activity(tab)
-	local mark = rho_marks[rho.activity(tab.active_pane)]
+	local activity = rho.activity(tab.active_pane)
+	local mark = rho_marks[activity]
 	if not mark then
 		return " "
 	end
+	-- Only the active tab's working star is coloured; the others pulse in grey.
+	local color = (activity == "working" and not tab.is_active) and palette.muted or mark[2]
 	return wezterm.format({
-		{ Foreground = { Color = mark[2] } },
+		{ Foreground = { Color = color } },
 		{ Text = mark[1] },
 		{ Foreground = { Color = tab.is_active and palette.yellow or palette.fg } },
 	})
@@ -256,6 +262,14 @@ function M.apply_to_config(config)
 	config.hide_tab_bar_if_only_one_tab = false
 	config.show_new_tab_button_in_tab_bar = false
 	config.tab_max_width = 32
+	-- The working star's pulse: an eased fade out, then back in, each taking
+	-- this many ms. Programs rarely use rapid blink, so this hardly touches the
+	-- terminal itself.
+	config.text_blink_rate_rapid = 1200
+	config.text_blink_rapid_ease_in = "EaseInOut"
+	config.text_blink_rapid_ease_out = "EaseInOut"
+	-- 10, the default, makes the fade stutter. 60 measured no costlier.
+	config.animation_fps = 60
 end
 
 return M
