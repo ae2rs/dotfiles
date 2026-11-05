@@ -199,6 +199,11 @@ local function rho_activity(tab)
 	})
 end
 
+-- The first tab starts under the window's rounded corner.
+local function corner_inset(tab)
+	return tab.tab_index == 0 and " " or ""
+end
+
 tabline.setup({
 	options = {
 		icons_enabled = true,
@@ -232,11 +237,13 @@ tabline.setup({
 		tabline_b = { { "", cond = false } },
 		tabline_c = { { "", cond = false } },
 		tab_active = {
+			corner_inset,
 			rho_activity,
 			"index",
 			{ "cwd", padding = { left = 0, right = 1 } },
 		},
 		tab_inactive = {
+			corner_inset,
 			rho_activity,
 			"index",
 			{ "cwd", padding = { left = 0, right = 1 } },
