@@ -179,7 +179,7 @@ local rho_marks = {
 	working = { "\27[6m✦\27[25m", palette.blue },
 	question = { "?", palette.blue },
 	stopped = { "✕", palette.red },
-	unread = { "●", palette.blue },
+	unread = { "•", palette.green },
 }
 
 -- What rho in the tab is doing, one cell wide in every state so the title
