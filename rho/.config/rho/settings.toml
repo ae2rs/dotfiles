@@ -63,6 +63,7 @@ append_system_prompt = ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
 instructions = ["AGENTS.md"]
 skills = ["skills/adhd", "skills/design-ui", "skills/eddy-malou", "skills/google-rust-style"]
 snippets = ["snippets"]
+cleanup = "cleanup"
 suggest = ["Requests name the file, crate or command they touch."]
 
 [profiles.dotfiles]
@@ -84,6 +85,8 @@ skills = [
   "skills/rerun-codex-review",
   "skills/prepare-review",
 ]
+snippets = ["snippets/monorepo"]
+cleanup = "cleanup-monorepo"
 suggest = [
   "A Bazel monorepo: Rust under rs/ (engine, mobile, platform, proto, geodata), a TypeScript web app under web/, iosapp/ and android/.",
   "Backend services live under rs/engine/api/back/.",
