@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  At login, start this Mac's rho server and `rho machine`, so the web reaches Mac sessions
+  without anyone opening rho first. An interactive login zsh gives both the environment a
+  terminal would: PATH from .zshrc, secrets from .zshenv.
+  No KeepAlive: `rho server restart` replaces the server outside launchd, and rho starts
+  `rho machine` again whenever it runs. A server already running is left alone.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>onl.factory.rho</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/zsh</string>
+		<string>-lic</string>
+		<string>rho server status | grep -q '^running:' || rho server restart; exec rho machine</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>AbandonProcessGroup</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/Users/lucas/.local/state/rho/launchd.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/lucas/.local/state/rho/launchd.log</string>
+</dict>
+</plist>
