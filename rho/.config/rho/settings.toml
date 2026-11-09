@@ -75,6 +75,7 @@ suggest = [
 
 [profiles.infrastructure]
 skills = ["skills/linear"]
+resources = ["linear"]
 
 [profiles.monorepo]
 instructions = ["profiles/monorepo.md"]
@@ -86,6 +87,7 @@ skills = [
   "skills/prepare-review",
 ]
 snippets = ["snippets/monorepo"]
+resources = ["linear"]
 cleanup = "cleanup-monorepo"
 suggest = [
   "A Bazel monorepo: Rust under rs/ (engine, mobile, platform, proto, geodata), a TypeScript web app under web/, iosapp/ and android/.",

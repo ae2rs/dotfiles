@@ -1,104 +1,128 @@
 ---
 name: linear
-description: Read and write Linear tickets for the amoco workspace using the `linear` CLI. Covers viewing one or more issues, creating issues and sub-issues, and updating or commenting on them, following the Core/Backend (CBE) team conventions. Work-only — applies solely to the wesprint-io/monorepo and wesprint-io/infrastructure repos and their worktrees.
-compatibility: Requires the `linear` CLI (v2.x) authenticated to the `amoco` workspace (`linear auth whoami` should print lucasdc@amo.co). No MCP is involved — all access is through the CLI.
+description: Read and write Linear tickets for the amoco workspace through rho's linear:// resource. Covers viewing issues, creating issues and sub-issues, and updating or commenting on them, following the Core/Backend (CBE) team conventions. Work-only — applies solely to the wesprint-io/monorepo and wesprint-io/infrastructure repos and their worktrees.
+compatibility: Requires the `linear` CLI (v2.x) on PATH and logged in to the `amoco` workspace (`linear auth whoami` prints lucasdc@amo.co); linear:// runs through its login. The profile must list `resources = ["linear"]`.
 ---
 
 # Linear tickets (amoco workspace)
 
-Linear is work-only tooling. Everything here goes through the `linear` CLI, which is
-already authenticated (`linear auth whoami` → lucasdc@amo.co, workspace `amoco`).
+Linear is work-only. Only the `monorepo` and `infrastructure` profiles declare this
+skill and mount `linear://`, so neither appears elsewhere.
 
-Only the work profiles in `cwd-profiles.json` declare this skill (`monorepo` and
-`infrastructure`), so you will not see it elsewhere.
+Work through `linear://` with the ordinary tools, not the `linear` CLI. No JSON, no
+`jq`, no description files, no `--help`.
 
 ## Requests
 
-When invoked as `/skill:linear <request>`, act on the request, following the
-conventions below:
+When invoked as `/skill:linear <request>`, act on it with the conventions below:
 
-- **Ticket IDs** (e.g. `CBE-3052`): `linear issue view` each and give a concise
-  summary; include sub-issues when relevant.
-- **Create:** draft the title(s) with the naming convention (read the parent's title
-  first for sub-issues), show the plan, and create them with `--team CBE -a self`
-  (plus `--parent` for sub-issues) after the user confirms.
-- **Update or comment:** make the change with the CLI and re-view to confirm.
-- **Nothing asked:** run `linear issue mine`, summarise the open issues, and ask what
-  to do.
+- **Ticket IDs** (e.g. `CBE-3052`): `read linear://CBE-3052` for each and give a short
+  summary. Read sub-issues when they matter.
+- **Create:** draft the title(s) with the naming convention (read the parent first for
+  sub-issues), show the plan, and write `linear://new` once the user confirms.
+- **Update or comment:** `edit` the issue, or write its `comment` target. The receipt
+  says what changed.
+- **Nothing asked:** `read linear://` (your open issues), summarise, and ask what to do.
 
 Echo back the resulting issue IDs and URLs.
 
 ## Conventions
 
-- **Team:** Core/Backend, key `CBE`. No default team is configured on this machine, so
-  always pass `--team CBE` when creating an issue (unless the user names another team,
-  e.g. `APPS`, `IOS`, `SRE`).
-- **Assignee:** yourself by default → `-a self`. Only assign someone else when the user
-  says so.
+- **Team:** Core/Backend, key `CBE`. Always set `team:` on a new issue: `CBE` unless the
+  user names another team (`APPS`, `IOS`, `SRE`, …).
+- **Assignee:** yourself by default, `assignee: me`. Assign someone else only when the
+  user says so.
 - **Title naming — pipe-separated hierarchy.** Each level appends ` | <detail>` to its
-  parent's title, so a title reads as a breadcrumb of where it sits. From `CBE-3052`:
+  parent's title, so a title reads as a breadcrumb. From `CBE-3052`:
   - Epic (parent): `Reengagement SMS V2`
   - Direct sub-issue: `Reengagement SMS V2 | Targeting`
-  - Direct sub-issue: `Reengagement SMS V2 | Design & Implement new SMS heuristics`
   - Sub-sub-issue: `Reengagement SMS V2 | Design & Implement new SMS heuristics | Add LiveActivity as a Channel`
 
-  When creating a sub-issue, look up the parent's title first and prefix the new title
-  with it. Cross-team children keep the epic prefix but live under their own team (e.g.
+  For a sub-issue, read the parent and reuse its exact title as the prefix.
+  Cross-team children keep the epic prefix but live under their own team (e.g.
   `APPS-3627: Reengagement | Friendship Created Live Activity`).
 
-## Reading tickets
+## The issue document
 
-- `linear issue view CBE-3052` — full details (title, state, priority, assignee, parent,
-  sub-issues, description, comments). Add `--no-comments` to trim, `-j` for JSON.
-- `linear issue view CBE-3052 -w` / `-a` — open in browser / Linear.app.
-- `linear issue mine` — your unstarted issues; `--all-states` for everything.
-- `linear issue query --team CBE --search "<term>" -s started` — structured search;
-  repeatable `-s`/`-l`/`--team`, `-j` for JSON. See `linear issue query --help`.
-- `linear issue id` — the issue for the current git branch (worktree-aware).
+`read linear://cbe-3052` (any case) gives front matter, then the description:
 
-When the user gives several ticket IDs, view each one and summarize; don't dump raw
-output unless they ask.
+```
+---
+title: Reengagement SMS V2 | Targeting
+team: CBE
+state: In Progress
+assignee: lucasdc
+priority: High
+project:
+labels: Growth
+parent: CBE-3052
+due:
+blocks:
+blocked-by:
+related: CBE-3061
+links:
+  - https://github.com/wesprint-io/monorepo/pull/123 PR 123
+# read-only
+url: https://linear.app/amoco/issue/CBE-3060
+children:
+  - CBE-3070 (Todo) Reengagement SMS V2 | Targeting | Cohorts
+comments: 2, read linear://CBE-3060/comments
+---
+Description in markdown.
+```
+
+- `edit` it like a file. Only what changed is sent.
+- `write` a partial document: a key left out stays as it is, and an empty value clears it.
+- State, label, user and project names match in any case. A wrong one fails and lists
+  the valid ones, so read the error rather than guessing again.
+- `priority` is None, Urgent, High, Medium or Low. `due` is `YYYY-MM-DD`.
+- `blocks`, `blocked-by` and `related` are comma-separated IDs. Removing one deletes
+  that relation.
+- `links` can only be added, one `  - <url> [title]` line each.
+- Linear normalises markdown. When it rewrites a description, the receipt says so:
+  read the issue again before the next edit.
 
 ## Creating tickets
 
-Prefer `--description-file` for anything with markdown; inline `-d` is fine for a line.
+Write a document to `linear://new`. `team` and `title` are required. The receipt gives
+the new ID and URL.
 
-```sh
-# Top-level issue in CBE, assigned to me
-linear issue create --team CBE -a self -t "<Epic title>" \
-  --description-file /tmp/desc.md -p 2
-
-# Sub-issue under CBE-3052 — prefix the title with the parent's title
-linear issue create --team CBE -a self --parent CBE-3052 \
-  -t "Reengagement SMS V2 | <new detail>" -d "<one-line body>"
+```
+---
+team: CBE
+title: Reengagement SMS V2 | <new detail>
+assignee: me
+parent: CBE-3052
+priority: Medium
+---
+Why and what, in markdown.
 ```
 
-Useful flags: `-p 1..4` (1 = highest), `--estimate`, `-l <label>` (repeatable),
-`--project`, `--milestone`, `--cycle`, `--due-date`, `--start` (start it after
-creation). Run `linear issue create --help` for the full list.
+The project is not copied from the parent. Set `project:` when it should have one.
+For a batch of sub-tickets, write `linear://new` once per ticket, each title carrying
+the shared prefix.
 
-For a batch of sub-tickets, create them one at a time under the same `--parent`, each
-title carrying the shared prefix. Echo back the new IDs/URLs when done.
+## Reading and listing
 
-## Updating & commenting
+- `read linear://CBE-3052/comments` — the thread, replies under their comment.
+- `write linear://CBE-3052/comment` — post a comment, in markdown.
+- `ls linear://` or `read linear://` — your open issues, 50 at most.
+- `read linear://?team=CBE&state=started&assignee=*&label=Growth&search=sms&limit=100`
+  — others. `assignee` takes `*` (anyone), `none`, `me` or a name. `state` takes
+  `open`, `all`, a type (`triage`, `backlog`, `unstarted`, `started`, `completed`,
+  `canceled`) or a state name. `label` repeats.
 
-- `linear issue update CBE-3060 -s "In Progress"` — change state, assignee (`-a`),
-  priority, title, parent, labels, etc. (same flags as create).
-- `linear issue start CBE-3060` — move to started and create/switch the git branch.
-- `linear issue comment add CBE-3060 -b "<comment>"` (see `... comment add --help`).
-- `linear issue relation ...` — dependencies/blocks between issues.
+## Still the CLI
+
+Only for what `linear://` cannot do:
+
+- `linear issue delete <ID>` — destructive; confirm with the user first.
+- `linear issue start <ID>` — move it to started and create the git branch.
+- `linear issue id` — the issue of the current git branch.
+- Documents, cycles, initiatives and history: `linear api` with a GraphQL query on stdin.
 
 ## Pitfalls
 
-- Don't create without `--team CBE`; there is no configured default team and creation
-  will fail or land in the wrong place.
-- Don't invent a title prefix — read the parent (`linear issue view <parent>`) and reuse
-  its exact title before appending ` | <detail>`.
-- Confirm before creating multiple tickets or deleting anything; deletion
-  (`linear issue delete`) is destructive.
-
-## Verification
-
-- After creating: `linear issue view <newId>` shows the expected team, assignee, parent,
-  and title prefix.
-- After updating: re-view the issue and confirm the changed field.
+- Never create without `team:`; there is no default team.
+- Don't invent a title prefix: read the parent and reuse its exact title.
+- Confirm before creating several tickets or deleting anything.
