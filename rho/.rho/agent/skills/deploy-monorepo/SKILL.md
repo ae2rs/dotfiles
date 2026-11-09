@@ -1,7 +1,7 @@
 ---
 name: deploy-monorepo
-description: Deploy a wesprint-io/monorepo backend change end to end, or just watch production API rollouts. The full path waits for green PR CI, merges the current PR only after the user approves, waits for the backend release, opens an infrastructure version-bump PR for the user to merge, then watches the Pulumi run and the Kubernetes rollout through a crash-free stability window. The watch-only path checks whether one or more API Deployments or StatefulSets rolled out and stay healthy. Use when asked to merge and deploy the monorepo PR, or to watch, verify or report the health of a rollout.
-compatibility: Requires gh, git, jq, Python 3, kubectl access to the production cluster, access to wesprint-io/monorepo and wesprint-io/infrastructure, and checkouts at /Users/lucas/work/monorepo and /Users/lucas/work/infrastructure.
+description: Deploy a wesprint-io/monorepo backend change end to end, or just watch production API rollouts. The full path waits for green PR CI, merges the current PR only after the user approves, waits for the backend release, opens an infrastructure version-bump PR for the user to merge and drafts its Slack bump message, then watches the Pulumi run and the Kubernetes rollout through a crash-free stability window. The watch-only path checks whether one or more API Deployments or StatefulSets rolled out and stay healthy. Use when asked to merge and deploy the monorepo PR, or to watch, verify or report the health of a rollout.
+compatibility: Requires gh, git, jq, Python 3, kubectl access to the production cluster, access to wesprint-io/monorepo and wesprint-io/infrastructure, the Slack MCP server, and checkouts at /Users/lucas/work/monorepo and /Users/lucas/work/infrastructure.
 ---
 
 # Deploy a monorepo PR
@@ -175,15 +175,28 @@ Never include unrelated files or existing changes.
 
 For `wesprint-io/infrastructure`, the script also requires the `gke-applications/gke-applications - Update (preview)` Pulumi check. Pulumi Cloud can post it after every GitHub job has finished, so the script waits until it is present and finished, and fails if it never appears.
 
-Then stop and hand the PR to the user with:
+Once the PR is ready (not a draft) and its CI is green, draft the bump message (below), then stop and hand the PR to the user with:
 
 - monorepo PR URL and merge SHA;
 - release run URL, and `runHeadSha` if `exact` was false;
 - image hash;
 - services bumped;
 - infrastructure PR URL and CI result;
+- the bump message and the Slack draft's `channel_link`, or why no draft was created;
 - validation caveats;
 - a request to merge the infrastructure PR and say when it is done.
+
+### Draft the bump message
+
+Take the services from the infrastructure PR's diff of `production/applications/versions/versions.go`: every `Overrides` key whose hash changed, plus every service that points at a shared hash variable (such as `BumpyHash`) that changed. If `ReleaseHash` changed, ask the user instead of drafting.
+
+The message is one line, the services in the file's order, each wrapped in backticks, nothing else:
+
+```text
+:bump: `name-api` `name-2-api`
+```
+
+Create it as a Slack draft, never a sent message: `slack/slack_send_message_draft` with `channel_id` `C0ALZF3FVA8` (#backend-release). It returns the `channel_link` to give the user. Slack allows one draft per channel and this tool cannot replace one: on `attached_draft_exists`, do not retry; put the message in the hand-off and say the old draft must be sent or deleted first.
 
 ## 8. Watch the rollout
 
