@@ -4,14 +4,23 @@ level = "debug"
 [claude]
 enabled = true
 account = "max"
-# wheel_scroll_rows = 1
+
+[copilot]
+enabled = false
 
 # Integrations that act on their own; scripts/install.sh asks about any missing here.
 [rtk]
 enabled = true
 
+[notifications]
+clickable = true
+
 [web]
 research = true
+
+[keybindings]
+"app.model.cycleForward" = ["shift+tab"]
+"app.session.rename" = "ctrl+shift+r"
 
 [jev]
 enabled = false
