@@ -156,3 +156,13 @@ profile = "rho"
 [[profiles.rules]]
 origin = "ae2rs/dotfiles"
 profile = "dotfiles"
+
+[server]
+upstream = "wss://agora.factory.onl"
+
+# The hostname changes with the network: Tailscale's home tailnet turns it into a ts.net name.
+[machine]
+name = "Lucass-MacBook-Pro.local"
+
+[memory]
+engram_url = "https://agora.factory.onl"
