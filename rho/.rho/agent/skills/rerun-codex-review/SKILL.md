@@ -26,7 +26,7 @@ Codex sees only the diff, the PR title and body, and the trigger comment's body 
      --jq ".data.repository.pullRequest.comments.nodes[] | select((.isMinimized | not) and ((.author.login == \"github-actions\" and (.body | startswith(\"<!-- codex-review -->\"))) or (.author.login == \"$me\" and (.body | contains(\"@codex\"))))) | .id"
    ```
 
-3. Before folding anything, read the unfolded reviews, the replies to them and the previous trigger comment (`pr://<n>/comments`), and write the new trigger comment body to a file:
+3. Before folding anything, read the unfolded reviews, the replies to them and the previous trigger comment (`read pr://<n>/comments`), and draft the new trigger comment body:
    - First line: `@codex review this PR`.
    - A few lines of context: what the PR does, where it sits in its stack, and what is out of scope (handled in another PR or ticket).
    - Every settled finding from earlier reviews, one bullet each, so Codex does not raise it again: fixed (name the commit by subject, since restacks change shas), or accepted by the user (won't fix / documented / irrelevant), with the one-line reason.
@@ -34,7 +34,7 @@ Codex sees only the diff, the PR title and body, and the trigger comment's body 
    - No line may be exactly `PROMPT_EOF`: the body is spliced into that heredoc.
 4. Fold each comment found in step 2 as outdated; never delete one:
    `gh api graphql -f id=<id> -f query='mutation($id:ID!){minimizeComment(input:{subjectId:$id,classifier:OUTDATED}){minimizedComment{isMinimized}}}'`
-5. Post the trigger: `gh pr comment $n --repo $r --body-file <file>`
+5. Post the trigger: `write` the body to `pr://<n>/comment`. The receipt names the new comment's URL.
 6. Verify by re-running step 2: only the new trigger comment is left unfolded. Record its `created_at` as `since`.
 
 ## 2. Wait for the review
@@ -48,7 +48,7 @@ Codex sees only the diff, the PR title and body, and the trigger comment's body 
    done
    ```
 
-8. Read the new comment. If the marker line is not followed by a `### Summary` review (for example "The code review could not be generated."), report it and stop.
+8. Read the new comment: the last entry of `read pr://<n>/comments`. If the marker line is not followed by a `### Summary` review (for example "The code review could not be generated."), report it and stop.
 
 ## 3. Work through the findings
 

@@ -21,7 +21,7 @@ The goal: the reviewer opens only the files that need judgement. Every other fil
    `viewerViewedState` is `VIEWED`, `UNVIEWED`, or `DISMISSED` (viewed, then changed by a later push).
 4. Save the patch: `gh pr diff $n --repo $r > /tmp/pr-$n.diff`. If it fails as too large, use `gh api --paginate repos/$r/pulls/$n/files` and read each file's `patch`.
 5. Index it: `grep -n '^diff --git' /tmp/pr-$n.diff`, then `read` every hunk. Do not classify a file from its name or its `+N -M` count. Test files and `.sqlx/query-*.json` only need a skim: confirm they are what their path says, and note what each test covers.
-6. Read the old body (`gh pr view $n --repo $r --json body -q .body`). Keep its Linear link, its "Stacked on #N" note and its testing line. A PR whose `baseRefName` is not `main` is stacked; one that targets `main` may still be, so trust the old body's stack note too.
+6. Read the old body: `read pr://<n>`, the description below the front matter. Keep its Linear link, its "Stacked on #N" note and its testing line. A PR whose `baseRefName` is not `main` is stacked; one that targets `main` may still be, so trust the old body's stack note too.
 
 ## 2. Classify every file
 
@@ -159,7 +159,7 @@ Stacked on #<n> (<what it does>).   ← only when stacked
 - **Docs:** `<path>`: <the contract it states, if any>.
 ```
 
-When it changed, write it with `gh pr edit $n --repo $r --body-file /tmp/pr-$n-body.md`, then read it back with `gh pr view $n --repo $r --json body -q .body` (`pr://` may serve a cached body).
+When it changed, `edit` the description in `pr://<n>`, or `write` `pr://<n>` as a `---` line, a second `---` line, then the new body: keys left out of the front matter stay as they are. The receipt says what changed; no read-back is needed.
 
 ## 6. Report
 

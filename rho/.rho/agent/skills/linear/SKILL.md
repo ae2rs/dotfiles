@@ -104,7 +104,10 @@ the shared prefix.
 
 ## Reading and listing
 
-- `read linear://CBE-3052/comments` — the thread, replies under their comment.
+- `read linear://CBE-3052/comments` — the thread, oldest first, each comment numbered `#i`,
+  replies under their comment.
+- `read linear://CBE-3052/comments/2` — comment #2's body. `edit` it, or `write` a new
+  body, to change it. An empty body is refused: deleting stays in the CLI.
 - `write linear://CBE-3052/comment` — post a comment, in markdown.
 - `ls linear://` or `read linear://` — your open issues, 50 at most.
 - `read linear://?team=CBE&state=started&assignee=*&label=Growth&search=sms&limit=100`
@@ -117,6 +120,8 @@ the shared prefix.
 Only for what `linear://` cannot do:
 
 - `linear issue delete <ID>` — destructive; confirm with the user first.
+- Deleting a comment: `linear api` with the `commentDelete` mutation on stdin; confirm
+  first.
 - `linear issue start <ID>` — move it to started and create the git branch.
 - `linear issue id` — the issue of the current git branch.
 - Documents, cycles, initiatives and history: `linear api` with a GraphQL query on stdin.
