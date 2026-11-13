@@ -2,6 +2,9 @@ prSections:
 - title: My Pull Requests
   filters: is:open author:@me
   type: null
+- title: My Stacked PRs
+  filters: is:open author:@me -base:main -base:master
+  type: null
 - title: Needs My Review
   filters: is:open review-requested:@me
   type: null
@@ -42,8 +45,7 @@ defaults:
         width: 20
         hidden: true
       base:
-        width: 15
-        hidden: true
+        width: 25
       lines:
         width: 15
     issues:
