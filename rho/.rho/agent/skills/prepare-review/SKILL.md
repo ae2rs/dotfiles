@@ -1,18 +1,18 @@
 ---
 name: prepare-review
-description: Prepare one of your own wesprint-io/monorepo pull requests, or a whole stack, for review — write or update its body as a short, scannable description only where it is missing or stale, add a review order with a note per file on what it does and why it changed, and mark every file that needs no judgement (tests, mechanical edits, plumbing, copies of a repeated edit) as viewed on GitHub. Use when asked to prepare a PR for review, write its description and review order, or mark its boring files as viewed.
+description: Prepare one of your own wesprint-io/monorepo pull requests, or a whole stack, for review — write or update its body as a short, scannable description only where it is missing or stale, and mark every file that needs no judgement (tests, mechanical edits, plumbing, copies of a repeated edit) as viewed on GitHub. Use when asked to prepare a PR for review, write its description, or mark its boring files as viewed.
 ---
 
 # Prepare a PR for review
 
-Works on the current branch's PR, or the number the user gives. For a whole stack, run sections 1 to 5 once per PR, bottom-up, then give one report. Read the whole diff before writing or marking anything.
+Works on the current branch's PR, or the number the user gives. For a whole stack, run sections 1 to 4 once per PR, bottom-up, then give one report. Read the whole diff before writing or marking anything.
 
 The goal: the reviewer opens only the files that need judgement. Every other file gets marked viewed.
 
 ## 1. Fetch
 
 1. `r=wesprint-io/monorepo; n=${N:-$(gh pr view --json number -q .number)}`
-2. `gh pr view $n --repo $r --json id,headRefOid,baseRefName -q '.id, .headRefOid, .baseRefName'` — keep the node id for section 4.
+2. `gh pr view $n --repo $r --json id,headRefOid,baseRefName -q '.id, .headRefOid, .baseRefName'` — keep the node id for section 3.
 3. List the files from GitHub. This list is the source of truth for paths: it gives a renamed file's new path, and which files are already viewed.
    ```sh
    gh api graphql --paginate -F n=$n -f query='query($n:Int!,$endCursor:String){repository(owner:"wesprint-io",name:"monorepo"){pullRequest(number:$n){files(first:100,after:$endCursor){pageInfo{hasNextPage endCursor} nodes{path additions deletions viewerViewedState}}}}}' \
@@ -75,24 +75,11 @@ These rules apply to non-test files. Even if the change looks small:
 
 ### Duplicates
 
-When the same edit repeats across files (same hunks, only names differ), keep the first file unviewed as the representative and mark the copies. The review order names every copy next to the representative. This applies to never-mark edits too, e.g. eight identical `.into_iter()` → `.active()` swaps.
+When the same edit repeats across files (same hunks, only names differ), keep the first file unviewed as the representative and mark the copies. The body's mechanical list names every copy with its representative. This applies to never-mark edits too, e.g. eight identical `.into_iter()` → `.active()` swaps.
 
 Two exceptions stay unviewed in every file: wire, schema and encoding changes (serialization attributes, fields on `Proto` or serde structs), and access checks. A file that differs from the others in any hunk is not a copy.
 
-## 3. Order the review
-
-Order groups by dependency, so each file is read after what it uses:
-1. core
-2. logic
-3. wire
-4. consumers
-5. clients
-
-Within a group, put the file a reviewer must read closely first, then its look-alikes. For each file or group of look-alikes, write one line: what the file does, and why this PR had to change it. Point out the decisions a reviewer must take (compatibility, rollout, data loss).
-
-Tests and mechanical files go in their own lists after the review order (see the template), not in it.
-
-## 4. Mark files viewed
+## 3. Mark files viewed
 
 Mark every test file, mechanical file and duplicate copy. Take each path from `/tmp/pr-$n-files.tsv`, never from a `diff --git a/…` header: for a renamed file, the old path marks nothing, yet the mutation still succeeds. Skip files already `VIEWED`. Never unmark a file: viewed state is the author's own review progress.
 
@@ -110,10 +97,10 @@ Then run the files query from section 1 again, and compare its `VIEWED` paths wi
 
 Viewed state belongs to the GitHub user running `gh`. It resets when a later push changes the file.
 
-## 5. Write the body
+## 4. Write the body
 
-Decide first whether the body needs work. Compare the old body against the diff and the `VIEWED` list from section 4:
-- **No template body yet** (no `## Review order`, or a stub from PR creation): write it in full from the template below.
+Decide first whether the body needs work. Compare the old body against the diff and the `VIEWED` list from section 3:
+- **No template body yet** (no `## What`, or a stub from PR creation): write it in full from the template below.
 - **Stale in places**: change only those parts and keep the rest word for word. Stale means it describes behaviour the diff no longer has, names files the PR no longer touches (or misses files it now touches), or its marked-viewed lists differ from the actual `VIEWED` paths.
 - **Still accurate**: leave it alone. Do not rewrite it to reword it or reorder it.
 
@@ -121,7 +108,7 @@ Style:
 - Short sentences. Simple words. Tight bullets, no blank lines between them.
 - One line per paragraph; never hard-wrap.
 - Say why, not what the diff already shows. No filler.
-- Description under ~500 words, not counting the two marked-viewed lists. Group look-alike files in the review order rather than listing each.
+- Description under ~500 words, not counting the two marked-viewed lists.
 - Repo-relative paths in backticks. No `pr://` links: other reviewers cannot open them.
 - Keep the testing line from the old body. If there is none, ask the user what was verified. Never invent it.
 
@@ -145,11 +132,6 @@ Stacked on #<n> (<what it does>).   ← only when stacked
 ## Testing
 - <what was verified, and what was not>
 
-## Review order
-1. **<group>**
-   - `<path>`: <what it does>; <why it changed>. Same edit in `<copy>`, `<copy>` (marked viewed).
-2. ...
-
 ### Tests, marked viewed
 - **<feature>:** `<path>`, `<path>`: <what they cover>.
 
@@ -157,11 +139,12 @@ Stacked on #<n> (<what it does>).   ← only when stacked
 - **Bazel deps:** `<path>`, `<path>`
 - **Plumbing for `<field>`:** `<path>`, ...
 - **Docs:** `<path>`: <the contract it states, if any>.
+- **Copies of `<representative>`:** `<path>`, ...
 ```
 
 When it changed, `edit` the description in `pr://<n>`, or `write` `pr://<n>` as a `---` line, a second `---` line, then the new body: keys left out of the front matter stay as they are. The receipt says what changed; no read-back is needed.
 
-## 6. Report
+## 5. Report
 
 In chat, per PR:
 - how many files were marked viewed out of the total, and any `FAIL` lines.
