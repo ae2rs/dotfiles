@@ -67,7 +67,10 @@ defaults:
 keybindings:
   universal: []
   issues: []
-  prs: []
+  prs:
+    - key: T
+      name: stack tree
+      command: python3 ~/.config/gh-dash/stack-tree.py {{.RepoName}} {{.PrNumber}} | less -R
   branches: []
 repoPaths: {}
 theme:
