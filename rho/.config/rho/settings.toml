@@ -66,6 +66,43 @@ url = "https://mcp.slack.com/mcp"
 client_id = "4558880155776.12385211203265"
 client_secret_env = "SLACK_MCP_CLIENT_SECRET" # in zsh/secrets/env.yaml (sops)
 callback_port = 47823
+disabled_tools = ["slack_send_message", "slack_schedule_message"]
+
+[mcp.servers.lambda]                 # the household's mail, through neti; see ~/perso/home/lambda/README.md
+url = "https://lambda.factory.onl/mcp"
+client_id = "rho-lambda"
+callback_port = 47830
+
+# Services rho reads through the machine's own CLIs; profiles offer them through `resources`.
+[actions]
+enabled = true
+
+[sentry]
+org = "amoamoamo"
+
+[k8s.contexts.home]
+kubeconfig = "~/.kube/little-boy.yaml"
+context = "little-boy"
+
+[k8s.contexts.gke]
+context = "gke_applications-5h1pm3n7_us-central1-b_us1b-applications"
+
+[query.sources.home]
+kind = "prometheus"
+url = "http://10.1.20.1:9090"
+
+[query.sources.mimir]                 # prod; needs the cluster's DNS
+kind = "prometheus"
+url = "http://mimir-nginx.monitoring/prometheus"
+
+# Prod Cloud SQL as postgres, through the `pg` wrapper; rho keeps it read-only.
+[query.sources.commerce]
+kind = "postgres"
+command = ["zsh", "-c", "source ~/.config/zsh/zshrc.d/50-aliases.zsh; pg commerce \"$@\"", "pg"]
+
+[query.sources.users]
+kind = "postgres"
+command = ["zsh", "-c", "source ~/.config/zsh/zshrc.d/50-aliases.zsh; pg users \"$@\"", "pg"]
 
 [profiles.base]
 append_system_prompt = ["APPEND_SYSTEM.md", "RESPONSE_STYLE.md"]
@@ -84,7 +121,7 @@ suggest = [
 
 [profiles.infrastructure]
 skills = ["skills/linear"]
-resources = ["linear"]
+resources = ["linear", "actions", "k8s", "query"]
 
 [profiles.monorepo]
 instructions = ["profiles/monorepo.md"]
@@ -96,7 +133,7 @@ skills = [
   "skills/prepare-review",
 ]
 snippets = ["snippets/monorepo"]
-resources = ["linear"]
+resources = ["linear", "actions", "sentry", "k8s", "query"]
 cleanup = "cleanup-monorepo"
 suggest = [
   "A Bazel monorepo: Rust under rs/ (engine, mobile, platform, proto, geodata), a TypeScript web app under web/, iosapp/ and android/.",
@@ -118,6 +155,9 @@ suggest = [
 # [[profiles.monorepo.always_ask]]
 # match = '\bgh\s+pr\s+merge\b'
 # reason = "merges a pull request into main"
+
+[profiles.home]
+resources = ["actions", "k8s", "query"]
 
 [profiles.neo]
 instructions = ["profiles/neo.md"]
@@ -150,6 +190,10 @@ origin = "ae2rs/neo"
 profile = "neo"
 
 [[profiles.rules]]
+origin = "ae2rs/home"
+profile = "home"
+
+[[profiles.rules]]
 origin = "ae2rs/rho"
 profile = "rho"
 
@@ -163,6 +207,10 @@ upstream = "wss://agora.factory.onl"
 # The hostname changes with the network: Tailscale's home tailnet turns it into a ts.net name.
 [machine]
 name = "Lucass-MacBook-Pro.local"
+
+# Each repository's cap; a writer subagent on a branch takes one.
+[worktrees]
+slots = 5
 
 [memory]
 engram_url = "https://agora.factory.onl"
