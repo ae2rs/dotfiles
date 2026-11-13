@@ -268,6 +268,8 @@ Give the user one status line and end the turn. Each run's exit notice brings yo
 
 If the infrastructure run fails, stop the monitor with `run` `cancel` and report.
 
+To show why a GitHub run failed, read `actions://<owner>/<repo>/<run>/logs`: each failed job's log up to its first error. `actions://<owner>/<repo>/<run>` lists its jobs and where each failed. Reruns still need the user's approval.
+
 ### 8.4 Judge restarts
 
 A rollout-period restart that recovers is a caveat to report, not a failure. Known transients:
