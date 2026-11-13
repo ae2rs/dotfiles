@@ -91,6 +91,15 @@ context = "gke_applications-5h1pm3n7_us-central1-b_us1b-applications"
 kind = "prometheus"
 url = "http://10.1.20.1:9090"
 
+# Home Loki and Tempo through Grafana's datasource proxy, signed in by hctl through neti.
+[query.sources.home-logs]
+kind = "loki"
+command = ["hctl", "grafana", "api", "get", "api/datasources/proxy/uid/loki"]
+
+[query.sources.home-traces]
+kind = "tempo"
+command = ["hctl", "grafana", "api", "get", "api/datasources/proxy/uid/tempo"]
+
 [query.sources.mimir]                 # prod; needs the cluster's DNS
 kind = "prometheus"
 url = "http://mimir-nginx.monitoring/prometheus"
