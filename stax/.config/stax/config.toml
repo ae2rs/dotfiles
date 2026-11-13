@@ -1,15 +1,3 @@
-[[sections]]
-title = "My PRs"
-filters = "is:open author:@me"
-
-[[sections]]
-title = "Needs my review"
-filters = "is:open review-requested:@me"
-
-[[sections]]
-title = "Involved"
-filters = "is:open involves:@me -author:@me"
-
 [repo_paths]
 "wesprint-io/*" = "~/work/*"
 "ae2rs/*" = "~/perso/*"
