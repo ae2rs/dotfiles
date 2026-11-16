@@ -1,11 +1,13 @@
 ---
 name: rerun-codex-review
-description: Run the Codex review loop on the current wesprint-io/monorepo PR. Fold every earlier Codex review comment and `@codex` trigger comment, post a new `@codex review this PR` comment that carries PR context and the already-settled findings, wait for the review, fix its findings, push, and re-trigger until Codex reports none. Never accepts a finding without asking the user. Use when asked to re-run, refresh or redo the Codex review, or to loop on Codex findings.
+description: Run the Codex review loop on the current wesprint-io/monorepo PR. Fold every earlier Codex review comment and `/codex` trigger comment, post a new `/codex review this PR` comment that carries PR context and the already-settled findings, wait for the review, fix its findings, push, and re-trigger until Codex reports none. Never accepts a finding without asking the user. Use when asked to re-run, refresh or redo the Codex review, or to loop on Codex findings.
 ---
 
 # Re-run the Codex review until it is clean
 
-`.github/workflows/codex.yaml` posts the review as one PR comment from `github-actions[bot]` whose first line is `<!-- codex-review -->`, followed by the review (`### Summary` ...) or by "The code review could not be generated."; it is triggered by a comment containing `@codex`. A push does not trigger it. Leave every other comment alone, including other `github-actions[bot]` comments (they start with a different `<!--` marker) and the replies to reviews.
+`.github/workflows/codex.yaml` posts the review as one PR comment from `github-actions[bot]` whose first line is `<!-- codex-review -->`, followed by the review (`### Summary` ...) or by "The code review could not be generated.". A comment, review or review comment whose body starts with `/codex` triggers it, and so does a non-draft PR being opened, reopened or marked ready; a push does not. Comment events run the workflow from `main`, so read its trigger rules there (`git show origin/main:.github/workflows/codex.yaml`), not in the PR's checkout.
+
+`@codex` is deprecated: it starts no review, only a deprecation notice from `github-actions[bot]` and a "create a Codex account" reply from `chatgpt-codex-connector[bot]`. Never write `@codex` anywhere in a trigger body. Leave every other comment alone, including other `github-actions[bot]` comments (they start with a different `<!--` marker) and the replies to reviews.
 
 Codex sees only the diff, the PR title and body, and the trigger comment's body (as "Additional instructions"). It never reads other PR comments, so findings already answered in replies come back on every re-run unless the trigger comment names them.
 
@@ -18,16 +20,16 @@ Codex sees only the diff, the PR title and body, and the trigger comment's body 
 ## 1. Trigger a review
 
 1. `r=wesprint-io/monorepo; n=$(gh pr view --json number -q .number); me=$(gh api user -q .login)`
-2. Find the old review and trigger comments that are not folded yet. GraphQL names the bot `github-actions`, without `[bot]`:
+2. Find the comments to fold: old reviews, old triggers (`/codex`, or the legacy `@codex`), and the noise a legacy trigger leaves (deprecation notices, connector replies). GraphQL names bots without `[bot]`:
 
    ```bash
    gh api graphql --paginate -f owner=wesprint-io -f name=monorepo -F n=$n \
      -f query='query($owner:String!,$name:String!,$n:Int!,$endCursor:String){repository(owner:$owner,name:$name){pullRequest(number:$n){comments(first:100,after:$endCursor){pageInfo{hasNextPage endCursor} nodes{id isMinimized author{login} body}}}}}' \
-     --jq ".data.repository.pullRequest.comments.nodes[] | select((.isMinimized | not) and ((.author.login == \"github-actions\" and (.body | startswith(\"<!-- codex-review -->\"))) or (.author.login == \"$me\" and (.body | contains(\"@codex\"))))) | .id"
+     --jq ".data.repository.pullRequest.comments.nodes[] | select((.isMinimized | not) and ((.author.login == \"github-actions\" and ((.body | startswith(\"<!-- codex-review -->\")) or (.body | contains(\"is deprecated. Comment\")))) or .author.login == \"chatgpt-codex-connector\" or (.author.login == \"$me\" and ((.body | startswith(\"/codex\")) or (.body | contains(\"@codex\")))))) | .id"
    ```
 
 3. Before folding anything, read the unfolded reviews, the replies to them and the previous trigger comment (`read pr://<n>/comments`), and draft the new trigger comment body:
-   - First line: `@codex review this PR`.
+   - First line: `/codex review this PR`. The body must start with `/codex`, and must not contain `@codex` anywhere.
    - A few lines of context: what the PR does, where it sits in its stack, and what is out of scope (handled in another PR or ticket).
    - Every settled finding from earlier reviews, one bullet each, so Codex does not raise it again: fixed (name the commit by subject, since restacks change shas), or accepted by the user (won't fix / documented / irrelevant), with the one-line reason.
    - Anything the user added when invoking the skill.
@@ -35,7 +37,7 @@ Codex sees only the diff, the PR title and body, and the trigger comment's body 
 4. Fold each comment found in step 2 as outdated; never delete one:
    `gh api graphql -f id=<id> -f query='mutation($id:ID!){minimizeComment(input:{subjectId:$id,classifier:OUTDATED}){minimizedComment{isMinimized}}}'`
 5. Post the trigger: `write` the body to `pr://<n>/comment`. The receipt names the new comment's URL.
-6. Verify by re-running step 2: only the new trigger comment is left unfolded. Record its `created_at` as `since`.
+6. Verify by re-running step 2: only the new trigger comment is left unfolded. Record its `created_at` as `since`. Then check the trigger took: within a minute, `gh run list -R $r -w codex.yaml -L 5` shows an `in_progress` run titled with the PR's title, and no deprecation notice was posted. If not, re-read the workflow's trigger rules on `main` before retrying.
 
 ## 2. Wait for the review
 
