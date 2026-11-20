@@ -332,6 +332,70 @@ y() {
     rm -f -- "$tmp"
 }
 
+# --- Proton Pass ---
+# Pick an item from every vault, then a field. Secrets go to the clipboard and
+# are cleared after 45s if still there; they never reach stdout.
+pw() {
+    emulate -L zsh
+    setopt pipe_fail
+
+    # Vault names repeat (two "Personal"), so address vaults by share_id.
+    local -a vaults
+    vaults=(${(f)"$(pass-cli vault list --output json | jq -r '.vaults[] | .share_id, .name')"}) || return 1
+
+    # Listing takes ~3s per vault: list them in parallel, each into its own file
+    # so lines cannot interleave.
+    local tmp items
+    tmp=$(mktemp -d) || return 1
+    items=$(
+        local share name i=0
+        for share name in $vaults; do
+            (( ++i ))
+            pass-cli item list --share-id $share --output json |
+                jq -r --arg vault $name '.items[] | [.share_id, .id, "\(.title)  · \($vault) · \(.item_type)"] | @tsv' \
+                >$tmp/$i &
+        done
+        wait
+        cat $tmp/*(N)
+    )
+    rm -rf -- $tmp
+
+    local pick
+    pick=$(fzf --delimiter=$'\t' --with-nth=3 --prompt='pass> ' <<<$items) || return
+    local share_id=${pick%%$'\t'*} rest=${pick#*$'\t'}
+    local item_id=${rest%%$'\t'*}
+
+    local item
+    item=$(pass-cli item view --share-id $share_id --item-id $item_id --output json) || return 1
+
+    local choice
+    choice=$(jq -r '.item.content as $c | ($c.content.Login // {}) as $l
+        | (if ($l.password // "") != "" then "password" else empty end),
+          (if ($l.username // "") != "" then "username  \($l.username)" else empty end),
+          (if ($l.email // "") != "" then "email  \($l.email)" else empty end),
+          (if ($l.totp_uri // "") != "" then "totp" else empty end),
+          ($l.urls // [] | .[] | "url  \(.)"),
+          (if ($c.note // "") != "" then "note" else empty end)' <<<$item |
+        fzf --prompt="$(jq -r .item.content.title <<<$item)> ") || return
+
+    local field=${choice%%  *} value
+    case $field in
+        password|username|email)
+            value=$(jq -r --arg f $field '.item.content.content.Login[$f]' <<<$item) ;;
+        totp)
+            value=$(pass-cli item totp --share-id $share_id --item-id $item_id --field totp --output json | jq -r .totp) || return 1 ;;
+        note)
+            value=$(jq -r .item.content.note <<<$item) ;;
+        url)
+            open ${choice#url  }
+            return ;;
+    esac
+
+    print -rn -- $value | pbcopy
+    print "copied $field"
+    ( sleep 45; [[ $(pbpaste) == $value ]] && print -n | pbcopy ) &>/dev/null &!
+}
+
 # --- Others ---
 alias pwdc='pwd | tr -d "\r" | pbcopy'
 alias ipcp='ipconfig getifaddr en0 | tr -d "\n" | pbcopy'
