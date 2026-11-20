@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  A second Tailscale node on the personal tailnet, so Tailscale.app can stay on amo.co: both
+  tailnets route 10.1.0.0/16. Userspace networking, no TUN and no root: home is reached only
+  through its proxies, SOCKS5 on 1055 and HTTP on 1056. Drive it with `tailscale-home`.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>onl.factory.tailscale-home</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/opt/tailscale/bin/tailscaled</string>
+		<string>--tun=userspace-networking</string>
+		<string>--statedir=/Users/lucas/.local/state/tailscale-home</string>
+		<string>--socket=/Users/lucas/.local/state/tailscale-home/tailscaled.sock</string>
+		<string>--socks5-server=127.0.0.1:1055</string>
+		<string>--outbound-http-proxy-listen=127.0.0.1:1056</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/Users/lucas/.local/state/tailscale-home/tailscaled.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/lucas/.local/state/tailscale-home/tailscaled.log</string>
+</dict>
+</plist>

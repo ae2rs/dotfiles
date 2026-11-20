@@ -399,3 +399,6 @@ pw() {
 # --- Others ---
 alias pwdc='pwd | tr -d "\r" | pbcopy'
 alias ipcp='ipconfig getifaddr en0 | tr -d "\n" | pbcopy'
+
+# The home tailnet's own tailscaled (launchd onl.factory.tailscale-home); Tailscale.app stays on amo.co.
+alias tailscale-home='/opt/homebrew/opt/tailscale/bin/tailscale --socket="$HOME/.local/state/tailscale-home/tailscaled.sock"'
