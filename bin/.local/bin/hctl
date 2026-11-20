@@ -1,0 +1,5 @@
+#!/bin/sh
+# hctl through the home tailnet's own tailscaled (launchd onl.factory.tailscale-home): Tailscale.app
+# stays on amo.co, which also routes 10.1.0.0/16. Scoped to hctl, so nothing else goes through home.
+HTTPS_PROXY=http://127.0.0.1:1056 HTTP_PROXY=http://127.0.0.1:1056 NO_PROXY=localhost,127.0.0.1,::1 \
+  exec "$HOME/.cargo/bin/hctl" "$@"
