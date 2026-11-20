@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadIdentifier</key>
+			<string>onl.factory.brave.proxy.settings</string>
+			<key>PayloadType</key>
+			<string>com.brave.Browser</string>
+			<key>PayloadUUID</key>
+			<string>6B6B2330-F6FF-5D85-A1F8-3826144BDF08</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>ProxySettings</key>
+			<dict>
+				<key>ProxyMode</key>
+				<string>pac_script</string>
+				<key>ProxyPacUrl</key>
+				<string>data:application/x-ns-proxy-autoconfig;base64,Ly8gQnJhdmUncyBwcm94eSBydWxlczogaG9tZSBuYW1lcyBnbyB0aHJvdWdoIHRoZSBob21lIHRhaWxuZXQncyBvd24gdGFpbHNjYWxlZCAobGF1bmNoZAovLyBvbmwuZmFjdG9yeS50YWlsc2NhbGUtaG9tZSksIHNpbmNlIFRhaWxzY2FsZS5hcHAgc3RheXMgb24gYW1vLmNvLCB3aGljaCBhbHNvIHJvdXRlcyAxMC4xLjAuMC8xNi4KLy8gRElSRUNUIGFmdGVyIHRoZSBwcm94eTogaWYgaXQgaXMgZG93biwgaG9tZSBpcyB0cmllZCB0aGUgb3JkaW5hcnkgd2F5LgpmdW5jdGlvbiBGaW5kUHJveHlGb3JVUkwodXJsLCBob3N0KSB7CiAgaWYgKGRuc0RvbWFpbklzKGhvc3QsICIuZmFjdG9yeS5vbmwiKSB8fCBkbnNEb21haW5Jcyhob3N0LCAiLmhvbWUuYXJwYSIpIHx8CiAgICAgIGhvc3QgPT0gIm1hYmJveC5ieXRlbC5mciIgfHwgc2hFeHBNYXRjaChob3N0LCAiMTAuMS4qIikpIHsKICAgIHJldHVybiAiU09DS1M1IDEyNy4wLjAuMToxMDU1OyBESVJFQ1QiOwogIH0KICByZXR1cm4gIkRJUkVDVCI7Cn0K</string>
+			</dict>
+		</dict>
+	</array>
+	<key>PayloadDisplayName</key>
+	<string>Brave: home through the home tailnet</string>
+	<key>PayloadIdentifier</key>
+	<string>onl.factory.brave.proxy</string>
+	<key>PayloadScope</key>
+	<string>User</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>108CBD95-E9D5-5C35-904F-ECEB58C1DBF4</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
