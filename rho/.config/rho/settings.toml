@@ -72,6 +72,7 @@ disabled_tools = ["slack_schedule_message"]
 url = "https://lambda.factory.onl/mcp"
 client_id = "rho-lambda"
 callback_port = 47830
+proxy = "http://127.0.0.1:1056"     # only reachable through the home tailnet
 
 # Services rho reads through the machine's own CLIs; profiles offer them through `resources`.
 [actions]
