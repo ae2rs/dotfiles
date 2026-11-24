@@ -1,6 +1,6 @@
 ---
 name: deploy-monorepo
-description: Deploy a wesprint-io/monorepo backend change end to end, or just watch production API rollouts. The full path waits for green PR CI, merges the current PR only after the user approves, waits for the backend release, opens an infrastructure version-bump PR for the user to merge and drafts its Slack bump message, then watches the Pulumi run and the Kubernetes rollout through a crash-free stability window. The watch-only path checks whether one or more API Deployments or StatefulSets rolled out and stay healthy. Use when asked to merge and deploy the monorepo PR, or to watch, verify or report the health of a rollout.
+description: Deploy a wesprint-io/monorepo backend change end to end, or just watch production API rollouts. The full path waits for green PR CI, merges the current PR only after the user approves, posts the bump message in #backend-release, waits for the backend release, opens the infrastructure version-bump PR and merges it once its CI is green, then watches the Pulumi run and the Kubernetes rollout through a crash-free stability window and marks the bump message done with a check reaction. The watch-only path checks whether one or more API Deployments or StatefulSets rolled out and stay healthy. Use when asked to merge and deploy the monorepo PR, or to watch, verify or report the health of a rollout.
 compatibility: Requires gh, git, jq, Python 3, kubectl access to the production cluster, access to wesprint-io/monorepo and wesprint-io/infrastructure, the Slack MCP server, and checkouts at /Users/lucas/work/monorepo and /Users/lucas/work/infrastructure.
 ---
 
@@ -13,8 +13,9 @@ Two entry points:
 
 ## Rules
 
-- **Never merge without the user's go-ahead.** Green CI is not consent. Ask before merging the monorepo PR, naming the PR and its head SHA. Ask again if the head changes.
-- **Never merge the infrastructure PR.** The user merges it. Do not enable auto-merge or deploy around it.
+- **Never merge the monorepo PR without the user's go-ahead.** Green CI is not consent. Ask before merging it, naming the PR and its head SHA. Ask again if the head changes.
+- **Merge the infrastructure PR yourself, only as section 7 says**: squash, green CI at the pinned head, `--match-head-commit`. Never enable auto-merge, bypass a check, or merge any other infrastructure PR.
+- **Post in Slack only in #backend-release** (`C0ALZF3FVA8`): one bump message per deploy (section 5), and a `white_check_mark` reaction on it once the deployment succeeds (section 8.6). Never edit, delete or react to any other message.
 - **Never mutate the cluster.** No restart, scale, delete, patch, rollback or context switch unless the user asks for it separately.
 - Run commands non-interactively, with explicit repository and PR numbers. Never rely on a current-branch default.
 - Do not use stacked-PR tooling, merge stack PRs beyond the ones the user chose, or update other PRs.
@@ -107,6 +108,8 @@ Take the UUID from `.details.uuid`. Poll `GET /repos/wesprint-io/monorepo/pulls/
 
 Then confirm every PR in the scope is `MERGED` and every PR after the target is still open. Record each one's `mergeCommit.oid` and `mergedAt`. Never infer a merge SHA from an old branch head. The rest of the deploy uses the target's merge SHA: it is the tip of the push, and it contains the others.
 
+Go straight on to section 4: the bump message goes out right after the merge.
+
 ## 4. Wait for the backend release
 
 ```bash
@@ -114,7 +117,7 @@ Then confirm every PR in the scope is `MERGED` and every PR after the target is 
   "$monorepo_merge_sha" "$backend_image_name"
 ```
 
-It prints JSON: `runId`, `url`, `mergeSha`, `runHeadSha`, `exact`, `image`, `metadataHash`.
+Start it in the background, then choose the services and post the bump message (section 5) while it runs. It prints JSON: `runId`, `url`, `mergeSha`, `runHeadSha`, `exact`, `image`, `metadataHash`.
 
 ### How it picks the run
 
@@ -134,7 +137,7 @@ The run was built from a later commit than the merge. Check that `runHeadSha` is
 
 ### If no run appears
 
-The workflow has a push `paths` filter. A merge that touches no backend path gets no run, and the script fails after 15 minutes. Check the PR's paths against the filter, then tell the user.
+The workflow has a push `paths` filter. A merge that touches no backend path gets no run, and the script fails after 15 minutes. Check the PR's paths against the filter, then tell the user, and say the bump message is already posted.
 
 ## 5. Choose the services to bump
 
@@ -143,9 +146,21 @@ Map each built image to its production service:
 - image: `WithImage` in `/Users/lucas/work/infrastructure/production/applications/**.go`;
 - deployed version: `Overrides` in `/Users/lucas/work/infrastructure/production/applications/versions/versions.go`.
 
-Use the monorepo diff, Bazel image ownership, Metadata image names and `WithImage` together. Bump only services that need the change. Never change the global `ReleaseHash` to deploy a few services.
+Use the monorepo diff, Bazel image ownership and `WithImage` together. Bump only services that need the change. Never change the global `ReleaseHash` to deploy a few services.
 
 If several services are plausible, the mapping is unclear, or the change may need coordinated bumps, propose a list with evidence and ask. If the mapping is clear, go ahead.
+
+### Post the bump message
+
+As soon as the services are chosen, post the bump message in #backend-release, so the team knows the bump is under way.
+
+List the chosen services, plus every service that points at the same shared hash variable (such as `BumpyHash`) in `versions.go`, in the file's order. The message is one line, each service wrapped in backticks, nothing else:
+
+```text
+:bump: `name-api` `name-2-api`
+```
+
+Send it with `slack/slack_send_message`, `channel_id` `C0ALZF3FVA8`. Record the message `ts` for section 8.6; if the tool returns none, find the message with `slack/slack_read_channel`. Post once per deploy: if the services change later, tell the user rather than posting again.
 
 ## 6. Open the infrastructure PR
 
@@ -154,7 +169,7 @@ Work from `/Users/lucas/work/infrastructure`.
 1. Require a clean working tree. If dirty, stop.
 2. Fetch, switch to `main`, `git pull --ff-only origin main`.
 3. Create a fresh branch under `ae2rs/`. Make sure it exists neither locally nor on the remote.
-4. In `versions.go`, replace only the chosen services' hashes with the Metadata hash.
+4. Require the release's images to cover every chosen service, or stop and ask. In `versions.go`, replace only the chosen services' hashes with the Metadata hash.
 5. Run `gofmt` on the file and read the diff.
 6. Run the smoke test. The PR's CI runs `go test ./...` and builds the Pulumi program, so do not repeat them here:
 
@@ -166,7 +181,7 @@ Work from `/Users/lucas/work/infrastructure`.
 
 Never include unrelated files or existing changes.
 
-## 7. Wait for infrastructure CI, then hand off
+## 7. Wait for infrastructure CI, then merge
 
 ```bash
 /Users/lucas/.rho/agent/skills/deploy-monorepo/scripts/wait-pr-ci.sh \
@@ -175,32 +190,22 @@ Never include unrelated files or existing changes.
 
 For `wesprint-io/infrastructure`, the script also requires the `gke-applications/gke-applications - Update (preview)` Pulumi check. Pulumi Cloud can post it after every GitHub job has finished, so the script waits until it is present and finished, and fails if it never appears.
 
-Once the PR is ready (not a draft) and its CI is green, draft the bump message (below), then stop and hand the PR to the user with:
+If a check fails, report it and stop. If the head moved, pin the new SHA and wait again.
 
-- monorepo PR URL and merge SHA;
-- release run URL, and `runHeadSha` if `exact` was false;
-- image hash;
-- services bumped;
-- infrastructure PR URL and CI result;
-- the bump message and the Slack draft's `channel_link`, or why no draft was created;
-- validation caveats;
-- a request to merge the infrastructure PR and say when it is done.
+Once the PR is ready (not a draft) and its CI is green at the pinned head:
 
-### Draft the bump message
+1. Resolve the targets and start the rollout monitor (sections 8.1 and 8.2), so it captures the starting state before the merge.
+2. Squash-merge only this PR at the pinned head:
 
-Take the services from the infrastructure PR's diff of `production/applications/versions/versions.go`: every `Overrides` key whose hash changed, plus every service that points at a shared hash variable (such as `BumpyHash`) that changed. If `ReleaseHash` changed, ask the user instead of drafting.
-
-The message is one line, the services in the file's order, each wrapped in backticks, nothing else:
-
-```text
-:bump: `name-api` `name-2-api`
-```
-
-Create it as a Slack draft, never a sent message: `slack/slack_send_message_draft` with `channel_id` `C0ALZF3FVA8` (#backend-release). It returns the `channel_link` to give the user. Slack allows one draft per channel and this tool cannot replace one: on `attached_draft_exists`, do not retry; put the message in the hand-off and say the old draft must be sent or deleted first.
+   ```bash
+   gh pr merge "$infra_pr" --repo wesprint-io/infrastructure --squash --match-head-commit "$infra_head_sha"
+   ```
+3. Re-query it, require `state: MERGED`, and record `mergeCommit.oid` as the infrastructure merge SHA. If the merge fails, cancel the monitor and report.
+4. Watch the infrastructure run (section 8.3).
 
 ## 8. Watch the rollout
 
-In a full deploy, resume only once the user says the infrastructure PR is merged. Re-query it, require `state: MERGED`, and record `mergeCommit.oid` as the infrastructure merge SHA.
+In a full deploy, section 7 has started the monitor and merged the infrastructure PR: continue at 8.3.
 
 ### 8.1 Resolve the targets
 
@@ -291,6 +296,12 @@ Call a deployment successful only after both the infrastructure run and the full
 - CrashLoopBackOff or other waiting or termination evidence;
 - monitoring limits.
 
-In a full deploy, also give the infrastructure PR, its merge SHA and the Pulumi run URL.
+In a full deploy, also give the monorepo PR and merge SHA, the release run URL (and `runHeadSha` if `exact` was false), the image hash, the infrastructure PR, its merge SHA and the Pulumi run URL.
 
 If monitoring was interrupted, say how much of the window completed. Never claim the full window passed.
+
+### 8.6 Mark the bump message done
+
+Once 8.5 calls the deployment successful, react to the bump message this session posted: `slack/slack_add_reaction` with `channel_id` `C0ALZF3FVA8`, `emoji` `white_check_mark` and its `message_ts`. The check tells the channel the bump is live.
+
+If the deployment failed or monitoring was interrupted, add no reaction and say so in the report. In a watch-only run, skip this unless this session posted the bump message.
