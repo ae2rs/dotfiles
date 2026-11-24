@@ -1,6 +1,6 @@
 ---
 name: deploy-monorepo
-description: Deploy a wesprint-io/monorepo backend change end to end, or just watch production API rollouts. The full path waits for green PR CI, merges the current PR only after the user approves, posts the bump message in #backend-release, waits for the backend release, opens the infrastructure version-bump PR and merges it once its CI is green, then watches the Pulumi run and the Kubernetes rollout through a crash-free stability window and marks the bump message done with a check reaction. The watch-only path checks whether one or more API Deployments or StatefulSets rolled out and stay healthy. Use when asked to merge and deploy the monorepo PR, or to watch, verify or report the health of a rollout.
+description: Deploy a wesprint-io/monorepo backend change end to end, or just watch production API rollouts. The full path waits for green PR CI, merges the current PR only after the user approves, posts the bump message in #backend-release, waits for the backend release, opens the infrastructure version-bump PR and merges it once its CI is green, then watches the Pulumi run, marks the bump message done with a check reaction once it is green, and watches the Kubernetes rollout through a crash-free stability window. The watch-only path checks whether one or more API Deployments or StatefulSets rolled out and stay healthy. Use when asked to merge and deploy the monorepo PR, or to watch, verify or report the health of a rollout.
 compatibility: Requires gh, git, jq, Python 3, kubectl access to the production cluster, access to wesprint-io/monorepo and wesprint-io/infrastructure, the Slack MCP server, and checkouts at /Users/lucas/work/monorepo and /Users/lucas/work/infrastructure.
 ---
 
@@ -15,7 +15,7 @@ Two entry points:
 
 - **Never merge the monorepo PR without the user's go-ahead.** Green CI is not consent. Ask before merging it, naming the PR and its head SHA. Ask again if the head changes.
 - **Merge the infrastructure PR yourself, only as section 7 says**: squash, green CI at the pinned head, `--match-head-commit`. Never enable auto-merge, bypass a check, or merge any other infrastructure PR.
-- **Post in Slack only in #backend-release** (`C0ALZF3FVA8`): one bump message per deploy (section 5), and a `white_check_mark` reaction on it once the deployment succeeds (section 8.6). Never edit, delete or react to any other message.
+- **Post in Slack only in #backend-release** (`C0ALZF3FVA8`): one bump message per deploy (section 5), and a `white_check_mark` reaction on it once the Pulumi run is green (section 8.6). Never edit, delete or react to any other message.
 - **Never mutate the cluster.** No restart, scale, delete, patch, rollback or context switch unless the user asks for it separately.
 - Run commands non-interactively, with explicit repository and PR numbers. Never rely on a current-branch default.
 - Do not use stacked-PR tooling, merge stack PRs beyond the ones the user chose, or update other PRs.
@@ -269,7 +269,7 @@ It pins the `Pulumi` push run whose head is the merge SHA, using the Actions API
 
 If `Reject stale runs` rejects it, find the newer successful main run carrying the same version, check the hash is still on main, and watch that one instead. Never rerun or bypass a failed deployment without the user's approval.
 
-Give the user one status line and end the turn. Each run's exit notice brings you back; read its output from `run://<id>`. The deployment is done when both have exited. A non-zero exit from either is a failed or interrupted deployment.
+Give the user one status line and end the turn. Each run's exit notice brings you back; read its output from `run://<id>`. When the infrastructure run exits 0, mark the bump message done right away (section 8.6), without waiting for the monitor. The deployment is done when both have exited. A non-zero exit from either is a failed or interrupted deployment.
 
 If the infrastructure run fails, stop the monitor with `run` `cancel` and report.
 
@@ -302,6 +302,6 @@ If monitoring was interrupted, say how much of the window completed. Never claim
 
 ### 8.6 Mark the bump message done
 
-Once 8.5 calls the deployment successful, react to the bump message this session posted: `slack/slack_add_reaction` with `channel_id` `C0ALZF3FVA8`, `emoji` `white_check_mark` and its `message_ts`. The check tells the channel the bump is live.
+As soon as the infrastructure run (8.3) exits 0, react to the bump message this session posted: `slack/slack_add_reaction` with `channel_id` `C0ALZF3FVA8`, `emoji` `white_check_mark` and its `message_ts`. The check tells the channel the bump is out. Do not wait for the rollout monitor or its stability window; a later rollout failure goes in the report, and the reaction stays.
 
-If the deployment failed or monitoring was interrupted, add no reaction and say so in the report. In a watch-only run, skip this unless this session posted the bump message.
+If the infrastructure run failed or was interrupted, add no reaction and say so in the report. In a watch-only run, skip this unless this session posted the bump message.
