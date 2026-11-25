@@ -3,7 +3,6 @@ level = "debug"
 
 [claude]
 enabled = true
-account = "max"
 
 [copilot]
 enabled = false
