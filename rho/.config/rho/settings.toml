@@ -32,9 +32,6 @@ wezterm = true
 default = "rho-claude/claude-opus-5-5"
 enabled = [
   "rho-claude/claude-opus-5-5",
-  "openai-codex/gpt-6.1-sol",
-  "openai-codex/gpt-6-astra",
-  "kimi-coding/k3",
   "prism/local/qwen3.8-flash-next-iq3_s",
 ]
 thinking = "high"
@@ -52,7 +49,7 @@ client_id = "rho-prism"
 context_window = 131072
 id = "local/qwen3.8-flash-next-iq3_s"
 max_tokens = 32768
-name = "Qwen3.8 Flash Next (prism, IQ3_S)"
+name = "prism"
 reasoning = true
 
 [providers.prism.models.thinking_level_map]
