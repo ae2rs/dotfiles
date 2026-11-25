@@ -35,26 +35,27 @@ enabled = [
   "openai-codex/gpt-6.1-sol",
   "openai-codex/gpt-6-astra",
   "kimi-coding/k3",
-  "llama-cpp/early-router-flash",
+  "prism/local/qwen3.8-flash-next-iq3_s",
 ]
 thinking = "high"
 
 [model.thinking_levels]
 "rho-claude/claude-opus-5-5" = "high"
 
-[providers.llama-cpp]
+[providers.prism]                    # the household's model, through neti; see ~/perso/home/prism/README.md
 api = "openai-completions"
-api_key = "none"
-base_url = "http://192.168.1.165:9999/v1"
+base_url = "https://prism.factory.onl/v1"
+auth = "neti"
+client_id = "rho-prism"
 
-[[providers.llama-cpp.models]]
+[[providers.prism.models]]
 context_window = 131072
-id = "early-router-flash"
+id = "local/qwen3.8-flash-next-iq3_s"
 max_tokens = 32768
-name = "Qwen3.8 Flash Next (llama.cpp, UD-Q3_K_XL)"
+name = "Qwen3.8 Flash Next (prism, IQ3_S)"
 reasoning = true
 
-[providers.llama-cpp.models.thinking_level_map]
+[providers.prism.models.thinking_level_map]
 high = "high"
 low = "low"
 medium = "medium"
